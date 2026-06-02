@@ -1,0 +1,16 @@
+<IfModule mod_rewrite.c>
+  RewriteEngine On
+  RewriteBase /
+  
+  # اگر فایل یا پوشه وجود دارد، مستقیماً سرو کن
+  RewriteCond %{REQUEST_FILENAME} !-f
+  RewriteCond %{REQUEST_FILENAME} !-d
+  
+  # بقیه درخواست‌ها را به index.html هدایت کن
+  RewriteRule . /index.html [L]
+</IfModule>
+
+# فعال کردن CORS (اختیاری)
+<IfModule mod_headers.c>
+  Header set Access-Control-Allow-Origin "*"
+</IfModule>
