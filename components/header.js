@@ -1,4 +1,4 @@
-// components/header.js - چیدمان: لوگو چپ | منو وسط | دکمه‌ها راست
+// components/header.js
 
 import { i18n } from '../core/i18n.js';
 
@@ -10,14 +10,14 @@ export function renderHeader() {
     <header class="site-header" dir="${isRTL ? 'rtl' : 'ltr'}">
       <div class="header-container">
         
-        <!-- ===== بخش 1: لوگو (چپ در LTR، راست در RTL) ===== -->
+        <!-- لوگو -->
         <div class="header-logo">
           <a href="/${currentLang}/">
             <img src="/assets/img/logo.png" alt="Mazorya Group" />
           </a>
         </div>
         
-        <!-- ===== بخش 2: منوی اصلی (وسط) ===== -->
+        <!-- منوی اصلی (دسکتاپ + موبایل کشویی) -->
         <nav class="header-nav" id="headerNav">
           <ul class="header-menu">
             <li><a href="/${currentLang}/" data-route="home">${i18n.t('nav_home')}</a></li>
@@ -26,11 +26,33 @@ export function renderHeader() {
             <li><a href="/${currentLang}/projects" data-route="projects">${i18n.t('nav_projects')}</a></li>
             <li><a href="/${currentLang}/contact" data-route="contact">${i18n.t('nav_contact')}</a></li>
           </ul>
+          
+          <!-- دکمه‌ها در موبایل (داخل منو) -->
+          <div class="header-actions-mobile">
+            <div class="lang-dropdown">
+              <button class="lang-btn" id="langBtnMobile">
+                <span class="lang-icon">🌐</span>
+                <span class="lang-code">${currentLang.toUpperCase()}</span>
+                <span class="lang-arrow">▼</span>
+              </button>
+              <div class="lang-menu" id="langMenuMobile">
+                <a href="#" data-lang="en">🇬🇧 English</a>
+                <a href="#" data-lang="fr">🇫🇷 Français</a>
+                <a href="#" data-lang="fa">🇮🇷 فارسی</a>
+                <a href="#" data-lang="ar">🇸🇦 العربية</a>
+                <a href="#" data-lang="de">🇩🇪 Deutsch</a>
+                <a href="#" data-lang="tr">🇹🇷 Türkiye</a>
+                <a href="#" data-lang="es">🇪🇸 Español</a>
+              </div>
+            </div>
+            <a href="/${currentLang}/auth" class="header-btn" data-route="auth">
+              ${i18n.t('btn_get_started')}
+            </a>
+          </div>
         </nav>
         
-        <!-- ===== بخش 3: دکمه‌ها (راست در LTR، چپ در RTL) ===== -->
+        <!-- دکمه‌ها (دسکتاپ) -->
         <div class="header-actions">
-          <!-- منوی زبان -->
           <div class="lang-dropdown">
             <button class="lang-btn" id="langBtn">
               <span class="lang-icon">🌐</span>
@@ -43,12 +65,10 @@ export function renderHeader() {
               <a href="#" data-lang="fa">🇮🇷 فارسی</a>
               <a href="#" data-lang="ar">🇸🇦 العربية</a>
               <a href="#" data-lang="de">🇩🇪 Deutsch</a>
-              <a href="#" data-lang="tr">🇪🇸 Turkey</a>
+              <a href="#" data-lang="tr">🇹🇷 Türkiye</a>
               <a href="#" data-lang="es">🇪🇸 Español</a>
             </div>
           </div>
-          
-          <!-- دکمه Get Started -->
           <a href="/${currentLang}/auth" class="header-btn" data-route="auth">
             ${i18n.t('btn_get_started')}
           </a>
@@ -65,7 +85,7 @@ export function renderHeader() {
 }
 
 export function attachHeaderEvents() {
-  // منوی موبایل
+  // ===== منوی موبایل =====
   const mobileToggle = document.getElementById('mobileToggle');
   const headerNav = document.getElementById('headerNav');
   
@@ -80,7 +100,7 @@ export function attachHeaderEvents() {
     });
   }
   
-  // منوی زبان
+  // ===== منوی زبان (دسکتاپ) =====
   const langBtn = document.getElementById('langBtn');
   const langMenu = document.getElementById('langMenu');
   
@@ -94,7 +114,7 @@ export function attachHeaderEvents() {
     });
     
     document.addEventListener('click', (e) => {
-      if (!newLangBtn.contains(e.target) && !langMenu.contains(e.target)) {
+      if (langMenu && newLangBtn && !newLangBtn.contains(e.target) && !langMenu.contains(e.target)) {
         langMenu.classList.remove('show');
       }
     });
@@ -119,7 +139,40 @@ export function attachHeaderEvents() {
     });
   }
   
-  // لینک‌های منو
+  // ===== منوی زبان (موبایل) =====
+  const langBtnMobile = document.getElementById('langBtnMobile');
+  const langMenuMobile = document.getElementById('langMenuMobile');
+  
+  if (langBtnMobile && langMenuMobile) {
+    const newLangBtnMobile = langBtnMobile.cloneNode(true);
+    langBtnMobile.parentNode.replaceChild(newLangBtnMobile, langBtnMobile);
+    
+    newLangBtnMobile.addEventListener('click', (e) => {
+      e.stopPropagation();
+      langMenuMobile.classList.toggle('show');
+    });
+    
+    langMenuMobile.querySelectorAll('[data-lang]').forEach(link => {
+      const newLink = link.cloneNode(true);
+      link.parentNode.replaceChild(newLink, link);
+      
+      newLink.addEventListener('click', async (e) => {
+        e.preventDefault();
+        const newLang = newLink.getAttribute('data-lang');
+        await i18n.setLanguage(newLang);
+        
+        const currentPath = window.location.pathname;
+        const match = currentPath.match(/^\/([a-z]{2})\//);
+        if (match) {
+          window.location.href = currentPath.replace(`/${match[1]}`, `/${newLang}`);
+        } else {
+          window.location.href = `/${newLang}/`;
+        }
+      });
+    });
+  }
+  
+  // ===== لینک‌های منو =====
   document.querySelectorAll('[data-route]').forEach(link => {
     const newLink = link.cloneNode(true);
     link.parentNode.replaceChild(newLink, link);
@@ -131,12 +184,15 @@ export function attachHeaderEvents() {
     });
   });
   
-  // بستن منوی موبایل بعد از کلیک روی لینک
+  // ===== بستن منوی موبایل بعد از کلیک روی لینک =====
   const nav = document.getElementById('headerNav');
   const toggle = document.getElementById('mobileToggle');
   if (nav) {
     nav.querySelectorAll('a').forEach(link => {
-      link.addEventListener('click', () => {
+      const newLink = link.cloneNode(true);
+      link.parentNode.replaceChild(newLink, link);
+      
+      newLink.addEventListener('click', () => {
         nav.classList.remove('active');
         if (toggle) toggle.classList.remove('active');
         document.body.style.overflow = '';
