@@ -5569,7 +5569,7 @@ html[dir="rtl"] .checkbox-label {
 
 @media (max-width: 768px) {
   .auth-section {
-    padding: 60px 0;
+    padding: 100px 0;
   }
   
   .auth-container {
@@ -5613,8 +5613,8 @@ html[dir="rtl"] .checkbox-label {
 
 @media (max-width: 768px) {
   .auth-container {
-    margin: 0 15px;
-    padding: 25px 18px;
+    margin: 0 1px;
+    padding: 25px 15px;
     border-radius: 24px;
   }
   
@@ -6644,6 +6644,7 @@ html[dir="rtl"] .activity-item:hover {
 @media (max-width: 768px) {
   .profile-section {
     padding: 10px;
+    margin-top: 100px;
   }
   
   .profile-main {
