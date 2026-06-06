@@ -2107,29 +2107,281 @@ html[dir="rtl"] .blog-side-content {
     height: 200px;
   }
 }
-/* ===== LOADING SPINNER ===== */
-.loading-spinner {
+/* ========================================
+   PRELOADER (لودر خفن با لوگو)
+   ======================================== */
+
+.preloader {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(135deg, #0f0f1a 0%, #1a1a2e 50%, #16213e 100%);
+  z-index: 9999;
   display: flex;
-  justify-content: center;
   align-items: center;
-  height: 100vh;
-  font-size: 1.2rem;
-  color: var(--color--primary-color);
+  justify-content: center;
+  transition: opacity 0.8s ease, visibility 0.8s ease;
 }
 
-/* ===== UTILITY CLASSES ===== */
-.mg-bottom-0 {
-  margin-bottom: 0;
+.preloader.hide {
+  opacity: 0;
+  visibility: hidden;
 }
 
-.mg-bottom-20 {
-  margin-bottom: 20px;
+/* لودر دایره‌ای چندگانه */
+.loader-wrapper {
+  position: relative;
+  width: 150px;
+  height: 150px;
 }
 
-.mg-top-25 {
-  margin-top: 25px;
+.loader-ring {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  border: 3px solid transparent;
+  border-radius: 50%;
+  animation: spin 1.5s cubic-bezier(0.68, -0.55, 0.265, 1.55) infinite;
 }
 
+.loader-ring:nth-child(1) {
+  border-top-color: #ff6b6b;
+  border-left-color: #ff6b6b;
+  animation-duration: 1s;
+}
+
+.loader-ring:nth-child(2) {
+  border-right-color: #4ecdc4;
+  border-bottom-color: #4ecdc4;
+  width: 85%;
+  height: 85%;
+  top: 7.5%;
+  left: 7.5%;
+  animation-duration: 1.5s;
+  animation-direction: reverse;
+}
+
+.loader-ring:nth-child(3) {
+  border-top-color: #ffd93d;
+  border-right-color: #ffd93d;
+  width: 65%;
+  height: 65%;
+  top: 17.5%;
+  left: 17.5%;
+  animation-duration: 2s;
+}
+
+/* لوگو در مرکز (از فایل واقعی) */
+.loader-logo {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 65px;
+  height: 65px;
+  background: url('/assets/img/1.png') center/contain no-repeat;
+  animation: logoGlow 1.5s ease-in-out infinite;
+  border-radius: 50%;
+}
+
+/* افکت درخشش دور لوگو */
+.loader-logo::before {
+  content: '';
+  position: absolute;
+  top: -10px;
+  left: -10px;
+  right: -10px;
+  bottom: -10px;
+  background: radial-gradient(circle, rgba(255,107,107,0.3), transparent);
+  border-radius: 50%;
+  animation: logoPulse 1.5s ease-in-out infinite;
+  z-index: -1;
+}
+
+/* متن زیر لودر */
+.loader-brand {
+  position: absolute;
+  bottom: -60px;
+  left: 0;
+  right: 0;
+  text-align: center;
+  font-size: 18px;
+  font-weight: 600;
+  letter-spacing: 4px;
+  color: #fff;
+  text-transform: uppercase;
+  opacity: 0.8;
+}
+
+.loader-brand span {
+  background: linear-gradient(90deg, #ff6b6b, #4ecdc4, #ffd93d);
+  background-clip: text;
+  -webkit-background-clip: text;
+  color: transparent;
+  font-weight: 700;
+}
+
+/* متن متحرک (MAZORYA) */
+.loader-text {
+  position: absolute;
+  bottom: -100px;
+  left: 0;
+  right: 0;
+  text-align: center;
+  color: rgba(255,255,255,0.7);
+  font-size: 12px;
+  letter-spacing: 2px;
+  font-weight: 300;
+  text-transform: uppercase;
+}
+
+.loader-text span {
+  display: inline-block;
+  animation: textWave 0.8s ease infinite;
+}
+
+.loader-text span:nth-child(1) { animation-delay: 0s; }
+.loader-text span:nth-child(2) { animation-delay: 0.07s; }
+.loader-text span:nth-child(3) { animation-delay: 0.14s; }
+.loader-text span:nth-child(4) { animation-delay: 0.21s; }
+.loader-text span:nth-child(5) { animation-delay: 0.28s; }
+.loader-text span:nth-child(6) { animation-delay: 0.35s; }
+.loader-text span:nth-child(7) { animation-delay: 0.42s; }
+
+/* نوار پیشرفت */
+.loader-progress {
+  position: absolute;
+  bottom: -140px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 220px;
+}
+
+.progress-bar-bg {
+  width: 100%;
+  height: 3px;
+  background: rgba(255,255,255,0.2);
+  border-radius: 3px;
+  overflow: hidden;
+}
+
+.progress-bar-fill {
+  width: 0%;
+  height: 100%;
+  background: linear-gradient(90deg, #ff6b6b, #4ecdc4, #ffd93d);
+  border-radius: 3px;
+  animation: progressAnim 2s ease forwards;
+}
+
+.progress-text {
+  text-align: center;
+  color: rgba(255,255,255,0.6);
+  font-size: 11px;
+  margin-top: 8px;
+}
+
+/* انیمیشن‌ها */
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+@keyframes logoGlow {
+  0%, 100% {
+    filter: drop-shadow(0 0 5px rgba(255,107,107,0.5));
+    transform: translate(-50%, -50%) scale(1);
+  }
+  50% {
+    filter: drop-shadow(0 0 20px rgba(255,107,107,0.8));
+    transform: translate(-50%, -50%) scale(1.05);
+  }
+}
+
+@keyframes logoPulse {
+  0%, 100% {
+    opacity: 0.3;
+    transform: scale(1);
+  }
+  50% {
+    opacity: 0.8;
+    transform: scale(1.2);
+  }
+}
+
+@keyframes textWave {
+  0%, 100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-4px);
+  }
+}
+
+@keyframes progressAnim {
+  0% { width: 0%; }
+  30% { width: 35%; }
+  60% { width: 70%; }
+  100% { width: 100%; }
+}
+
+/* ===== موبایل ===== */
+@media (max-width: 768px) {
+  .loader-wrapper {
+    width: 110px;
+    height: 110px;
+  }
+  
+  .loader-logo {
+    width: 45px;
+    height: 45px;
+  }
+  
+  .loader-brand {
+    font-size: 14px;
+    bottom: -50px;
+  }
+  
+  .loader-text {
+    font-size: 10px;
+    bottom: -80px;
+  }
+  
+  .loader-progress {
+    width: 180px;
+    bottom: -110px;
+  }
+}
+
+@media (max-width: 480px) {
+  .loader-wrapper {
+    width: 90px;
+    height: 90px;
+  }
+  
+  .loader-logo {
+    width: 38px;
+    height: 38px;
+  }
+  
+  .loader-brand {
+    font-size: 12px;
+    bottom: -45px;
+  }
+  
+  .loader-text {
+    font-size: 9px;
+    bottom: -70px;
+  }
+  
+  .loader-progress {
+    width: 150px;
+    bottom: -95px;
+  }
+}
 /* ===== RESPONSIVE MEDIA QUERIES ===== */
 @media screen and (max-width: 768px) {
   .container-regular {
