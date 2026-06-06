@@ -1,4 +1,4 @@
-// components/header.js
+// components/header.js - قسمت منوی زبان با SVG
 
 import { i18n } from '../core/i18n.js';
 
@@ -17,7 +17,7 @@ export function renderHeader() {
           </a>
         </div>
         
-        <!-- منوی اصلی (دسکتاپ + موبایل کشویی) -->
+        <!-- منوی اصلی -->
         <nav class="header-nav" id="headerNav">
           <ul class="header-menu">
             <li><a href="/${currentLang}/" data-route="home">${i18n.t('nav_home')}</a></li>
@@ -27,13 +27,21 @@ export function renderHeader() {
             <li><a href="/${currentLang}/contact" data-route="contact">${i18n.t('nav_contact')}</a></li>
           </ul>
           
-          <!-- دکمه‌ها در موبایل (داخل منو) -->
+          <!-- دکمه‌ها در موبایل -->
           <div class="header-actions-mobile">
             <div class="lang-dropdown">
-              <button class="lang-btn" id="langBtnMobile">
-                <span class="lang-icon">🌐</span>
+              <button type="button" class="lang-btn" id="langBtnMobile">
+                <!-- آیکون کره SVG -->
+                <svg class="lang-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <circle cx="12" cy="12" r="10"/>
+                  <line x1="2" y1="12" x2="22" y2="12"/>
+                  <path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/>
+                </svg>
                 <span class="lang-code">${currentLang.toUpperCase()}</span>
-                <span class="lang-arrow">▼</span>
+                <!-- فلش پایین SVG -->
+                <svg class="lang-arrow" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <polyline points="6 9 12 15 18 9"/>
+                </svg>
               </button>
               <div class="lang-menu" id="langMenuMobile">
                 <a href="#" data-lang="en">🇬🇧 English</a>
@@ -54,10 +62,18 @@ export function renderHeader() {
         <!-- دکمه‌ها (دسکتاپ) -->
         <div class="header-actions">
           <div class="lang-dropdown">
-            <button class="lang-btn" id="langBtn">
-              <span class="lang-icon">🌐</span>
+            <button type="button" class="lang-btn" id="langBtn">
+              <!-- آیکون کره SVG -->
+              <svg class="lang-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <circle cx="12" cy="12" r="10"/>
+                <line x1="2" y1="12" x2="22" y2="12"/>
+                <path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/>
+              </svg>
               <span class="lang-code">${currentLang.toUpperCase()}</span>
-              <span class="lang-arrow">▼</span>
+              <!-- فلش پایین SVG -->
+              <svg class="lang-arrow" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <polyline points="6 9 12 15 18 9"/>
+              </svg>
             </button>
             <div class="lang-menu" id="langMenu">
               <a href="#" data-lang="en">🇬🇧 English</a>
@@ -74,8 +90,8 @@ export function renderHeader() {
           </a>
         </div>
         
-        <!-- دکمه همبرگر (موبایل) -->
-        <button class="header-mobile-toggle" id="mobileToggle" aria-label="Menu">
+        <!-- دکمه همبرگر -->
+        <button type="button" class="header-mobile-toggle" id="mobileToggle" aria-label="Menu">
           <span></span><span></span><span></span>
         </button>
         
@@ -93,10 +109,17 @@ export function attachHeaderEvents() {
     const newToggle = mobileToggle.cloneNode(true);
     mobileToggle.parentNode.replaceChild(newToggle, mobileToggle);
     
-    newToggle.addEventListener('click', () => {
+    newToggle.addEventListener('click', (e) => {
+      e.preventDefault();
+      e.stopPropagation();
       headerNav.classList.toggle('active');
       newToggle.classList.toggle('active');
-      document.body.style.overflow = headerNav.classList.contains('active') ? 'hidden' : '';
+      
+      if (headerNav.classList.contains('active')) {
+        document.body.style.overflow = 'hidden';
+      } else {
+        document.body.style.overflow = '';
+      }
     });
   }
   
@@ -184,7 +207,7 @@ export function attachHeaderEvents() {
     });
   });
   
-  // ===== بستن منوی موبایل بعد از کلیک روی لینک =====
+  // ===== بستن منوی موبایل =====
   const nav = document.getElementById('headerNav');
   const toggle = document.getElementById('mobileToggle');
   if (nav) {

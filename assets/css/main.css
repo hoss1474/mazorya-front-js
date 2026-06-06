@@ -2183,7 +2183,7 @@ html[dir="rtl"] .blog-side-content {
   transform: translate(-50%, -50%);
   width: 65px;
   height: 65px;
-  background: url('/assets/img/1.png') center/contain no-repeat;
+  background: url('/assets/img/logo.png') center/contain no-repeat;
   animation: logoGlow 1.5s ease-in-out infinite;
   border-radius: 50%;
 }
@@ -2202,7 +2202,7 @@ html[dir="rtl"] .blog-side-content {
   z-index: -1;
 }
 
-/* متن زیر لودر */
+/* نام برند */
 .loader-brand {
   position: absolute;
   bottom: -60px;
@@ -3140,6 +3140,122 @@ html[dir="rtl"] .header-mobile-toggle span {
     font-size: 13px;
     padding: 10px;
   }
+}
+/* ===== تنظیمات اضافی برای موبایل ===== */
+
+@media (max-width: 768px) {
+  /* دکمه‌ها در منوی موبایل */
+  .header-actions-mobile {
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+    width: 100%;
+    margin-top: 25px;
+    padding-top: 20px;
+    border-top: 1px solid #eee;
+  }
+  
+  .header-actions-mobile .lang-dropdown {
+    width: 100%;
+  }
+  
+  .header-actions-mobile .lang-btn {
+    width: 100%;
+    justify-content: center;
+    background: transparent;
+    border: 1px solid #ddd;
+    padding: 12px 16px;
+    border-radius: 50px;
+    font-size: 14px;
+  }
+  
+  .header-actions-mobile .lang-menu {
+    position: static;
+    width: 100%;
+    margin-top: 8px;
+    border: 1px solid #e0e0e0;
+    box-shadow: none;
+    border-radius: 12px;
+  }
+  
+  .header-actions-mobile .lang-menu a {
+    padding: 12px 16px;
+    text-align: center;
+  }
+  
+  .header-actions-mobile .header-btn {
+    width: 100%;
+    text-align: center;
+    justify-content: center;
+    padding: 12px 16px;
+    background: #1f1f2e;
+    color: #fff;
+    border-radius: 50px;
+    font-size: 14px;
+    font-weight: 600;
+  }
+  
+  .header-actions-mobile .header-btn:hover {
+    background: #ff6b6b;
+  }
+  
+  /* مخفی کردن دکمه‌های دسکتاپ در موبایل */
+  .header-actions {
+    display: none;
+  }
+}
+
+/* RTL برای موبایل */
+html[dir="rtl"] .header-actions-mobile .lang-btn {
+  flex-direction: row-reverse;
+}
+/* ===== استایل آیکون‌های زبان ===== */
+.lang-btn {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  background: transparent;
+  border: 1px solid #1f1f2e;
+  padding: 8px 14px;
+  border-radius: 40px;
+  cursor: pointer;
+  font-size: 14px;
+  font-weight: 500;
+  transition: all 0.3s ease;
+}
+
+.lang-icon {
+  width: 16px;
+  height: 16px;
+  stroke: #1f1f2e;
+}
+
+.lang-arrow {
+  width: 12px;
+  height: 12px;
+  stroke: #1f1f2e;
+  transition: transform 0.3s ease;
+}
+
+.lang-btn:hover .lang-icon,
+.lang-btn:hover .lang-arrow {
+  stroke: #fff;
+}
+
+.lang-btn:hover {
+  background: #ff6b6b;
+  border-color: #ff6b6b;
+  color: #fff;
+}
+
+/* چرخش فلش وقتی منو باز است */
+.lang-dropdown.open .lang-arrow {
+  transform: rotate(180deg);
+}
+
+/* RTL */
+html[dir="rtl"] .lang-btn {
+  flex-direction: row-reverse;
 }
 /* ========================================
    FOOTER STYLES - 3 ROWS
