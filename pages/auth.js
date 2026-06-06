@@ -1,11 +1,15 @@
-// pages/auth.js - Login & Register Page
+// pages/auth.js - Login Page (Only Login with Email/Password + Phone/OTP)
 
 import { i18n } from '../core/i18n.js';
 import { renderHeader, attachHeaderEvents } from '../components/header.js';
 import { renderFooter, attachFooterEvents } from '../components/footer.js';
+import { loginUser, sendOtp, verifyOtp } from '../core/api.js';
 
-// وضعیت صفحه (login یا register)
-let activeTab = 'login';
+// وضعیت صفحه (email یا phone)
+let loginMethod = 'email'; // 'email' or 'phone'
+let otpSent = false;
+let otpVerified = false;
+let phoneNumber = '';
 
 export async function renderAuth() {
   const app = document.getElementById('app');
@@ -19,31 +23,42 @@ export async function renderAuth() {
       <div class="w-layout-blockcontainer container-regular w-container">
         <div class="auth-container ${isRTL ? 'rtl-auth' : ''}">
           
-          <!-- Tab Switcher -->
-          <div class="auth-tabs">
-            <button class="auth-tab ${activeTab === 'login' ? 'active' : ''}" data-tab="login">
-              ${i18n.t('login') || 'Login'}
+          <!-- عنوان صفحه -->
+          <div class="auth-header">
+            <h1 class="auth-main-title">${i18n.t('login_title') || 'Welcome Back'}</h1>
+            <p class="auth-main-subtitle">${i18n.t('login_subtitle') || 'Choose your preferred login method'}</p>
+          </div>
+          
+          <!-- انتخاب روش ورود -->
+          <div class="login-method-tabs">
+            <button class="method-tab ${loginMethod === 'email' ? 'active' : ''}" data-method="email">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <rect x="2" y="4" width="20" height="16" rx="2"/>
+                <path d="M22 7l-10 7L2 7"/>
+              </svg>
+              ${i18n.t('login_with_email') || 'Email & Password'}
             </button>
-            <button class="auth-tab ${activeTab === 'register' ? 'active' : ''}" data-tab="register">
-              ${i18n.t('register') || 'Register'}
+            <button class="method-tab ${loginMethod === 'phone' ? 'active' : ''}" data-method="phone">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <rect x="5" y="2" width="14" height="20" rx="2" ry="2"/>
+                <line x1="12" y1="18" x2="12.01" y2="18"/>
+              </svg>
+              ${i18n.t('login_with_phone') || 'Phone & OTP'}
             </button>
           </div>
           
-          <!-- Login Form -->
-          <div id="login-form" class="auth-form ${activeTab === 'login' ? 'active' : ''}">
-            <h2 class="auth-title">${i18n.t('login_title') || 'Welcome Back'}</h2>
-            <p class="auth-subtitle">${i18n.t('login_subtitle') || 'Login with your email or phone number'}</p>
-            
-            <form id="login-form-element">
+          <!-- ===== فرم ورود با ایمیل و پسورد ===== -->
+          <div id="email-login-form" class="auth-form ${loginMethod === 'email' ? 'active' : ''}">
+            <form id="login-email-form-element">
               <div class="auth-input-group">
-                <label>${i18n.t('email_or_phone') || 'Email or Phone Number'}</label>
-                <input type="text" id="login-identifier" class="auth-input" placeholder="${i18n.t('email_or_phone_placeholder') || 'example@email.com or +1234567890'}" />
+                <label>${i18n.t('email') || 'Email Address'}</label>
+                <input type="email" id="login-email" class="auth-input" placeholder="${i18n.t('email_placeholder') || 'example@email.com'}" required />
               </div>
               
               <div class="auth-input-group">
                 <label>${i18n.t('password') || 'Password'}</label>
                 <div class="password-wrapper">
-                  <input type="password" id="login-password" class="auth-input" placeholder="${i18n.t('password_placeholder') || 'Enter your password'}" />
+                  <input type="password" id="login-password" class="auth-input" placeholder="${i18n.t('password_placeholder') || 'Enter your password'}" required />
                   <button type="button" class="password-toggle" data-target="login-password">
                     <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                       <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/>
@@ -57,100 +72,46 @@ export async function renderAuth() {
                 <label class="checkbox-label">
                   <input type="checkbox" id="remember-me" /> ${i18n.t('remember_me') || 'Remember me'}
                 </label>
-                <a href="#" class="forgot-password">${i18n.t('forgot_password') || 'Forgot password?'}</a>
+                <a href="#" class="forgot-password" id="forgotPasswordBtn">${i18n.t('forgot_password') || 'Forgot password?'}</a>
               </div>
               
               <button type="submit" class="auth-submit-btn">${i18n.t('login') || 'Login'}</button>
             </form>
-            
-            <div class="auth-divider">
-              <span>${i18n.t('or') || 'OR'}</span>
-            </div>
-            
-            <div class="auth-social">
-              <button class="social-btn google">
-                <img src="/assets/img/google-icon.svg" alt="Google" />
-                ${i18n.t('continue_with_google') || 'Continue with Google'}
-              </button>
-              <button class="social-btn facebook">
-                <img src="/assets/img/facebook-icon.svg" alt="Facebook" />
-                ${i18n.t('continue_with_facebook') || 'Continue with Facebook'}
-              </button>
-            </div>
           </div>
           
-          <!-- Register Form -->
-          <div id="register-form" class="auth-form ${activeTab === 'register' ? 'active' : ''}">
-            <h2 class="auth-title">${i18n.t('register_title') || 'Create Account'}</h2>
-            <p class="auth-subtitle">${i18n.t('register_subtitle') || 'Sign up with your email or phone number'}</p>
-            
-            <form id="register-form-element">
+          <!-- ===== فرم ورود با شماره موبایل و OTP ===== -->
+          <div id="phone-login-form" class="auth-form ${loginMethod === 'phone' ? 'active' : ''}">
+            <form id="login-phone-form-element">
               <div class="auth-input-group">
-                <label>${i18n.t('full_name') || 'Full Name'}</label>
-                <input type="text" id="register-name" class="auth-input" placeholder="${i18n.t('full_name_placeholder') || 'John Doe'}" />
-              </div>
-              
-              <div class="auth-input-group">
-                <label>${i18n.t('email') || 'Email'}</label>
-                <input type="email" id="register-email" class="auth-input" placeholder="${i18n.t('email_placeholder') || 'example@email.com'}" />
-              </div>
-              
-              <div class="auth-input-group">
-                <label>${i18n.t('phone') || 'Phone Number'}</label>
-                <input type="tel" id="register-phone" class="auth-input" placeholder="${i18n.t('phone_placeholder') || '+1234567890'}" />
-              </div>
-              
-              <div class="auth-input-group">
-                <label>${i18n.t('password') || 'Password'}</label>
-                <div class="password-wrapper">
-                  <input type="password" id="register-password" class="auth-input" placeholder="${i18n.t('password_placeholder') || 'Create a password'}" />
-                  <button type="button" class="password-toggle" data-target="register-password">
-                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                      <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/>
-                      <circle cx="12" cy="12" r="3"/>
-                    </svg>
-                  </button>
+                <label>${i18n.t('phone_number') || 'Phone Number'}</label>
+                <div class="phone-input-wrapper">
+                  <select id="phone-country-code" class="country-code-select">
+                    <option value="+1">🇺🇸 +1 (USA)</option>
+                    <option value="+44">🇬🇧 +44 (UK)</option>
+                    <option value="+90">🇹🇷 +90 (Turkey)</option>
+                    <option value="+98" selected>🇮🇷 +98 (Iran)</option>
+                    <option value="+966">🇸🇦 +966 (KSA)</option>
+                    <option value="+49">🇩🇪 +49 (Germany)</option>
+                    <option value="+33">🇫🇷 +33 (France)</option>
+                    <option value="+34">🇪🇸 +34 (Spain)</option>
+                  </select>
+                  <input type="tel" id="login-phone" class="auth-input" placeholder="${i18n.t('phone_placeholder') || '9123456789'}" required />
                 </div>
               </div>
               
-              <div class="auth-input-group">
-                <label>${i18n.t('confirm_password') || 'Confirm Password'}</label>
-                <div class="password-wrapper">
-                  <input type="password" id="register-confirm-password" class="auth-input" placeholder="${i18n.t('confirm_password_placeholder') || 'Confirm your password'}" />
-                  <button type="button" class="password-toggle" data-target="register-confirm-password">
-                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                      <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/>
-                      <circle cx="12" cy="12" r="3"/>
-                    </svg>
-                  </button>
+              <div id="otp-section" style="display: none;">
+                <div class="auth-input-group">
+                  <label>${i18n.t('otp_code') || 'OTP Code'}</label>
+                  <input type="text" id="login-otp" class="auth-input" placeholder="${i18n.t('otp_placeholder') || 'Enter 6-digit code'}" maxlength="6" />
                 </div>
               </div>
               
-              <div class="auth-terms">
-                <label class="checkbox-label">
-                  <input type="checkbox" id="terms-checkbox" required /> 
-                  ${i18n.t('agree_terms') || 'I agree to the'} <a href="/${currentLang}/terms">${i18n.t('terms') || 'Terms of Service'}</a> ${i18n.t('and') || 'and'} <a href="/${currentLang}/privacy">${i18n.t('privacy') || 'Privacy Policy'}</a>
-                </label>
-              </div>
-              
-              <button type="submit" class="auth-submit-btn">${i18n.t('register') || 'Register'}</button>
+              <button type="button" id="sendOtpBtn" class="auth-submit-btn secondary">${i18n.t('send_otp') || 'Send OTP'}</button>
+              <button type="submit" id="verifyOtpBtn" class="auth-submit-btn" style="display: none;">${i18n.t('verify_login') || 'Verify & Login'}</button>
             </form>
-            
-            <div class="auth-divider">
-              <span>${i18n.t('or') || 'OR'}</span>
-            </div>
-            
-            <div class="auth-social">
-              <button class="social-btn google">
-                <img src="/assets/img/google-icon.svg" alt="Google" />
-                ${i18n.t('signup_with_google') || 'Sign up with Google'}
-              </button>
-              <button class="social-btn x">
-                <img src="/assets/img/x-icon.svg" alt="x" />
-                ${i18n.t('signup_with_x') || 'Sign up with x'}
-              </button>
-            </div>
           </div>
+          
+          
           
           <!-- Messages -->
           <div id="auth-message" class="auth-message" style="display: none;"></div>
@@ -176,30 +137,33 @@ export async function renderAuth() {
 }
 
 function attachAuthEvents() {
-  // Tab switching
-  const tabs = document.querySelectorAll('.auth-tab');
-  const loginForm = document.getElementById('login-form');
-  const registerForm = document.getElementById('register-form');
+  // ===== تغییر روش ورود =====
+  const methodTabs = document.querySelectorAll('.method-tab');
+  const emailForm = document.getElementById('email-login-form');
+  const phoneForm = document.getElementById('phone-login-form');
   
-  tabs.forEach(tab => {
+  methodTabs.forEach(tab => {
     tab.addEventListener('click', () => {
-      const tabName = tab.getAttribute('data-tab');
-      activeTab = tabName;
+      const method = tab.getAttribute('data-method');
+      loginMethod = method;
+      otpSent = false;
+      otpVerified = false;
       
-      tabs.forEach(t => t.classList.remove('active'));
+      methodTabs.forEach(t => t.classList.remove('active'));
       tab.classList.add('active');
       
-      if (tabName === 'login') {
-        loginForm.classList.add('active');
-        registerForm.classList.remove('active');
+      if (method === 'email') {
+        emailForm.classList.add('active');
+        phoneForm.classList.remove('active');
       } else {
-        registerForm.classList.add('active');
-        loginForm.classList.remove('active');
+        phoneForm.classList.add('active');
+        emailForm.classList.remove('active');
+        resetOtpForm();
       }
     });
   });
   
-  // Password visibility toggle
+  // ===== Password visibility toggle =====
   const passwordToggles = document.querySelectorAll('.password-toggle');
   passwordToggles.forEach(toggle => {
     toggle.addEventListener('click', () => {
@@ -208,7 +172,6 @@ function attachAuthEvents() {
       const type = input.getAttribute('type') === 'password' ? 'text' : 'password';
       input.setAttribute('type', type);
       
-      // Change icon
       const svg = toggle.querySelector('svg');
       if (type === 'text') {
         svg.innerHTML = '<path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"/><line x1="1" y1="1" x2="23" y2="23"/>';
@@ -218,72 +181,162 @@ function attachAuthEvents() {
     });
   });
   
-  // Login form submit
-  const loginFormElement = document.getElementById('login-form-element');
-  if (loginFormElement) {
-    loginFormElement.addEventListener('submit', async (e) => {
+  // ===== فرم ورود با ایمیل =====
+  const loginEmailForm = document.getElementById('login-email-form-element');
+  if (loginEmailForm) {
+    loginEmailForm.addEventListener('submit', async (e) => {
       e.preventDefault();
-      const identifier = document.getElementById('login-identifier')?.value.trim();
+      const email = document.getElementById('login-email')?.value.trim();
       const password = document.getElementById('login-password')?.value.trim();
       const rememberMe = document.getElementById('remember-me')?.checked;
       const messageDiv = document.getElementById('auth-message');
       
-      if (!identifier || !password) {
+      if (!email || !password) {
         showMessage(messageDiv, i18n.t('fill_all_fields') || 'Please fill all fields', 'error');
         return;
       }
       
-      // TODO: Call login API
-      showMessage(messageDiv, i18n.t('login_success') || 'Login successful! Redirecting...', 'success');
+      showLoading(true, 'email');
       
-      setTimeout(() => {
-        window.location.href = `/${i18n.getCurrentLanguage()}/profile`;
-      }, 1500);
+      const result = await loginUser(email, password, rememberMe, 'email');
+      
+      showLoading(false, 'email');
+      
+      if (result.success) {
+        showMessage(messageDiv, i18n.t('login_success') || 'Login successful! Redirecting...', 'success');
+        setTimeout(() => {
+          window.location.href = `/${i18n.getCurrentLanguage()}/profile`;
+        }, 1500);
+      } else {
+        showMessage(messageDiv, result.error || i18n.t('login_failed') || 'Login failed. Please try again.', 'error');
+      }
     });
   }
   
-  // Register form submit
-  const registerFormElement = document.getElementById('register-form-element');
-  if (registerFormElement) {
-    registerFormElement.addEventListener('submit', async (e) => {
-      e.preventDefault();
-      const name = document.getElementById('register-name')?.value.trim();
-      const email = document.getElementById('register-email')?.value.trim();
-      const phone = document.getElementById('register-phone')?.value.trim();
-      const password = document.getElementById('register-password')?.value.trim();
-      const confirmPassword = document.getElementById('register-confirm-password')?.value.trim();
-      const termsChecked = document.getElementById('terms-checkbox')?.checked;
+  // ===== OTP related functions =====
+  const sendOtpBtn = document.getElementById('sendOtpBtn');
+  const verifyOtpBtn = document.getElementById('verifyOtpBtn');
+  const otpSection = document.getElementById('otp-section');
+  const loginPhone = document.getElementById('login-phone');
+  const countryCodeSelect = document.getElementById('phone-country-code');
+  const otpInput = document.getElementById('login-otp');
+  
+  if (sendOtpBtn) {
+    sendOtpBtn.addEventListener('click', async () => {
+      const countryCode = countryCodeSelect?.value || '+98';
+      const phone = loginPhone?.value.trim();
       const messageDiv = document.getElementById('auth-message');
       
-      if (!name || !email || !phone || !password) {
-        showMessage(messageDiv, i18n.t('fill_all_fields') || 'Please fill all fields', 'error');
+      if (!phone) {
+        showMessage(messageDiv, i18n.t('enter_phone') || 'Please enter your phone number', 'error');
         return;
       }
       
-      if (password !== confirmPassword) {
-        showMessage(messageDiv, i18n.t('password_mismatch') || 'Passwords do not match', 'error');
-        return;
+      phoneNumber = countryCode + phone.replace(/^0+/, '');
+      
+      showLoading(true, 'phone');
+      sendOtpBtn.disabled = true;
+      sendOtpBtn.textContent = i18n.t('sending') || 'Sending...';
+      
+      const result = await sendOtp(phoneNumber);
+      
+      showLoading(false, 'phone');
+      sendOtpBtn.disabled = false;
+      sendOtpBtn.textContent = i18n.t('send_otp') || 'Send OTP';
+      
+      if (result.success) {
+        otpSent = true;
+        otpSection.style.display = 'block';
+        sendOtpBtn.style.display = 'none';
+        verifyOtpBtn.style.display = 'block';
+        showMessage(messageDiv, i18n.t('otp_sent') || 'OTP sent to your phone number', 'success');
+      } else {
+        showMessage(messageDiv, result.error || i18n.t('otp_failed') || 'Failed to send OTP', 'error');
       }
-      
-      if (password.length < 6) {
-        showMessage(messageDiv, i18n.t('password_length') || 'Password must be at least 6 characters', 'error');
-        return;
-      }
-      
-      if (!termsChecked) {
-        showMessage(messageDiv, i18n.t('accept_terms') || 'Please accept the Terms of Service', 'error');
-        return;
-      }
-      
-      // TODO: Call register API
-      showMessage(messageDiv, i18n.t('register_success') || 'Registration successful! Redirecting to login...', 'success');
-      
-      setTimeout(() => {
-        activeTab = 'login';
-        const loginTab = document.querySelector('.auth-tab[data-tab="login"]');
-        if (loginTab) loginTab.click();
-      }, 1500);
     });
+  }
+  
+  if (verifyOtpBtn) {
+    verifyOtpBtn.addEventListener('click', async () => {
+      const otp = otpInput?.value.trim();
+      const messageDiv = document.getElementById('auth-message');
+      
+      if (!otp || otp.length < 4) {
+        showMessage(messageDiv, i18n.t('enter_otp') || 'Please enter the OTP code', 'error');
+        return;
+      }
+      
+      showLoading(true, 'phone');
+      verifyOtpBtn.disabled = true;
+      verifyOtpBtn.textContent = i18n.t('verifying') || 'Verifying...';
+      
+      const result = await verifyOtp(phoneNumber, otp);
+      
+      showLoading(false, 'phone');
+      verifyOtpBtn.disabled = false;
+      verifyOtpBtn.textContent = i18n.t('verify_login') || 'Verify & Login';
+      
+      if (result.success) {
+        showMessage(messageDiv, i18n.t('login_success') || 'Login successful! Redirecting...', 'success');
+        setTimeout(() => {
+          window.location.href = `/${i18n.getCurrentLanguage()}/profile`;
+        }, 1500);
+      } else {
+        showMessage(messageDiv, result.error || i18n.t('invalid_otp') || 'Invalid OTP. Please try again.', 'error');
+      }
+    });
+  }
+  
+  // Forgot password
+  const forgotBtn = document.getElementById('forgotPasswordBtn');
+  if (forgotBtn) {
+    forgotBtn.addEventListener('click', (e) => {
+      e.preventDefault();
+      const messageDiv = document.getElementById('auth-message');
+      showMessage(messageDiv, i18n.t('reset_password_msg') || 'Password reset link will be sent to your email.', 'info');
+    });
+  }
+  
+  // Go to register
+  const registerBtn = document.getElementById('goToRegisterBtn');
+  if (registerBtn) {
+    registerBtn.addEventListener('click', (e) => {
+      e.preventDefault();
+      window.location.href = `/${i18n.getCurrentLanguage()}/register`;
+    });
+  }
+}
+
+function resetOtpForm() {
+  const otpSection = document.getElementById('otp-section');
+  const sendOtpBtn = document.getElementById('sendOtpBtn');
+  const verifyOtpBtn = document.getElementById('verifyOtpBtn');
+  const otpInput = document.getElementById('login-otp');
+  const loginPhone = document.getElementById('login-phone');
+  
+  otpSent = false;
+  otpVerified = false;
+  
+  if (otpSection) otpSection.style.display = 'none';
+  if (sendOtpBtn) sendOtpBtn.style.display = 'block';
+  if (verifyOtpBtn) verifyOtpBtn.style.display = 'none';
+  if (otpInput) otpInput.value = '';
+  if (loginPhone) loginPhone.value = '';
+}
+
+function showLoading(isLoading, method) {
+  const emailBtn = document.querySelector('#email-login-form .auth-submit-btn');
+  const phoneSendBtn = document.getElementById('sendOtpBtn');
+  const phoneVerifyBtn = document.getElementById('verifyOtpBtn');
+  
+  if (method === 'email' && emailBtn) {
+    if (isLoading) {
+      emailBtn.disabled = true;
+      emailBtn.textContent = i18n.t('logging_in') || 'Logging in...';
+    } else {
+      emailBtn.disabled = false;
+      emailBtn.textContent = i18n.t('login') || 'Login';
+    }
   }
 }
 
