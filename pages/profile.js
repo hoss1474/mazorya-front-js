@@ -3,6 +3,22 @@
 import { i18n } from '../core/i18n.js';
 import { renderHeader, attachHeaderEvents } from '../components/header.js';
 import { renderFooter, attachFooterEvents } from '../components/footer.js';
+import { 
+  getUserData, 
+  isAuthenticated, 
+  logoutUser,
+  updateUserProfile,
+  changePassword,
+  uploadAvatar,
+  getUserProjects,
+  getInvoices,
+  getAuthToken
+} from '../core/api.js';
+
+// ============================================================
+// ⚡ تنظیمات آدرس API
+// ============================================================
+const API_BASE = 'http://127.0.0.1:8000/api';
 
 // وضعیت سایدبار (باز/بسته در موبایل)
 let mobileMenuOpen = false;
@@ -11,6 +27,103 @@ export async function renderProfile() {
   const app = document.getElementById('app');
   const currentLang = i18n.getCurrentLanguage();
   const isRTL = currentLang === 'fa' || currentLang === 'ar';
+  
+  // ===== بررسی احراز هویت =====
+  if (!isAuthenticated()) {
+    window.location.href = `/${currentLang}/auth`;
+    return;
+  }
+  
+  // ===== دریافت اطلاعات کاربر از localStorage =====
+  let userData = null;
+  try {
+    userData = getUserData();
+    console.log('User data from localStorage:', userData);
+  } catch (e) {
+    console.error('Error getting user data:', e);
+  }
+  
+  // اگر اطلاعات در localStorage نبود یا خراب بود، از سرور بگیر
+  if (!userData) {
+    try {
+      const token = getAuthToken();
+      if (token) {
+        const response = await fetch(`${API_BASE}/user/profile`, {
+          headers: { 
+            'Authorization': `Bearer ${token}`,
+            'Content-Type': 'application/json'
+          }
+        });
+        const data = await response.json();
+        console.log('Profile API response:', data);
+        
+        if (data.status && data.data) {
+          userData = data.data;
+          localStorage.setItem('user_data', JSON.stringify(userData));
+        }
+      }
+    } catch (err) {
+      console.error('Failed to fetch profile from API:', err);
+    }
+  }
+  
+  // اگر باز هم دیتا نداریم، از مقادیر پیش‌فرض استفاده کن
+  if (!userData) {
+    userData = {
+      full_name: '',
+      email: '',
+      phone: '',
+      company_name: '',
+      website: '',
+      avatar: null,
+      status: 'active',
+      project_progress: 0,
+      amount: 0
+    };
+  }
+  
+  // دریافت پروژه‌ها و فاکتورها
+  let projects = [];
+  let invoices = [];
+  try {
+    projects = await getUserProjects();
+    invoices = await getInvoices();
+    console.log('Projects:', projects);
+    console.log('Invoices:', invoices);
+  } catch (err) {
+    console.error('Failed to fetch projects/invoices:', err);
+  }
+  
+  // مقادیر از userData
+  const userName = userData?.full_name || '';
+  const userEmail = userData?.email || '';
+  const userPhone = userData?.phone || '';
+  const userCompany = userData?.company_name || '';
+  const userWebsite = userData?.website || '';
+  const userAvatar = userData?.avatar || '/assets/img/default-avatar.png';
+  const projectProgress = userData?.project_progress || 0;
+  const projectAmount = userData?.amount || 0;
+  const userStatus = userData?.status || 'active';
+  
+  // وضعیت‌های پرداخت از پروژه‌ها
+  let statuses = ['pending', 'pending', 'pending', 'pending'];
+  let activeProjects = 0;
+  let completedProjects = 0;
+  
+  if (projects && projects.length > 0) {
+    // محاسبه از روی پروژه اول (یا جمع کل)
+    const allPayments = [];
+    projects.forEach(project => {
+      if (project.payments) {
+        project.payments.forEach(p => allPayments.push(p));
+      }
+    });
+    if (allPayments.length > 0) {
+      statuses = allPayments.map(p => p.status);
+      activeProjects = statuses.filter(s => s === 'pending').length;
+      completedProjects = statuses.filter(s => s === 'paid').length;
+    }
+  }
   
   app.innerHTML = `
     ${renderHeader()}
@@ -24,7 +137,7 @@ export async function renderProfile() {
           
           <div class="profile-avatar">
             <div class="avatar-wrapper">
-              <img src="/assets/img/default-avatar.png" alt="Profile" id="profileAvatar" />
+              <img src="${userAvatar}" alt="Profile" id="profileAvatar" />
               <label for="avatarUpload" class="avatar-upload-btn">
                 <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                   <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/>
@@ -33,9 +146,11 @@ export async function renderProfile() {
               </label>
               <input type="file" id="avatarUpload" accept="image/*" style="display: none;" />
             </div>
-            <h3 id="profileName">John Doe</h3>
-            <p id="profileEmail">john@example.com</p>
-            <span class="profile-badge" id="profileStatus">Active</span>
+            <h3 id="profileName">${escapeHtml(userName)}</h3>
+            <p id="profileEmail">${escapeHtml(userEmail)}</p>
+            ${userPhone ? `<p class="profile-phone">📱 ${escapeHtml(userPhone)}</p>` : ''}
+            ${userCompany ? `<p class="profile-company">🏢 ${escapeHtml(userCompany)}</p>` : ''}
+            <span class="profile-badge ${userStatus === 'active' ? 'active' : 'inactive'}">${i18n.t('active') || 'Active'}</span>
           </div>
           
           <nav class="profile-nav">
@@ -111,17 +226,17 @@ export async function renderProfile() {
           
           <!-- Tab: Dashboard -->
           <div id="tab-dashboard" class="profile-tab active">
-            ${renderDashboard()}
+            ${renderDashboard(activeProjects, completedProjects, projectAmount, projectProgress)}
           </div>
           
           <!-- Tab: Projects -->
           <div id="tab-projects" class="profile-tab">
-            ${renderProjectsTab()}
+            ${renderProjectsTab(projects)}
           </div>
           
           <!-- Tab: Timeline -->
           <div id="tab-timeline" class="profile-tab">
-            ${renderTimelineTab()}
+            ${renderTimelineTab(projectProgress)}
           </div>
           
           <!-- Tab: Messages -->
@@ -131,12 +246,12 @@ export async function renderProfile() {
           
           <!-- Tab: Invoices -->
           <div id="tab-invoices" class="profile-tab">
-            ${renderInvoicesTab()}
+            ${renderInvoicesTab(invoices)}
           </div>
           
           <!-- Tab: Settings -->
           <div id="tab-settings" class="profile-tab">
-            ${renderSettingsTab()}
+            ${renderSettingsTab(userName, userEmail, userPhone, userCompany, userWebsite)}
           </div>
           
         </main>
@@ -163,10 +278,10 @@ export async function renderProfile() {
 // ============================================================
 // Dashboard Tab
 // ============================================================
-function renderDashboard() {
+function renderDashboard(activeProjects, completedProjects, projectAmount, projectProgress) {
   return `
     <div class="dashboard-header">
-      <h1>${i18n.t('welcome_back') || 'Welcome back,'} <span id="userName">John</span>!</h1>
+      <h1>${i18n.t('welcome_back') || 'Welcome back'}!</h1>
       <p>${i18n.t('dashboard_subtitle') || 'Here\'s what\'s happening with your projects today.'}</p>
     </div>
     
@@ -175,28 +290,28 @@ function renderDashboard() {
         <div class="stat-icon">📊</div>
         <div class="stat-info">
           <h3>${i18n.t('active_projects') || 'Active Projects'}</h3>
-          <p class="stat-number" id="activeProjects">3</p>
+          <p class="stat-number">${activeProjects}</p>
         </div>
       </div>
       <div class="stat-card">
         <div class="stat-icon">✅</div>
         <div class="stat-info">
           <h3>${i18n.t('completed_projects') || 'Completed Projects'}</h3>
-          <p class="stat-number" id="completedProjects">7</p>
+          <p class="stat-number">${completedProjects}</p>
         </div>
       </div>
       <div class="stat-card">
-        <div class="stat-icon">💬</div>
+        <div class="stat-icon">💰</div>
         <div class="stat-info">
-          <h3>${i18n.t('unread_messages') || 'Unread Messages'}</h3>
-          <p class="stat-number" id="unreadMessages">3</p>
+          <h3>${i18n.t('total_amount') || 'Total Amount'}</h3>
+          <p class="stat-number">$${parseInt(projectAmount).toLocaleString()}</p>
         </div>
       </div>
       <div class="stat-card">
-        <div class="stat-icon">📄</div>
+        <div class="stat-icon">📈</div>
         <div class="stat-info">
-          <h3>${i18n.t('pending_invoices') || 'Pending Invoices'}</h3>
-          <p class="stat-number" id="pendingInvoices">2</p>
+          <h3>${i18n.t('project_progress') || 'Project Progress'}</h3>
+          <p class="stat-number">${projectProgress}%</p>
         </div>
       </div>
     </div>
@@ -207,22 +322,8 @@ function renderDashboard() {
         <div class="activity-item">
           <div class="activity-icon">🚀</div>
           <div class="activity-content">
-            <p><strong>Website Redesign</strong> - Progress updated to 45%</p>
-            <span class="activity-time">2 hours ago</span>
-          </div>
-        </div>
-        <div class="activity-item">
-          <div class="activity-icon">💬</div>
-          <div class="activity-content">
-            <p><strong>Sarah</strong> sent you a message</p>
-            <span class="activity-time">5 hours ago</span>
-          </div>
-        </div>
-        <div class="activity-item">
-          <div class="activity-icon">📄</div>
-          <div class="activity-content">
-            <p><strong>Invoice #INV-001</strong> has been paid</p>
-            <span class="activity-time">1 day ago</span>
+            <p><strong>${i18n.t('project_progress_updated') || 'Project progress updated to'} ${projectProgress}%</strong></p>
+            <span class="activity-time">${i18n.t('just_now') || 'Just now'}</span>
           </div>
         </div>
       </div>
@@ -231,73 +332,79 @@ function renderDashboard() {
 }
 
 // ============================================================
-// Projects Tab
+// Projects Tab (با قابلیت کلیک و نمایش قسط‌ها)
 // ============================================================
-function renderProjectsTab() {
-  return `
+function renderProjectsTab(projects) {
+  if (!projects || projects.length === 0) {
+    return `
+      <div class="projects-header">
+        <h1>${i18n.t('my_projects') || 'My Projects'}</h1>
+      </div>
+      <div class="no-projects">
+        <p>${i18n.t('no_projects') || 'No projects found.'}</p>
+      </div>
+    `;
+  }
+  
+  let projectsHtml = `
     <div class="projects-header">
       <h1>${i18n.t('my_projects') || 'My Projects'}</h1>
-      <button class="btn-new-project" id="newProjectBtn">
-        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-          <line x1="12" y1="5" x2="12" y2="19"/>
-          <line x1="5" y1="12" x2="19" y2="12"/>
-        </svg>
-        ${i18n.t('new_project') || 'New Project'}
-      </button>
     </div>
-    
-    <div class="projects-grid-profile" id="projectsList">
-      <div class="project-card-profile">
-        <div class="project-status status-active"></div>
-        <h3>Website Redesign</h3>
-        <p>Complete overhaul of corporate website with modern design</p>
-        <div class="project-progress">
-          <div class="progress-label">
-            <span>Progress</span>
-            <span class="progress-percent">45%</span>
-          </div>
-          <div class="progress-bar">
-            <div class="progress-fill" style="width: 45%;"></div>
-          </div>
-        </div>
-        <div class="project-deadline">
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor">
-            <circle cx="12" cy="12" r="10"/>
-            <polyline points="12 6 12 12 16 14"/>
-          </svg>
-          <span>Due: Dec 31, 2025</span>
-        </div>
-      </div>
-      
-      <div class="project-card-profile">
-        <div class="project-status status-progress"></div>
-        <h3>Mobile App Development</h3>
-        <p>iOS and Android app for e-commerce platform</p>
-        <div class="project-progress">
-          <div class="progress-label">
-            <span>Progress</span>
-            <span class="progress-percent">75%</span>
-          </div>
-          <div class="progress-bar">
-            <div class="progress-fill" style="width: 75%;"></div>
-          </div>
-        </div>
-        <div class="project-deadline">
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor">
-            <circle cx="12" cy="12" r="10"/>
-            <polyline points="12 6 12 12 16 14"/>
-          </svg>
-          <span>Due: Feb 15, 2026</span>
-        </div>
-      </div>
-    </div>
+    <div class="projects-list-accordion">
   `;
+  
+  projects.forEach((project, index) => {
+    const projectId = `project-${index}-${project.id || index}`;
+    const hasPayments = project.payments && project.payments.length > 0;
+    const progress = project.project_progress || 0;
+    const amount = parseInt(project.amount || 0).toLocaleString();
+    
+    projectsHtml += `
+      <div class="project-accordion-item">
+        <div class="project-accordion-header" data-project="${projectId}">
+          <div class="project-info">
+            <h3 class="project-name">${escapeHtml(project.project_name || 'بدون نام')}</h3>
+            <div class="project-meta">
+              <span class="project-type">${i18n.t('project_type') || 'نوع'}: ${escapeHtml(project.project_type || 'web')}</span>
+              <span class="project-progress-badge">${i18n.t('progress') || 'پیشرفت'}: ${progress}%</span>
+              <span class="project-amount">${i18n.t('total_amount') || 'مبلغ کل'}: $${amount}</span>
+            </div>
+          </div>
+          <div class="project-toggle-icon">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <polyline points="6 9 12 15 18 9"/>
+            </svg>
+          </div>
+        </div>
+        <div class="project-accordion-content" id="${projectId}" style="display: none;">
+          <div class="payments-list">
+            <h4>${i18n.t('payment_plans') || 'قسط‌ها'}</h4>
+            ${hasPayments ? project.payments.map(payment => `
+              <div class="payment-item">
+                <div class="payment-info">
+                  <span class="payment-title">${escapeHtml(payment.title || 'قسط')}</span>
+                  <span class="payment-amount">$${parseInt(payment.amount || 0).toLocaleString()}</span>
+                </div>
+                <div class="payment-status ${payment.status === 'paid' ? 'paid' : 'pending'}">
+                  ${payment.status === 'paid' ? '✓ پرداخت شده' : '⏳ در انتظار پرداخت'}
+                </div>
+              </div>
+            `).join('') : '<p class="no-payments">هیچ قسطی ثبت نشده است</p>'}
+          </div>
+        </div>
+      </div>
+    `;
+  });
+  
+  projectsHtml += `</div>`;
+  
+  return projectsHtml;
 }
 
 // ============================================================
-// Timeline Tab (0 to 100% progress)
+// Timeline Tab
 // ============================================================
-function renderTimelineTab() {
+function renderTimelineTab(projectProgress) {
   return `
     <div class="timeline-header">
       <h1>${i18n.t('project_timeline') || 'Project Timeline'}</h1>
@@ -308,50 +415,13 @@ function renderTimelineTab() {
       <div class="timeline-stats">
         <div class="timeline-stat">
           <span class="stat-label">${i18n.t('current_progress') || 'Current Progress'}</span>
-          <span class="stat-value" id="timelineProgress">45%</span>
-        </div>
-        <div class="timeline-stat">
-          <span class="stat-label">${i18n.t('estimated_completion') || 'Estimated Completion'}</span>
-          <span class="stat-value">Dec 31, 2025</span>
-        </div>
-        <div class="timeline-stat">
-          <span class="stat-label">${i18n.t('days_remaining') || 'Days Remaining'}</span>
-          <span class="stat-value" id="daysRemaining">45</span>
+          <span class="stat-value" id="timelineProgress">${projectProgress}%</span>
         </div>
       </div>
       
       <div class="timeline-progress-container">
         <div class="timeline-progress-bar">
-          <div class="timeline-progress-fill" id="timelineProgressFill" style="width: 45%;">
-            <span class="progress-tooltip">45%</span>
-          </div>
-        </div>
-        <div class="timeline-milestones">
-          <div class="milestone completed" data-percent="0">
-            <div class="milestone-dot"></div>
-            <span class="milestone-label">${i18n.t('start') || 'Start'}</span>
-            <span class="milestone-date">Jan 2025</span>
-          </div>
-          <div class="milestone completed" data-percent="25">
-            <div class="milestone-dot"></div>
-            <span class="milestone-label">${i18n.t('research_phase') || 'Research Phase'}</span>
-            <span class="milestone-date">Mar 2025</span>
-          </div>
-          <div class="milestone active" data-percent="45">
-            <div class="milestone-dot"></div>
-            <span class="milestone-label">${i18n.t('development_phase') || 'Development Phase'}</span>
-            <span class="milestone-date">Jun 2025</span>
-          </div>
-          <div class="milestone" data-percent="75">
-            <div class="milestone-dot"></div>
-            <span class="milestone-label">${i18n.t('testing_phase') || 'Testing Phase'}</span>
-            <span class="milestone-date">Sep 2025</span>
-          </div>
-          <div class="milestone" data-percent="100">
-            <div class="milestone-dot"></div>
-            <span class="milestone-label">${i18n.t('launch') || 'Launch'}</span>
-            <span class="milestone-date">Dec 2025</span>
-          </div>
+          <div class="timeline-progress-fill" id="timelineProgressFill" style="width: ${projectProgress}%;"></div>
         </div>
       </div>
     </div>
@@ -359,10 +429,10 @@ function renderTimelineTab() {
     <div class="progress-update">
       <h3>${i18n.t('update_progress') || 'Update Project Progress'}</h3>
       <div class="progress-slider-container">
-        <input type="range" id="progressSlider" min="0" max="100" value="45" step="5" />
+        <input type="range" id="progressSlider" min="0" max="100" value="${projectProgress}" step="5" />
         <div class="slider-value">
           <span>${i18n.t('progress') || 'Progress'}:</span>
-          <strong id="sliderValue">45%</strong>
+          <strong id="sliderValue">${projectProgress}%</strong>
         </div>
         <button class="btn-update-progress" id="updateProgressBtn">
           ${i18n.t('update') || 'Update'}
@@ -394,47 +464,23 @@ function renderMessagesTab() {
           <div class="message-avatar">S</div>
           <div class="message-content">
             <div class="message-sender">
-              <strong>Sarah Johnson</strong>
-              <span class="message-time">2 hours ago</span>
+              <strong>Support Team</strong>
+              <span class="message-time">2 ${i18n.t('hours_ago') || 'hours ago'}</span>
             </div>
-            <p>Hey! I wanted to check in on the website redesign project...</p>
-          </div>
-        </div>
-        <div class="message-item">
-          <div class="message-avatar">M</div>
-          <div class="message-content">
-            <div class="message-sender">
-              <strong>Mike Chen</strong>
-              <span class="message-time">Yesterday</span>
-            </div>
-            <p>The new assets are ready for review. Let me know what you think!</p>
-          </div>
-        </div>
-        <div class="message-item">
-          <div class="message-avatar">A</div>
-          <div class="message-content">
-            <div class="message-sender">
-              <strong>Alex Rivera</strong>
-              <span class="message-time">3 days ago</span>
-            </div>
-            <p>Great meeting today! I'll send over the updated timeline soon.</p>
+            <p>${i18n.t('welcome_message') || 'Welcome to Mazorya Group! How can we help you today?'}</p>
           </div>
         </div>
       </div>
       
       <div class="message-panel" id="messagePanel" style="display: none;">
         <div class="message-panel-header">
-          <button class="back-to-messages" id="backToMessages">← Back</button>
-          <h3 id="messageReceiver">Sarah Johnson</h3>
+          <button class="back-to-messages" id="backToMessages">← ${i18n.t('back') || 'Back'}</button>
+          <h3 id="messageReceiver">Support Team</h3>
         </div>
         <div class="message-conversation" id="messageConversation">
           <div class="conversation-message received">
-            <p>Hey! I wanted to check in on the website redesign project. How's everything going?</p>
-            <span class="message-time">2 hours ago</span>
-          </div>
-          <div class="conversation-message sent">
-            <p>Everything is on track! We're at 45% completion and should hit the next milestone next week.</p>
-            <span class="message-time">1 hour ago</span>
+            <p>${i18n.t('welcome_message') || 'Welcome to Mazorya Group! How can we help you today?'}</p>
+            <span class="message-time">2 ${i18n.t('hours_ago') || 'hours ago'}</span>
           </div>
         </div>
         <div class="message-input-area">
@@ -449,7 +495,6 @@ function renderMessagesTab() {
       </div>
     </div>
     
-    <!-- New Message Modal -->
     <div class="modal" id="newMessageModal" style="display: none;">
       <div class="modal-content">
         <div class="modal-header">
@@ -473,7 +518,40 @@ function renderMessagesTab() {
 // ============================================================
 // Invoices Tab
 // ============================================================
-function renderInvoicesTab() {
+function renderInvoicesTab(invoices) {
+  if (!invoices || invoices.length === 0) {
+    return `
+      <div class="invoices-header">
+        <h1>${i18n.t('invoices') || 'Invoices & Payments'}</h1>
+      </div>
+      <div class="no-invoices">
+        <p>${i18n.t('no_invoices') || 'No invoices found.'}</p>
+      </div>
+    `;
+  }
+  
+  const invoicesList = invoices.map(invoice => `
+    <div class="invoice-card">
+      <div class="invoice-status ${invoice.status === 'paid' ? 'paid' : 'pending'}"></div>
+      <div class="invoice-info">
+        <h4>${escapeHtml(invoice.title || 'Invoice')}</h4>
+        <p>${escapeHtml(invoice.description || '')}</p>
+        <span class="invoice-date">${i18n.t('issued') || 'Issued'}: ${new Date(invoice.created_at).toLocaleDateString()}</span>
+      </div>
+      <div class="invoice-amount">$${parseInt(invoice.amount || 0).toLocaleString()}</div>
+      <div class="invoice-actions">
+        ${invoice.status === 'pending' ? `<button class="btn-pay">${i18n.t('pay_now') || 'Pay Now'}</button>` : ''}
+        <button class="btn-download" title="${i18n.t('download') || 'Download'}">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+            <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+            <polyline points="7 10 12 15 17 10"/>
+            <line x1="12" y1="15" x2="12" y2="3"/>
+          </svg>
+        </button>
+      </div>
+    </div>
+  `).join('');
+  
   return `
     <div class="invoices-header">
       <h1>${i18n.t('invoices') || 'Invoices & Payments'}</h1>
@@ -487,59 +565,8 @@ function renderInvoicesTab() {
       </button>
     </div>
     
-    <div class="invoices-stats">
-      <div class="invoice-stat">
-        <span class="stat-label">${i18n.t('total_paid') || 'Total Paid'}</span>
-        <span class="stat-value">$12,450</span>
-      </div>
-      <div class="invoice-stat">
-        <span class="stat-label">${i18n.t('pending_payment') || 'Pending Payment'}</span>
-        <span class="stat-value">$3,200</span>
-      </div>
-      <div class="invoice-stat">
-        <span class="stat-label">${i18n.t('overdue') || 'Overdue'}</span>
-        <span class="stat-value">$0</span>
-      </div>
-    </div>
-    
     <div class="invoices-list" id="invoicesList">
-      <div class="invoice-card">
-        <div class="invoice-status paid"></div>
-        <div class="invoice-info">
-          <h4>INV-2025-001</h4>
-          <p>Website Redesign - Initial Deposit</p>
-          <span class="invoice-date">Issued: Nov 15, 2025</span>
-        </div>
-        <div class="invoice-amount">$2,500</div>
-        <div class="invoice-actions">
-          <button class="btn-download" title="Download">
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor">
-              <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
-              <polyline points="7 10 12 15 17 10"/>
-              <line x1="12" y1="15" x2="12" y2="3"/>
-            </svg>
-          </button>
-        </div>
-      </div>
-      <div class="invoice-card">
-        <div class="invoice-status pending"></div>
-        <div class="invoice-info">
-          <h4>INV-2025-002</h4>
-          <p>Mobile App Development - Milestone 2</p>
-          <span class="invoice-date">Issued: Dec 01, 2025</span>
-        </div>
-        <div class="invoice-amount">$3,200</div>
-        <div class="invoice-actions">
-          <button class="btn-pay">${i18n.t('pay_now') || 'Pay Now'}</button>
-          <button class="btn-download" title="Download">
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor">
-              <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
-              <polyline points="7 10 12 15 17 10"/>
-              <line x1="12" y1="15" x2="12" y2="3"/>
-            </svg>
-          </button>
-        </div>
-      </div>
+      ${invoicesList}
     </div>
     
     <!-- Upload Invoice Modal -->
@@ -565,7 +592,7 @@ function renderInvoicesTab() {
             <div class="progress-bar">
               <div class="progress-fill" style="width: 0%;"></div>
             </div>
-            <p class="upload-status">Uploading...</p>
+            <p class="upload-status">${i18n.t('uploading') || 'Uploading...'}</p>
           </div>
         </div>
         <div class="modal-footer">
@@ -580,7 +607,7 @@ function renderInvoicesTab() {
 // ============================================================
 // Settings Tab
 // ============================================================
-function renderSettingsTab() {
+function renderSettingsTab(userName, userEmail, userPhone, userCompany, userWebsite) {
   return `
     <div class="settings-header">
       <h1>${i18n.t('settings') || 'Settings'}</h1>
@@ -593,23 +620,31 @@ function renderSettingsTab() {
         <div class="form-row">
           <div class="form-group">
             <label>${i18n.t('full_name') || 'Full Name'}</label>
-            <input type="text" id="settingsName" class="settings-input" value="John Doe" />
+            <input type="text" id="settingsName" class="settings-input" value="${escapeHtml(userName)}" />
           </div>
           <div class="form-group">
             <label>${i18n.t('email') || 'Email'}</label>
-            <input type="email" id="settingsEmail" class="settings-input" value="john@example.com" />
+            <input type="email" id="settingsEmail" class="settings-input" value="${escapeHtml(userEmail)}" readonly disabled />
           </div>
         </div>
         <div class="form-row">
           <div class="form-group">
             <label>${i18n.t('phone') || 'Phone'}</label>
-            <input type="tel" id="settingsPhone" class="settings-input" value="+1 234 567 8900" />
+            <input type="tel" id="settingsPhone" class="settings-input" value="${escapeHtml(userPhone)}" />
           </div>
           <div class="form-group">
             <label>${i18n.t('company') || 'Company'}</label>
-            <input type="text" id="settingsCompany" class="settings-input" value="Mazorya Group" />
+            <input type="text" id="settingsCompany" class="settings-input" value="${escapeHtml(userCompany)}" />
           </div>
         </div>
+        ${userWebsite ? `
+        <div class="form-row">
+          <div class="form-group">
+            <label>${i18n.t('website') || 'Website'}</label>
+            <input type="url" id="settingsWebsite" class="settings-input" value="${escapeHtml(userWebsite)}" />
+          </div>
+        </div>
+        ` : ''}
       </div>
       
       <div class="settings-section">
@@ -630,24 +665,7 @@ function renderSettingsTab() {
             <input type="password" id="confirmPassword" class="settings-input" />
           </div>
         </div>
-      </div>
-      
-      <div class="settings-section">
-        <h3>${i18n.t('notifications') || 'Notifications'}</h3>
-        <div class="toggle-item">
-          <label class="toggle-switch">
-            <input type="checkbox" id="emailNotifications" checked />
-            <span class="toggle-slider"></span>
-          </label>
-          <span>${i18n.t('email_notifications') || 'Email notifications about project updates'}</span>
-        </div>
-        <div class="toggle-item">
-          <label class="toggle-switch">
-            <input type="checkbox" id="messageNotifications" checked />
-            <span class="toggle-slider"></span>
-          </label>
-          <span>${i18n.t('message_notifications') || 'Push notifications for new messages'}</span>
-        </div>
+        <button class="btn-change-password" id="changePasswordBtn">${i18n.t('update_password') || 'Update Password'}</button>
       </div>
       
       <div class="settings-actions">
@@ -662,44 +680,194 @@ function renderSettingsTab() {
 // Event Handlers
 // ============================================================
 function attachProfileEvents() {
+  const currentLang = i18n.getCurrentLanguage();
+  
   // Tab switching
   const navItems = document.querySelectorAll('.nav-item');
   const tabs = document.querySelectorAll('.profile-tab');
   
   navItems.forEach(item => {
-    item.addEventListener('click', (e) => {
+    const newItem = item.cloneNode(true);
+    item.parentNode.replaceChild(newItem, item);
+    
+    newItem.addEventListener('click', (e) => {
       e.preventDefault();
-      const tabName = item.getAttribute('data-tab');
+      const tabName = newItem.getAttribute('data-tab');
       
       navItems.forEach(nav => nav.classList.remove('active'));
-      item.classList.add('active');
+      newItem.classList.add('active');
       
       tabs.forEach(tab => tab.classList.remove('active'));
       const activeTab = document.getElementById(`tab-${tabName}`);
       if (activeTab) activeTab.classList.add('active');
       
-      // Close sidebar on mobile after click
       if (window.innerWidth <= 768) {
         const sidebar = document.getElementById('profileSidebar');
-        sidebar.classList.remove('open');
+        if (sidebar) sidebar.classList.remove('open');
       }
     });
   });
+  
+  // ===== Accordion for Projects (بعد از رندر تب Projects) =====
+  function initProjectsAccordion() {
+    document.querySelectorAll('.project-accordion-header').forEach(header => {
+      const newHeader = header.cloneNode(true);
+      header.parentNode.replaceChild(newHeader, header);
+      
+      newHeader.addEventListener('click', () => {
+        const parent = newHeader.closest('.project-accordion-item');
+        const content = parent.querySelector('.project-accordion-content');
+        const isOpen = content.style.display === 'block';
+        
+        document.querySelectorAll('.project-accordion-content').forEach(c => {
+          if (c !== content) {
+            c.style.display = 'none';
+            c.closest('.project-accordion-item')?.classList.remove('open');
+          }
+        });
+        
+        content.style.display = isOpen ? 'none' : 'block';
+        parent.classList.toggle('open', !isOpen);
+      });
+    });
+  }
+  
+  // وقتی تب Projects کلیک شد، اکاردئون راه‌اندازی شود
+  const projectsTab = document.querySelector('.nav-item[data-tab="projects"]');
+  if (projectsTab) {
+    projectsTab.addEventListener('click', () => {
+      setTimeout(() => initProjectsAccordion(), 100);
+    });
+  }
+  
+  // همچنین هنگام لود اولیه اگر تب Projects فعال بود
+  if (document.querySelector('.nav-item.active')?.getAttribute('data-tab') === 'projects') {
+    setTimeout(() => initProjectsAccordion(), 200);
+  }
   
   // Mobile menu toggle
   const mobileToggle = document.getElementById('mobileMenuToggle');
   const sidebar = document.getElementById('profileSidebar');
   const sidebarClose = document.getElementById('sidebarClose');
   
-  if (mobileToggle) {
-    mobileToggle.addEventListener('click', () => {
+  if (mobileToggle && sidebar) {
+    const newToggle = mobileToggle.cloneNode(true);
+    mobileToggle.parentNode.replaceChild(newToggle, mobileToggle);
+    
+    newToggle.addEventListener('click', () => {
       sidebar.classList.toggle('open');
     });
   }
   
-  if (sidebarClose) {
-    sidebarClose.addEventListener('click', () => {
+  if (sidebarClose && sidebar) {
+    const newClose = sidebarClose.cloneNode(true);
+    sidebarClose.parentNode.replaceChild(newClose, sidebarClose);
+    
+    newClose.addEventListener('click', () => {
       sidebar.classList.remove('open');
+    });
+  }
+  
+  // Logout
+  const logoutBtn = document.getElementById('logoutBtn');
+  if (logoutBtn) {
+    const newLogoutBtn = logoutBtn.cloneNode(true);
+    logoutBtn.parentNode.replaceChild(newLogoutBtn, logoutBtn);
+    
+    newLogoutBtn.addEventListener('click', async () => {
+      await logoutUser();
+      window.location.href = `/${currentLang}/auth`;
+    });
+  }
+  
+  // Update progress
+  const progressSlider = document.getElementById('progressSlider');
+  const sliderValue = document.getElementById('sliderValue');
+  const timelineProgressFill = document.getElementById('timelineProgressFill');
+  const timelineProgress = document.getElementById('timelineProgress');
+  const updateBtn = document.getElementById('updateProgressBtn');
+  
+  if (progressSlider) {
+    const newSlider = progressSlider.cloneNode(true);
+    progressSlider.parentNode.replaceChild(newSlider, progressSlider);
+    
+    newSlider.addEventListener('input', (e) => {
+      const val = e.target.value;
+      if (sliderValue) sliderValue.textContent = `${val}%`;
+      if (timelineProgressFill) timelineProgressFill.style.width = `${val}%`;
+      if (timelineProgress) timelineProgress.textContent = `${val}%`;
+    });
+  }
+  
+  if (updateBtn) {
+    const newUpdateBtn = updateBtn.cloneNode(true);
+    updateBtn.parentNode.replaceChild(newUpdateBtn, updateBtn);
+    
+    newUpdateBtn.addEventListener('click', () => {
+      const val = progressSlider?.value || 0;
+      showToast(`${i18n.t('progress_updated') || 'Progress updated to'} ${val}%!`, 'success');
+    });
+  }
+  
+  // Save profile settings
+  const saveBtn = document.getElementById('saveSettingsBtn');
+  if (saveBtn) {
+    const newSaveBtn = saveBtn.cloneNode(true);
+    saveBtn.parentNode.replaceChild(newSaveBtn, saveBtn);
+    
+    newSaveBtn.addEventListener('click', async () => {
+      const name = document.getElementById('settingsName')?.value;
+      const phone = document.getElementById('settingsPhone')?.value;
+      const company = document.getElementById('settingsCompany')?.value;
+      const website = document.getElementById('settingsWebsite')?.value;
+      
+      const result = await updateUserProfile({
+        full_name: name,
+        phone: phone,
+        company_name: company,
+        website: website
+      });
+      
+      if (result.success) {
+        showToast(i18n.t('settings_saved') || 'Settings saved successfully!', 'success');
+        setTimeout(() => window.location.reload(), 1500);
+      } else {
+        showToast(result.error || 'Update failed', 'error');
+      }
+    });
+  }
+  
+  // Change password
+  const changePasswordBtn = document.getElementById('changePasswordBtn');
+  if (changePasswordBtn) {
+    const newChangeBtn = changePasswordBtn.cloneNode(true);
+    changePasswordBtn.parentNode.replaceChild(newChangeBtn, changePasswordBtn);
+    
+    newChangeBtn.addEventListener('click', async () => {
+      const currentPassword = document.getElementById('currentPassword')?.value;
+      const newPassword = document.getElementById('newPassword')?.value;
+      const confirmPassword = document.getElementById('confirmPassword')?.value;
+      
+      if (!currentPassword || !newPassword) {
+        showToast('Please fill all password fields', 'error');
+        return;
+      }
+      
+      if (newPassword !== confirmPassword) {
+        showToast('New passwords do not match', 'error');
+        return;
+      }
+      
+      const result = await changePassword(currentPassword, newPassword);
+      
+      if (result.success) {
+        showToast('Password changed successfully!', 'success');
+        document.getElementById('currentPassword').value = '';
+        document.getElementById('newPassword').value = '';
+        document.getElementById('confirmPassword').value = '';
+      } else {
+        showToast(result.error || 'Password change failed', 'error');
+      }
     });
   }
   
@@ -707,77 +875,101 @@ function attachProfileEvents() {
   const avatarUpload = document.getElementById('avatarUpload');
   const profileAvatar = document.getElementById('profileAvatar');
   
-  if (avatarUpload) {
-    avatarUpload.addEventListener('change', (e) => {
+  if (avatarUpload && profileAvatar) {
+    const newAvatarUpload = avatarUpload.cloneNode(true);
+    avatarUpload.parentNode.replaceChild(newAvatarUpload, avatarUpload);
+    
+    newAvatarUpload.addEventListener('change', async (e) => {
       const file = e.target.files[0];
       if (file) {
-        const reader = new FileReader();
-        reader.onload = (event) => {
-          profileAvatar.src = event.target.result;
-        };
-        reader.readAsDataURL(file);
+        const result = await uploadAvatar(file);
+        if (result.success && result.avatarUrl) {
+          profileAvatar.src = result.avatarUrl;
+          showToast('Avatar updated successfully!', 'success');
+        } else {
+          showToast(result.error || 'Upload failed', 'error');
+        }
       }
     });
   }
   
-  // Progress slider
-  const progressSlider = document.getElementById('progressSlider');
-  const sliderValue = document.getElementById('sliderValue');
-  const timelineProgressFill = document.getElementById('timelineProgressFill');
-  const timelineProgress = document.getElementById('timelineProgress');
+  // Message panel
+  const newMessageBtn = document.getElementById('newMessageBtn');
+  const newMessageModal = document.getElementById('newMessageModal');
   
-  if (progressSlider) {
-    progressSlider.addEventListener('input', (e) => {
-      const val = e.target.value;
-      if (sliderValue) sliderValue.textContent = `${val}%`;
-      if (timelineProgressFill) timelineProgressFill.style.width = `${val}%`;
-      if (timelineProgressFill) timelineProgressFill.setAttribute('data-tooltip', `${val}%`);
-      if (timelineProgress) timelineProgress.textContent = `${val}%`;
+  if (newMessageBtn && newMessageModal) {
+    const newBtn = newMessageBtn.cloneNode(true);
+    newMessageBtn.parentNode.replaceChild(newBtn, newMessageBtn);
+    
+    newBtn.addEventListener('click', () => {
+      newMessageModal.style.display = 'flex';
     });
   }
   
-  // Update progress button
-  const updateBtn = document.getElementById('updateProgressBtn');
-  if (updateBtn) {
-    updateBtn.addEventListener('click', () => {
-      const val = progressSlider?.value || 45;
-      // TODO: API call to update project progress
-      showToast(`Progress updated to ${val}%!`, 'success');
+  const sendNewMessageBtn = document.getElementById('sendNewMessageBtn');
+  if (sendNewMessageBtn) {
+    const newSendBtn = sendNewMessageBtn.cloneNode(true);
+    sendNewMessageBtn.parentNode.replaceChild(newSendBtn, sendNewMessageBtn);
+    
+    newSendBtn.addEventListener('click', () => {
+      const modal = newSendBtn.closest('.modal');
+      if (modal) modal.style.display = 'none';
+      showToast('Your message has been sent!', 'success');
     });
   }
   
-  // Messages - open message
+  // Modal close
+  const modalClose = document.querySelectorAll('.modal-close, .btn-cancel');
+  modalClose.forEach(btn => {
+    const newBtn = btn.cloneNode(true);
+    btn.parentNode.replaceChild(newBtn, btn);
+    
+    newBtn.addEventListener('click', () => {
+      const modal = newBtn.closest('.modal');
+      if (modal) modal.style.display = 'none';
+    });
+  });
+  
+  // Message panel conversation
   const messageItems = document.querySelectorAll('.message-item');
   const messagesList = document.getElementById('messagesList');
   const messagePanel = document.getElementById('messagePanel');
   const backButton = document.getElementById('backToMessages');
   
   messageItems.forEach(item => {
-    item.addEventListener('click', () => {
+    const newItem = item.cloneNode(true);
+    item.parentNode.replaceChild(newItem, item);
+    
+    newItem.addEventListener('click', () => {
       if (messagesList) messagesList.style.display = 'none';
       if (messagePanel) messagePanel.style.display = 'flex';
     });
   });
   
-  if (backButton) {
-    backButton.addEventListener('click', () => {
+  if (backButton && messagesList && messagePanel) {
+    const newBack = backButton.cloneNode(true);
+    backButton.parentNode.replaceChild(newBack, backButton);
+    
+    newBack.addEventListener('click', () => {
       if (messagesList) messagesList.style.display = 'block';
       if (messagePanel) messagePanel.style.display = 'none';
     });
   }
   
-  // Send message
   const sendBtn = document.getElementById('sendMessageBtn');
   const messageInput = document.getElementById('messageInput');
   const conversation = document.getElementById('messageConversation');
   
   if (sendBtn && messageInput && conversation) {
-    sendBtn.addEventListener('click', () => {
+    const newSendBtn = sendBtn.cloneNode(true);
+    sendBtn.parentNode.replaceChild(newSendBtn, sendBtn);
+    
+    newSendBtn.addEventListener('click', () => {
       const text = messageInput.value.trim();
       if (text) {
         const messageDiv = document.createElement('div');
         messageDiv.className = 'conversation-message sent';
-        messageDiv.innerHTML = `<p>${escapeHtml(text)}</p><span class="message-time">Just now</span>`;
+        messageDiv.innerHTML = `<p>${escapeHtml(text)}</p><span class="message-time">${i18n.t('just_now') || 'Just now'}</span>`;
         conversation.appendChild(messageDiv);
         messageInput.value = '';
         conversation.scrollTop = conversation.scrollHeight;
@@ -785,30 +977,39 @@ function attachProfileEvents() {
     });
   }
   
-  // New message modal
-  const newMessageBtn = document.getElementById('newMessageBtn');
-  const newMessageModal = document.getElementById('newMessageModal');
-  const modalClose = document.querySelectorAll('.modal-close, .btn-cancel');
-  
-  if (newMessageBtn && newMessageModal) {
-    newMessageBtn.addEventListener('click', () => {
-      newMessageModal.style.display = 'flex';
-    });
-  }
-  
-  modalClose.forEach(btn => {
-    btn.addEventListener('click', () => {
-      const modal = btn.closest('.modal');
-      if (modal) modal.style.display = 'none';
+  // Pay now buttons
+  const payButtons = document.querySelectorAll('.btn-pay');
+  payButtons.forEach(btn => {
+    const newBtn = btn.cloneNode(true);
+    btn.parentNode.replaceChild(newBtn, btn);
+    
+    newBtn.addEventListener('click', () => {
+      showToast('Redirecting to payment gateway...', 'info');
     });
   });
+  
+  // Delete account
+  const deleteBtn = document.getElementById('deleteAccountBtn');
+  if (deleteBtn) {
+    const newDeleteBtn = deleteBtn.cloneNode(true);
+    deleteBtn.parentNode.replaceChild(newDeleteBtn, deleteBtn);
+    
+    newDeleteBtn.addEventListener('click', () => {
+      if (confirm('Are you sure you want to delete your account? This action cannot be undone.')) {
+        showToast('Account deletion requested. We\'ll be in touch.', 'warning');
+      }
+    });
+  }
   
   // Upload invoice modal
   const uploadBtn = document.getElementById('uploadInvoiceBtn');
   const uploadModal = document.getElementById('uploadInvoiceModal');
   
   if (uploadBtn && uploadModal) {
-    uploadBtn.addEventListener('click', () => {
+    const newUploadBtn = uploadBtn.cloneNode(true);
+    uploadBtn.parentNode.replaceChild(newUploadBtn, uploadBtn);
+    
+    newUploadBtn.addEventListener('click', () => {
       uploadModal.style.display = 'flex';
     });
   }
@@ -822,7 +1023,10 @@ function attachProfileEvents() {
   let selectedFile = null;
   
   if (browseBtn && invoiceFile) {
-    browseBtn.addEventListener('click', () => {
+    const newBrowseBtn = browseBtn.cloneNode(true);
+    browseBtn.parentNode.replaceChild(newBrowseBtn, browseBtn);
+    
+    newBrowseBtn.addEventListener('click', () => {
       invoiceFile.click();
     });
     
@@ -855,9 +1059,11 @@ function attachProfileEvents() {
   }
   
   if (confirmUploadBtn) {
-    confirmUploadBtn.addEventListener('click', () => {
+    const newConfirmBtn = confirmUploadBtn.cloneNode(true);
+    confirmUploadBtn.parentNode.replaceChild(newConfirmBtn, confirmUploadBtn);
+    
+    newConfirmBtn.addEventListener('click', () => {
       if (selectedFile) {
-        // Simulate upload
         if (uploadArea) uploadArea.style.display = 'none';
         if (uploadProgress) uploadProgress.style.display = 'block';
         
@@ -882,27 +1088,13 @@ function attachProfileEvents() {
       }
     });
   }
-  
-  // Save settings
-  const saveBtn = document.getElementById('saveSettingsBtn');
-  if (saveBtn) {
-    saveBtn.addEventListener('click', () => {
-      showToast('Settings saved successfully!', 'success');
-    });
-  }
-  
-  // Delete account
-  const deleteBtn = document.getElementById('deleteAccountBtn');
-  if (deleteBtn) {
-    deleteBtn.addEventListener('click', () => {
-      if (confirm('Are you sure you want to delete your account? This action cannot be undone.')) {
-        showToast('Account deletion requested. We\'ll be in touch.', 'warning');
-      }
-    });
-  }
 }
 
 function showToast(message, type = 'info') {
+  // حذف توست قبلی اگر وجود داشت
+  const existingToast = document.querySelector('.toast-message');
+  if (existingToast) existingToast.remove();
+  
   const toast = document.createElement('div');
   toast.className = `toast-message ${type}`;
   toast.textContent = message;
@@ -910,7 +1102,7 @@ function showToast(message, type = 'info') {
   
   setTimeout(() => {
     toast.classList.add('show');
-  }, 100);
+  }, 10);
   
   setTimeout(() => {
     toast.classList.remove('show');

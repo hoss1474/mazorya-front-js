@@ -23,18 +23,18 @@ let isIX2Initialized = false;
 export function initIX2() {
   if (isIX2Initialized) return;
   
-  // صبر کن تا jQuery و Webflow لود شوند
-  if (typeof jQuery === 'undefined') {
-    console.warn('⏳ Waiting for jQuery...');
-    setTimeout(initIX2, 100);
-    return;
-  }
+  // // صبر کن تا jQuery و Webflow لود شوند
+  // if (typeof jQuery === 'undefined') {
+  //   console.warn('⏳ Waiting for jQuery...');
+  //   setTimeout(initIX2, 100);
+  //   return;
+  // }
   
-  if (typeof Webflow === 'undefined' || !Webflow.require) {
-    console.warn('⏳ Waiting for Webflow...');
-    setTimeout(initIX2, 100);
-    return;
-  }
+  // if (typeof Webflow === 'undefined' || !Webflow.require) {
+  //   console.warn('⏳ Waiting for Webflow...');
+  //   setTimeout(initIX2, 100);
+  //   return;
+  // }
   
   try {
     Webflow.require('ix2').init(IX2_DATA);

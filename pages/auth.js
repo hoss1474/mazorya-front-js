@@ -3,10 +3,10 @@
 import { i18n } from '../core/i18n.js';
 import { renderHeader, attachHeaderEvents } from '../components/header.js';
 import { renderFooter, attachFooterEvents } from '../components/footer.js';
-import { loginUser, sendOtp, verifyOtp } from '../core/api.js';
+import { loginUser,  isAuthenticated } from '../core/api.js';
 
 // وضعیت صفحه (email یا phone)
-let loginMethod = 'email'; // 'email' or 'phone'
+let loginMethod = 'email';
 let otpSent = false;
 let otpVerified = false;
 let phoneNumber = '';
@@ -15,6 +15,12 @@ export async function renderAuth() {
   const app = document.getElementById('app');
   const currentLang = i18n.getCurrentLanguage();
   const isRTL = currentLang === 'fa' || currentLang === 'ar';
+  
+  // اگر قبلاً لاگین کرده، مستقیم بره پروفایل
+  if (isAuthenticated()) {
+    window.location.href = `/${currentLang}/profile`;
+    return;
+  }
   
   app.innerHTML = `
     ${renderHeader()}
@@ -111,8 +117,6 @@ export async function renderAuth() {
             </form>
           </div>
           
-          
-          
           <!-- Messages -->
           <div id="auth-message" class="auth-message" style="display: none;"></div>
           
@@ -181,34 +185,61 @@ function attachAuthEvents() {
     });
   });
   
-  // ===== فرم ورود با ایمیل =====
+  // ===== فرم ورود با ایمیل (نسخه اصلاح شده نهایی) =====
   const loginEmailForm = document.getElementById('login-email-form-element');
   if (loginEmailForm) {
     loginEmailForm.addEventListener('submit', async (e) => {
       e.preventDefault();
+      
       const email = document.getElementById('login-email')?.value.trim();
       const password = document.getElementById('login-password')?.value.trim();
       const rememberMe = document.getElementById('remember-me')?.checked;
       const messageDiv = document.getElementById('auth-message');
       
       if (!email || !password) {
-        showMessage(messageDiv, i18n.t('fill_all_fields') || 'Please fill all fields', 'error');
+        showMessage(messageDiv, 'لطفاً ایمیل و رمز عبور را وارد کنید', 'error');
         return;
       }
       
-      showLoading(true, 'email');
+      // غیرفعال کردن دکمه
+      const submitBtn = loginEmailForm.querySelector('.auth-submit-btn');
+      const originalText = submitBtn?.textContent;
+      if (submitBtn) {
+        submitBtn.disabled = true;
+        submitBtn.textContent = 'در حال ورود...';
+      }
       
-      const result = await loginUser(email, password, rememberMe, 'email');
+      // مخفی کردن پیام قبلی
+      if (messageDiv) {
+        messageDiv.style.display = 'none';
+        messageDiv.className = 'auth-message';
+      }
       
-      showLoading(false, 'email');
+      // ارسال درخواست لاگین
+      const result = await loginUser(email, password, rememberMe);
+      console.log('Login result:', result);
+      
+      // فعال کردن دکمه
+      if (submitBtn) {
+        submitBtn.disabled = false;
+        submitBtn.textContent = originalText || 'ورود';
+      }
       
       if (result.success) {
-        showMessage(messageDiv, i18n.t('login_success') || 'Login successful! Redirecting...', 'success');
+        // نمایش پیام موفقیت
+        showMessage(messageDiv, 'ورود موفق! در حال انتقال به پروفایل...', 'success');
+        
+        // هدایت به صفحه پروفایل با استفاده از replace
         setTimeout(() => {
-          window.location.href = `/${i18n.getCurrentLanguage()}/profile`;
-        }, 1500);
+          const currentLang = i18n.getCurrentLanguage();
+          const profileUrl = `/${currentLang}/profile`;
+          console.log('Redirecting to:', profileUrl);
+          window.location.replace(profileUrl);
+        }, 1000);
+        
       } else {
-        showMessage(messageDiv, result.error || i18n.t('login_failed') || 'Login failed. Please try again.', 'error');
+        const errorMsg = result.error || 'ایمیل یا رمز عبور اشتباه است';
+        showMessage(messageDiv, errorMsg, 'error');
       }
     });
   }
@@ -228,30 +259,28 @@ function attachAuthEvents() {
       const messageDiv = document.getElementById('auth-message');
       
       if (!phone) {
-        showMessage(messageDiv, i18n.t('enter_phone') || 'Please enter your phone number', 'error');
+        showMessage(messageDiv, 'لطفاً شماره موبایل را وارد کنید', 'error');
         return;
       }
       
       phoneNumber = countryCode + phone.replace(/^0+/, '');
       
-      showLoading(true, 'phone');
       sendOtpBtn.disabled = true;
-      sendOtpBtn.textContent = i18n.t('sending') || 'Sending...';
+      sendOtpBtn.textContent = 'در حال ارسال...';
       
       const result = await sendOtp(phoneNumber);
       
-      showLoading(false, 'phone');
       sendOtpBtn.disabled = false;
-      sendOtpBtn.textContent = i18n.t('send_otp') || 'Send OTP';
+      sendOtpBtn.textContent = 'ارسال کد';
       
       if (result.success) {
         otpSent = true;
         otpSection.style.display = 'block';
         sendOtpBtn.style.display = 'none';
         verifyOtpBtn.style.display = 'block';
-        showMessage(messageDiv, i18n.t('otp_sent') || 'OTP sent to your phone number', 'success');
+        showMessage(messageDiv, 'کد تایید به شماره شما ارسال شد', 'success');
       } else {
-        showMessage(messageDiv, result.error || i18n.t('otp_failed') || 'Failed to send OTP', 'error');
+        showMessage(messageDiv, result.error || 'ارسال کد ناموفق بود', 'error');
       }
     });
   }
@@ -262,27 +291,26 @@ function attachAuthEvents() {
       const messageDiv = document.getElementById('auth-message');
       
       if (!otp || otp.length < 4) {
-        showMessage(messageDiv, i18n.t('enter_otp') || 'Please enter the OTP code', 'error');
+        showMessage(messageDiv, 'لطفاً کد تایید را وارد کنید', 'error');
         return;
       }
       
-      showLoading(true, 'phone');
       verifyOtpBtn.disabled = true;
-      verifyOtpBtn.textContent = i18n.t('verifying') || 'Verifying...';
+      verifyOtpBtn.textContent = 'در حال بررسی...';
       
       const result = await verifyOtp(phoneNumber, otp);
       
-      showLoading(false, 'phone');
       verifyOtpBtn.disabled = false;
-      verifyOtpBtn.textContent = i18n.t('verify_login') || 'Verify & Login';
+      verifyOtpBtn.textContent = 'تایید و ورود';
       
       if (result.success) {
-        showMessage(messageDiv, i18n.t('login_success') || 'Login successful! Redirecting...', 'success');
+        showMessage(messageDiv, 'ورود موفق! در حال انتقال...', 'success');
         setTimeout(() => {
-          window.location.href = `/${i18n.getCurrentLanguage()}/profile`;
-        }, 1500);
+          const currentLang = i18n.getCurrentLanguage();
+          window.location.replace(`/${currentLang}/profile`);
+        }, 1000);
       } else {
-        showMessage(messageDiv, result.error || i18n.t('invalid_otp') || 'Invalid OTP. Please try again.', 'error');
+        showMessage(messageDiv, result.error || 'کد نادرست است', 'error');
       }
     });
   }
@@ -293,16 +321,7 @@ function attachAuthEvents() {
     forgotBtn.addEventListener('click', (e) => {
       e.preventDefault();
       const messageDiv = document.getElementById('auth-message');
-      showMessage(messageDiv, i18n.t('reset_password_msg') || 'Password reset link will be sent to your email.', 'info');
-    });
-  }
-  
-  // Go to register
-  const registerBtn = document.getElementById('goToRegisterBtn');
-  if (registerBtn) {
-    registerBtn.addEventListener('click', (e) => {
-      e.preventDefault();
-      window.location.href = `/${i18n.getCurrentLanguage()}/register`;
+      showMessage(messageDiv, 'لینک بازیابی رمز عبور به ایمیل شما ارسال خواهد شد.', 'info');
     });
   }
 }
@@ -324,27 +343,14 @@ function resetOtpForm() {
   if (loginPhone) loginPhone.value = '';
 }
 
-function showLoading(isLoading, method) {
-  const emailBtn = document.querySelector('#email-login-form .auth-submit-btn');
-  const phoneSendBtn = document.getElementById('sendOtpBtn');
-  const phoneVerifyBtn = document.getElementById('verifyOtpBtn');
-  
-  if (method === 'email' && emailBtn) {
-    if (isLoading) {
-      emailBtn.disabled = true;
-      emailBtn.textContent = i18n.t('logging_in') || 'Logging in...';
-    } else {
-      emailBtn.disabled = false;
-      emailBtn.textContent = i18n.t('login') || 'Login';
-    }
-  }
-}
-
 function showMessage(element, message, type) {
   if (element) {
     element.textContent = message;
     element.className = `auth-message ${type}`;
     element.style.display = 'block';
+    
+    element.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    
     setTimeout(() => {
       element.style.display = 'none';
     }, 5000);
