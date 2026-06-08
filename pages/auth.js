@@ -3,7 +3,7 @@
 import { i18n } from '../core/i18n.js';
 import { renderHeader, attachHeaderEvents } from '../components/header.js';
 import { renderFooter, attachFooterEvents } from '../components/footer.js';
-import { loginUser, isAuthenticated, forgotPassword, resetPassword } from '../core/api.js';
+import { loginUser, isAuthenticated} from '../core/api.js';
 
 export async function renderAuth() {
   const app = document.getElementById('app');
