@@ -1,8 +1,6 @@
-// core/api.js - نسخه نهایی کامل
+// core/api.js - نسخه نهایی کامل با تمام exportها
 
 import { i18n } from './i18n.js';
-
-
 
 // ============================================================
 // ⚡ تنظیمات آدرس API
@@ -84,38 +82,6 @@ export async function logoutUser() {
     }
     console.log('✅ User logged out');
     return { success: true };
-}
-
-// ============================================================
-// 📡 تابع عمومی fetch با مدیریت توکن
-// ============================================================
-
-async function fetchWithToken(endpoint, options = {}) {
-    const token = getAuthToken();
-    const headers = {
-        'Content-Type': 'application/json',
-        'Accept': 'application/json',
-        ...options.headers
-    };
-    
-    if (token) {
-        headers['Authorization'] = `Bearer ${token}`;
-    }
-    
-    const response = await fetch(`${API_BASE}${endpoint}`, {
-        ...options,
-        headers
-    });
-    
-    if (response.status === 401) {
-        console.log('❌ Unauthorized, redirecting to login');
-        localStorage.removeItem('auth_token');
-        localStorage.removeItem('user_data');
-        window.location.href = `/${i18n.getCurrentLanguage()}/auth`;
-        return null;
-    }
-    
-    return response;
 }
 
 // ============================================================
@@ -277,6 +243,7 @@ export async function changePassword(currentPassword, newPassword) {
         return { success: false, error: error.message };
     }
 }
+
 // ============================================================
 // 📧 فراموشی رمز عبور (Forgot Password)
 // ============================================================
@@ -327,6 +294,7 @@ export async function resetPassword(email, code, password) {
         return { success: false, error: error.message };
     }
 }
+
 // ============================================================
 // 📁 پروژه‌ها
 // ============================================================
@@ -547,24 +515,24 @@ export {
     submitContactForm,
     subscribeNewsletter,
     
-    // احراز هویت
-    getUserData,
-    isAuthenticated,
-    getAuthToken,
-    logoutUser,
-    loginUser,
+    // // احراز هویت
+    // getUserData,
+    // isAuthenticated,
+    // getAuthToken,
+    // logoutUser,
+    // loginUser,
     
-    // پروفایل
-    getUserProfile,
-    updateUserProfile,
-    uploadAvatar,
-    changePassword,
+    // // پروفایل
+    // getUserProfile,
+    // updateUserProfile,
+    // uploadAvatar,
+    // changePassword,
     
-    // فراموشی رمز (این دو خط را حتماً اضافه کن)
-    forgotPassword,
-    resetPassword,
+    // // فراموشی رمز
+    // forgotPassword,
+    // resetPassword,
     
-    // پروژه و فاکتور
-    getUserProjects,
-    getInvoices
+    // // پروژه و فاکتور
+    // getUserProjects,
+    // getInvoices
 };
