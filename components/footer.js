@@ -41,7 +41,7 @@ export function renderFooter() {
             <h4>${i18n.t('footer_pages')}</h4>
             <ul>
               <li><a href="/${currentLang}/" data-route="home">${i18n.t('nav_home')}</a></li>
-              <li><a href="/${currentLang}/about-us" data-route="about">${i18n.t('nav_about')}</a></li>
+              <li><a href="/${currentLang}/about" data-route="about">${i18n.t('nav_about')}</a></li>
               <li><a href="/${currentLang}/projects" data-route="projects">${i18n.t('nav_projects')}</a></li>
               <li><a href="/${currentLang}/contact" data-route="contact">${i18n.t('nav_contact')}</a></li>
             </ul>

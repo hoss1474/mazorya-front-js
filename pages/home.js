@@ -108,7 +108,7 @@ function renderCountSection(currentLang) {
             </div>
             <p class="count-content">${i18n.t('count_content') || '"Our goal is to help clients succeed in the digital landscape through creative strategies and effective execution, delivering measurable results for their brand."'}</p>
             <div class="count-button-wrap">
-              <a href="/${currentLang}/about-us" class="primary-button" data-route="about">${i18n.t('see_more') || 'See More'}</a>
+              <a href="/${currentLang}/about" class="primary-button" data-route="about">${i18n.t('see_more') || 'See More'}</a>
             </div>
           </div>
           <div class="count-area">
