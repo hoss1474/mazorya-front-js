@@ -1,22 +1,15 @@
-// pages/auth.js - Login Page (Only Login with Email/Password + Phone/OTP)
+// pages/auth.js - Login Page (Only Email + Forgot Password)
 
 import { i18n } from '../core/i18n.js';
 import { renderHeader, attachHeaderEvents } from '../components/header.js';
 import { renderFooter, attachFooterEvents } from '../components/footer.js';
-import { loginUser,  isAuthenticated } from '../core/api.js';
-
-// وضعیت صفحه (email یا phone)
-let loginMethod = 'email';
-let otpSent = false;
-let otpVerified = false;
-let phoneNumber = '';
+import { loginUser, isAuthenticated, forgotPassword, resetPassword } from '../core/api.js';
 
 export async function renderAuth() {
   const app = document.getElementById('app');
   const currentLang = i18n.getCurrentLanguage();
   const isRTL = currentLang === 'fa' || currentLang === 'ar';
   
-  // اگر قبلاً لاگین کرده، مستقیم بره پروفایل
   if (isAuthenticated()) {
     window.location.href = `/${currentLang}/profile`;
     return;
@@ -25,104 +18,157 @@ export async function renderAuth() {
   app.innerHTML = `
     ${renderHeader()}
     
-    <section class="auth-section">
-      <div class="w-layout-blockcontainer container-regular w-container">
-        <div class="auth-container ${isRTL ? 'rtl-auth' : ''}">
+    <section class="auth-page">
+      <div class="auth-bg-decoration">
+        <div class="auth-bg-circle auth-bg-circle-1"></div>
+        <div class="auth-bg-circle auth-bg-circle-2"></div>
+        <div class="auth-bg-circle auth-bg-circle-3"></div>
+      </div>
+      
+      <div class="auth-container">
+        <div class="auth-card ${isRTL ? 'rtl-auth' : ''}">
           
-          <!-- عنوان صفحه -->
+          <!-- Logo -->
+          <div class="auth-logo">
+            <img src="/assets/img/logo.png" alt="Mazorya Group" />
+          </div>
+          
+          <!-- Title -->
           <div class="auth-header">
-            <h1 class="auth-main-title">${i18n.t('login_title') || 'Welcome Back'}</h1>
-            <p class="auth-main-subtitle">${i18n.t('login_subtitle') || 'Choose your preferred login method'}</p>
+            <h1>${i18n.t('login_title') || 'Welcome Back'}</h1>
+            <p>${i18n.t('login_subtitle') || 'Login to your account'}</p>
           </div>
           
-          <!-- انتخاب روش ورود -->
-          <div class="login-method-tabs">
-            <button class="method-tab ${loginMethod === 'email' ? 'active' : ''}" data-method="email">
+          <!-- ===== Login Form ===== -->
+          <form id="login-form" class="auth-form">
+            <div class="input-group">
+              <div class="input-icon">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/>
+                  <polyline points="22,6 12,13 2,6"/>
+                </svg>
+              </div>
+              <input type="email" id="login-email" placeholder="${i18n.t('email') || 'Email Address'}" autocomplete="email" />
+            </div>
+            
+            <div class="input-group">
+              <div class="input-icon">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <rect x="3" y="11" width="18" height="11" rx="2" ry="2"/>
+                  <path d="M7 11V7a5 5 0 0 1 10 0v4"/>
+                </svg>
+              </div>
+              <input type="password" id="login-password" placeholder="${i18n.t('password') || 'Password'}" />
+              <button type="button" class="password-toggle" data-target="login-password">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/>
+                  <circle cx="12" cy="12" r="3"/>
+                </svg>
+              </button>
+            </div>
+            
+            <div class="form-options">
+              <label class="checkbox">
+                <input type="checkbox" id="remember-me" />
+                <span>${i18n.t('remember_me') || 'Remember me'}</span>
+              </label>
+              <button type="button" class="forgot-link" id="forgotPasswordBtn">${i18n.t('forgot_password') || 'Forgot Password?'}</button>
+            </div>
+            
+            <button type="submit" class="auth-btn">
+              <span>${i18n.t('login') || 'Login'}</span>
               <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                <rect x="2" y="4" width="20" height="16" rx="2"/>
-                <path d="M22 7l-10 7L2 7"/>
+                <line x1="5" y1="12" x2="19" y2="12"/>
+                <polyline points="12 5 19 12 12 19"/>
               </svg>
-              ${i18n.t('login_with_email') || 'Email & Password'}
             </button>
-            <button class="method-tab ${loginMethod === 'phone' ? 'active' : ''}" data-method="phone">
-              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                <rect x="5" y="2" width="14" height="20" rx="2" ry="2"/>
-                <line x1="12" y1="18" x2="12.01" y2="18"/>
-              </svg>
-              ${i18n.t('login_with_phone') || 'Phone & OTP'}
-            </button>
-          </div>
+          </form>
           
-          <!-- ===== فرم ورود با ایمیل و پسورد ===== -->
-          <div id="email-login-form" class="auth-form ${loginMethod === 'email' ? 'active' : ''}">
-            <form id="login-email-form-element">
-              <div class="auth-input-group">
-                <label>${i18n.t('email') || 'Email Address'}</label>
-                <input type="email" id="login-email" class="auth-input" placeholder="${i18n.t('email_placeholder') || 'example@email.com'}" required />
-              </div>
-              
-              <div class="auth-input-group">
-                <label>${i18n.t('password') || 'Password'}</label>
-                <div class="password-wrapper">
-                  <input type="password" id="login-password" class="auth-input" placeholder="${i18n.t('password_placeholder') || 'Enter your password'}" required />
-                  <button type="button" class="password-toggle" data-target="login-password">
-                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                      <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/>
-                      <circle cx="12" cy="12" r="3"/>
-                    </svg>
-                  </button>
-                </div>
-              </div>
-              
-              <div class="auth-options">
-                <label class="checkbox-label">
-                  <input type="checkbox" id="remember-me" /> ${i18n.t('remember_me') || 'Remember me'}
-                </label>
-                <a href="#" class="forgot-password" id="forgotPasswordBtn">${i18n.t('forgot_password') || 'Forgot password?'}</a>
-              </div>
-              
-              <button type="submit" class="auth-submit-btn">${i18n.t('login') || 'Login'}</button>
-            </form>
-          </div>
-          
-          <!-- ===== فرم ورود با شماره موبایل و OTP ===== -->
-          <div id="phone-login-form" class="auth-form ${loginMethod === 'phone' ? 'active' : ''}">
-            <form id="login-phone-form-element">
-              <div class="auth-input-group">
-                <label>${i18n.t('phone_number') || 'Phone Number'}</label>
-                <div class="phone-input-wrapper">
-                  <select id="phone-country-code" class="country-code-select">
-                    <option value="+1">🇺🇸 +1 (USA)</option>
-                    <option value="+44">🇬🇧 +44 (UK)</option>
-                    <option value="+90">🇹🇷 +90 (Turkey)</option>
-                    <option value="+98" selected>🇮🇷 +98 (Iran)</option>
-                    <option value="+966">🇸🇦 +966 (KSA)</option>
-                    <option value="+49">🇩🇪 +49 (Germany)</option>
-                    <option value="+33">🇫🇷 +33 (France)</option>
-                    <option value="+34">🇪🇸 +34 (Spain)</option>
-                  </select>
-                  <input type="tel" id="login-phone" class="auth-input" placeholder="${i18n.t('phone_placeholder') || '9123456789'}" required />
-                </div>
-              </div>
-              
-              <div id="otp-section" style="display: none;">
-                <div class="auth-input-group">
-                  <label>${i18n.t('otp_code') || 'OTP Code'}</label>
-                  <input type="text" id="login-otp" class="auth-input" placeholder="${i18n.t('otp_placeholder') || 'Enter 6-digit code'}" maxlength="6" />
-                </div>
-              </div>
-              
-              <button type="button" id="sendOtpBtn" class="auth-submit-btn secondary">${i18n.t('send_otp') || 'Send OTP'}</button>
-              <button type="submit" id="verifyOtpBtn" class="auth-submit-btn" style="display: none;">${i18n.t('verify_login') || 'Verify & Login'}</button>
-            </form>
-          </div>
-          
-          <!-- Messages -->
+          <!-- Message -->
           <div id="auth-message" class="auth-message" style="display: none;"></div>
           
         </div>
       </div>
     </section>
+    
+    <!-- ===== Forgot Password Modal ===== -->
+    <div id="forgotModal" class="auth-modal" style="display: none;">
+      <div class="auth-modal-overlay"></div>
+      <div class="auth-modal-container">
+        <div class="auth-modal-content ${isRTL ? 'rtl-auth' : ''}">
+          <button class="auth-modal-close" id="closeModalBtn">&times;</button>
+          
+          <div class="auth-modal-header">
+            <div class="auth-modal-icon">
+              <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                <path d="M12 8v4l3 3"/>
+                <circle cx="12" cy="12" r="10"/>
+              </svg>
+            </div>
+            <h2>${i18n.t('reset_password') || 'Reset Password'}</h2>
+            <p>${i18n.t('reset_instructions') || 'Enter your email to receive a verification code'}</p>
+          </div>
+          
+          <div id="forgot-step-1" class="auth-modal-step active">
+            <div class="input-group">
+              <div class="input-icon">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/>
+                  <polyline points="22,6 12,13 2,6"/>
+                </svg>
+              </div>
+              <input type="email" id="forgot-email" placeholder="${i18n.t('email') || 'Email Address'}" />
+            </div>
+            <button id="sendCodeBtn" class="auth-modal-btn">
+              <span>${i18n.t('send_code') || 'Send Reset Code'}</span>
+            </button>
+          </div>
+          
+          <div id="forgot-step-2" class="auth-modal-step">
+            <div class="input-group">
+              <div class="input-icon">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <circle cx="12" cy="12" r="10"/>
+                  <polyline points="12 6 12 12 16 14"/>
+                </svg>
+              </div>
+              <input type="text" id="reset-code" placeholder="${i18n.t('verification_code') || 'Verification Code'}" maxlength="6" />
+            </div>
+            <div class="input-group">
+              <div class="input-icon">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <rect x="3" y="11" width="18" height="11" rx="2" ry="2"/>
+                  <path d="M7 11V7a5 5 0 0 1 10 0v4"/>
+                </svg>
+              </div>
+              <input type="password" id="reset-password" placeholder="${i18n.t('new_password') || 'New Password'}" />
+              <button type="button" class="password-toggle" data-target="reset-password">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/>
+                  <circle cx="12" cy="12" r="3"/>
+                </svg>
+              </button>
+            </div>
+            <div class="input-group">
+              <div class="input-icon">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <rect x="3" y="11" width="18" height="11" rx="2" ry="2"/>
+                  <path d="M7 11V7a5 5 0 0 1 10 0v4"/>
+                </svg>
+              </div>
+              <input type="password" id="reset-confirm-password" placeholder="${i18n.t('confirm_password') || 'Confirm Password'}" />
+            </div>
+            <button id="resetPasswordBtn" class="auth-modal-btn">
+              <span>${i18n.t('reset_password') || 'Reset Password'}</span>
+            </button>
+          </div>
+          
+          <div class="auth-modal-footer">
+            <button class="auth-modal-back" id="backToLoginBtn">← ${i18n.t('back_to_login') || 'Back to Login'}</button>
+          </div>
+        </div>
+      </div>
+    </div>
     
     ${renderFooter()}
   `;
@@ -141,56 +187,32 @@ export async function renderAuth() {
 }
 
 function attachAuthEvents() {
-  // ===== تغییر روش ورود =====
-  const methodTabs = document.querySelectorAll('.method-tab');
-  const emailForm = document.getElementById('email-login-form');
-  const phoneForm = document.getElementById('phone-login-form');
+  const currentLang = i18n.getCurrentLanguage();
+  const isRTL = currentLang === 'fa' || currentLang === 'ar';
   
-  methodTabs.forEach(tab => {
-    tab.addEventListener('click', () => {
-      const method = tab.getAttribute('data-method');
-      loginMethod = method;
-      otpSent = false;
-      otpVerified = false;
-      
-      methodTabs.forEach(t => t.classList.remove('active'));
-      tab.classList.add('active');
-      
-      if (method === 'email') {
-        emailForm.classList.add('active');
-        phoneForm.classList.remove('active');
-      } else {
-        phoneForm.classList.add('active');
-        emailForm.classList.remove('active');
-        resetOtpForm();
-      }
-    });
-  });
-  
-  // ===== Password visibility toggle =====
-  const passwordToggles = document.querySelectorAll('.password-toggle');
-  passwordToggles.forEach(toggle => {
+  // Password toggle
+  document.querySelectorAll('.password-toggle').forEach(toggle => {
     toggle.addEventListener('click', () => {
       const targetId = toggle.getAttribute('data-target');
       const input = document.getElementById(targetId);
-      const type = input.getAttribute('type') === 'password' ? 'text' : 'password';
-      input.setAttribute('type', type);
-      
-      const svg = toggle.querySelector('svg');
-      if (type === 'text') {
-        svg.innerHTML = '<path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"/><line x1="1" y1="1" x2="23" y2="23"/>';
-      } else {
-        svg.innerHTML = '<path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/>';
+      if (input) {
+        const type = input.type === 'password' ? 'text' : 'password';
+        input.type = type;
+        const svg = toggle.querySelector('svg');
+        if (type === 'text') {
+          svg.innerHTML = '<path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"/><line x1="1" y1="1" x2="23" y2="23"/>';
+        } else {
+          svg.innerHTML = '<path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/>';
+        }
       }
     });
   });
   
-  // ===== فرم ورود با ایمیل (نسخه اصلاح شده نهایی) =====
-  const loginEmailForm = document.getElementById('login-email-form-element');
-  if (loginEmailForm) {
-    loginEmailForm.addEventListener('submit', async (e) => {
+  // Login form
+  const loginForm = document.getElementById('login-form');
+  if (loginForm) {
+    loginForm.addEventListener('submit', async (e) => {
       e.preventDefault();
-      
       const email = document.getElementById('login-email')?.value.trim();
       const password = document.getElementById('login-password')?.value.trim();
       const rememberMe = document.getElementById('remember-me')?.checked;
@@ -201,146 +223,155 @@ function attachAuthEvents() {
         return;
       }
       
-      // غیرفعال کردن دکمه
-      const submitBtn = loginEmailForm.querySelector('.auth-submit-btn');
-      const originalText = submitBtn?.textContent;
+      const submitBtn = loginForm.querySelector('.auth-btn');
+      const originalHtml = submitBtn?.innerHTML;
       if (submitBtn) {
         submitBtn.disabled = true;
-        submitBtn.textContent = 'در حال ورود...';
+        submitBtn.innerHTML = '<div class="spinner"></div> در حال ورود...';
       }
       
-      // مخفی کردن پیام قبلی
-      if (messageDiv) {
-        messageDiv.style.display = 'none';
-        messageDiv.className = 'auth-message';
-      }
-      
-      // ارسال درخواست لاگین
       const result = await loginUser(email, password, rememberMe);
-      console.log('Login result:', result);
       
-      // فعال کردن دکمه
       if (submitBtn) {
         submitBtn.disabled = false;
-        submitBtn.textContent = originalText || 'ورود';
+        submitBtn.innerHTML = originalHtml;
       }
       
       if (result.success) {
-        // نمایش پیام موفقیت
-        showMessage(messageDiv, 'ورود موفق! در حال انتقال به پروفایل...', 'success');
-        
-        // هدایت به صفحه پروفایل با استفاده از replace
+        showMessage(messageDiv, 'ورود موفق! در حال انتقال...', 'success');
         setTimeout(() => {
-          const currentLang = i18n.getCurrentLanguage();
-          const profileUrl = `/${currentLang}/profile`;
-          console.log('Redirecting to:', profileUrl);
-          window.location.replace(profileUrl);
+          window.location.href = `/${currentLang}/profile`;
         }, 1000);
-        
       } else {
-        const errorMsg = result.error || 'ایمیل یا رمز عبور اشتباه است';
-        showMessage(messageDiv, errorMsg, 'error');
+        showMessage(messageDiv, result.error || 'ایمیل یا رمز عبور اشتباه است', 'error');
       }
     });
   }
   
-  // ===== OTP related functions =====
-  const sendOtpBtn = document.getElementById('sendOtpBtn');
-  const verifyOtpBtn = document.getElementById('verifyOtpBtn');
-  const otpSection = document.getElementById('otp-section');
-  const loginPhone = document.getElementById('login-phone');
-  const countryCodeSelect = document.getElementById('phone-country-code');
-  const otpInput = document.getElementById('login-otp');
+  // Forgot password modal
+  const forgotBtn = document.getElementById('forgotPasswordBtn');
+  const modal = document.getElementById('forgotModal');
+  const closeModal = document.getElementById('closeModalBtn');
+  const backToLogin = document.getElementById('backToLoginBtn');
   
-  if (sendOtpBtn) {
-    sendOtpBtn.addEventListener('click', async () => {
-      const countryCode = countryCodeSelect?.value || '+98';
-      const phone = loginPhone?.value.trim();
+  if (forgotBtn && modal) {
+    forgotBtn.addEventListener('click', () => {
+      modal.style.display = 'flex';
+      document.getElementById('forgot-step-1').classList.add('active');
+      document.getElementById('forgot-step-2').classList.remove('active');
+    });
+  }
+  
+  if (closeModal) {
+    closeModal.addEventListener('click', () => {
+      modal.style.display = 'none';
+      resetForgotForm();
+    });
+  }
+  
+  if (backToLogin) {
+    backToLogin.addEventListener('click', () => {
+      modal.style.display = 'none';
+      resetForgotForm();
+    });
+  }
+  
+  modal?.addEventListener('click', (e) => {
+    if (e.target === modal) {
+      modal.style.display = 'none';
+      resetForgotForm();
+    }
+  });
+  
+  // Send code
+  const sendCodeBtn = document.getElementById('sendCodeBtn');
+  if (sendCodeBtn) {
+    sendCodeBtn.addEventListener('click', async () => {
+      const email = document.getElementById('forgot-email')?.value.trim();
       const messageDiv = document.getElementById('auth-message');
       
-      if (!phone) {
-        showMessage(messageDiv, 'لطفاً شماره موبایل را وارد کنید', 'error');
+      if (!email) {
+        showMessage(messageDiv, 'لطفاً ایمیل خود را وارد کنید', 'error');
         return;
       }
       
-      phoneNumber = countryCode + phone.replace(/^0+/, '');
+      sendCodeBtn.disabled = true;
+      sendCodeBtn.innerHTML = '<div class="spinner"></div> در حال ارسال...';
       
-      sendOtpBtn.disabled = true;
-      sendOtpBtn.textContent = 'در حال ارسال...';
+      const result = await forgotPassword(email);
       
-      const result = await sendOtp(phoneNumber);
-      
-      sendOtpBtn.disabled = false;
-      sendOtpBtn.textContent = 'ارسال کد';
+      sendCodeBtn.disabled = false;
+      sendCodeBtn.innerHTML = '<span>ارسال کد</span>';
       
       if (result.success) {
-        otpSent = true;
-        otpSection.style.display = 'block';
-        sendOtpBtn.style.display = 'none';
-        verifyOtpBtn.style.display = 'block';
-        showMessage(messageDiv, 'کد تایید به شماره شما ارسال شد', 'success');
+        showMessage(messageDiv, 'کد تأیید به ایمیل شما ارسال شد', 'success');
+        document.getElementById('forgot-step-1').classList.remove('active');
+        document.getElementById('forgot-step-2').classList.add('active');
       } else {
         showMessage(messageDiv, result.error || 'ارسال کد ناموفق بود', 'error');
       }
     });
   }
   
-  if (verifyOtpBtn) {
-    verifyOtpBtn.addEventListener('click', async () => {
-      const otp = otpInput?.value.trim();
+  // Reset password
+  const resetBtn = document.getElementById('resetPasswordBtn');
+  if (resetBtn) {
+    resetBtn.addEventListener('click', async () => {
+      const email = document.getElementById('forgot-email')?.value.trim();
+      const code = document.getElementById('reset-code')?.value.trim();
+      const password = document.getElementById('reset-password')?.value.trim();
+      const confirmPassword = document.getElementById('reset-confirm-password')?.value.trim();
       const messageDiv = document.getElementById('auth-message');
       
-      if (!otp || otp.length < 4) {
-        showMessage(messageDiv, 'لطفاً کد تایید را وارد کنید', 'error');
+      if (!code || !password || !confirmPassword) {
+        showMessage(messageDiv, 'لطفاً همه فیلدها را پر کنید', 'error');
         return;
       }
       
-      verifyOtpBtn.disabled = true;
-      verifyOtpBtn.textContent = 'در حال بررسی...';
+      if (password !== confirmPassword) {
+        showMessage(messageDiv, 'رمز عبور و تأیید آن مطابقت ندارند', 'error');
+        return;
+      }
       
-      const result = await verifyOtp(phoneNumber, otp);
+      if (password.length < 6) {
+        showMessage(messageDiv, 'رمز عبور باید حداقل 6 کاراکتر باشد', 'error');
+        return;
+      }
       
-      verifyOtpBtn.disabled = false;
-      verifyOtpBtn.textContent = 'تایید و ورود';
+      resetBtn.disabled = true;
+      resetBtn.innerHTML = '<div class="spinner"></div> در حال بازنشانی...';
+      
+      const result = await resetPassword(email, code, password);
+      
+      resetBtn.disabled = false;
+      resetBtn.innerHTML = '<span>بازنشانی رمز</span>';
       
       if (result.success) {
-        showMessage(messageDiv, 'ورود موفق! در حال انتقال...', 'success');
+        showMessage(messageDiv, 'رمز عبور با موفقیت تغییر کرد! اکنون می‌توانید وارد شوید', 'success');
         setTimeout(() => {
-          const currentLang = i18n.getCurrentLanguage();
-          window.location.replace(`/${currentLang}/profile`);
-        }, 1000);
+          modal.style.display = 'none';
+          resetForgotForm();
+        }, 1500);
       } else {
-        showMessage(messageDiv, result.error || 'کد نادرست است', 'error');
+        showMessage(messageDiv, result.error || 'بازنشانی رمز ناموفق بود', 'error');
       }
-    });
-  }
-  
-  // Forgot password
-  const forgotBtn = document.getElementById('forgotPasswordBtn');
-  if (forgotBtn) {
-    forgotBtn.addEventListener('click', (e) => {
-      e.preventDefault();
-      const messageDiv = document.getElementById('auth-message');
-      showMessage(messageDiv, 'لینک بازیابی رمز عبور به ایمیل شما ارسال خواهد شد.', 'info');
     });
   }
 }
 
-function resetOtpForm() {
-  const otpSection = document.getElementById('otp-section');
-  const sendOtpBtn = document.getElementById('sendOtpBtn');
-  const verifyOtpBtn = document.getElementById('verifyOtpBtn');
-  const otpInput = document.getElementById('login-otp');
-  const loginPhone = document.getElementById('login-phone');
+function resetForgotForm() {
+  const emailInput = document.getElementById('forgot-email');
+  const codeInput = document.getElementById('reset-code');
+  const passwordInput = document.getElementById('reset-password');
+  const confirmInput = document.getElementById('reset-confirm-password');
   
-  otpSent = false;
-  otpVerified = false;
+  if (emailInput) emailInput.value = '';
+  if (codeInput) codeInput.value = '';
+  if (passwordInput) passwordInput.value = '';
+  if (confirmInput) confirmInput.value = '';
   
-  if (otpSection) otpSection.style.display = 'none';
-  if (sendOtpBtn) sendOtpBtn.style.display = 'block';
-  if (verifyOtpBtn) verifyOtpBtn.style.display = 'none';
-  if (otpInput) otpInput.value = '';
-  if (loginPhone) loginPhone.value = '';
+  document.getElementById('forgot-step-1')?.classList.add('active');
+  document.getElementById('forgot-step-2')?.classList.remove('active');
 }
 
 function showMessage(element, message, type) {
@@ -348,9 +379,7 @@ function showMessage(element, message, type) {
     element.textContent = message;
     element.className = `auth-message ${type}`;
     element.style.display = 'block';
-    
     element.scrollIntoView({ behavior: 'smooth', block: 'center' });
-    
     setTimeout(() => {
       element.style.display = 'none';
     }, 5000);

@@ -2,15 +2,17 @@
 
 import { i18n } from './i18n.js';
 
+
+
 // ============================================================
 // ⚡ تنظیمات آدرس API
 // ============================================================
 
 // برای سرور آنلاین
-const API_BASE = 'https://api.cardifygroup.com/api';
+// const API_BASE = 'https://api.cardifygroup.com/api';
 
 // برای لوکال (توسعه) - در زمان توسعه کامنت را بردار
-// const API_BASE = 'http://127.0.0.1:8000/api';
+const API_BASE = 'http://127.0.0.1:8000/api';
 
 // ============================================================
 
@@ -275,7 +277,56 @@ export async function changePassword(currentPassword, newPassword) {
         return { success: false, error: error.message };
     }
 }
+// ============================================================
+// 📧 فراموشی رمز عبور (Forgot Password)
+// ============================================================
 
+export async function forgotPassword(email) {
+    try {
+        const response = await fetch(`${API_BASE}/forgot-password`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'Accept': 'application/json'
+            },
+            body: JSON.stringify({ email })
+        });
+        
+        const data = await response.json();
+        console.log('📥 Forgot password response:', data);
+        
+        return { success: response.ok, error: data.message };
+    } catch (error) {
+        console.error('Forgot password error:', error);
+        return { success: false, error: error.message };
+    }
+}
+
+export async function resetPassword(email, code, password) {
+    try {
+        const response = await fetch(`${API_BASE}/reset-password`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'Accept': 'application/json'
+            },
+            body: JSON.stringify({ 
+                email, 
+                code, 
+                password,
+                password_confirmation: password 
+            })
+        });
+        
+        const data = await response.json();
+        console.log('📥 Reset password response:', data);
+        
+        return { success: response.ok, error: data.message };
+    } catch (error) {
+        console.error('Reset password error:', error);
+        return { success: false, error: error.message };
+    }
+}
 // ============================================================
 // 📁 پروژه‌ها
 // ============================================================
