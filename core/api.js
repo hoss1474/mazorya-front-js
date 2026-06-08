@@ -9,10 +9,10 @@ import { i18n } from './i18n.js';
 // ============================================================
 
 // برای سرور آنلاین
-// const API_BASE = 'https://api.cardifygroup.com/api';
+const API_BASE = 'https://api.cardifygroup.com/api';
 
 // برای لوکال (توسعه) - در زمان توسعه کامنت را بردار
-const API_BASE = 'http://127.0.0.1:8000/api';
+// const API_BASE = 'http://127.0.0.1:8000/api';
 
 // ============================================================
 
