@@ -535,6 +535,7 @@ async function subscribeNewsletter(email) {
 // ============================================================
 
 export {
+    // عمومی
     fetchAPI,
     loadInitialData,
     getProjects,
@@ -545,17 +546,25 @@ export {
     getServiceBySlug,
     submitContactForm,
     subscribeNewsletter,
-    getUserData,        // ✅ این خط را اضافه کن
-    isAuthenticated,    // ✅ این خط را اضافه کن
-    getAuthToken,       // ✅ این خط را اضافه کن
-    logoutUser,         // ✅ این خط را اضافه کن
-    loginUser,          // ✅ این خط را اضافه کن
-    getUserProfile,     // ✅ این خط را اضافه کن
-    updateUserProfile,  // ✅ این خط را اضافه کن
-    uploadAvatar,       // ✅ این خط را اضافه کن
-    changePassword,     // ✅ این خط را اضافه کن
-    forgotPassword,     // ✅ این خط را اضافه کن
-    resetPassword,      // ✅ این خط را اضافه کن
-    getUserProjects,    // ✅ این خط را اضافه کن
-    getInvoices         // ✅ این خط را اضافه کن
+    
+    // احراز هویت
+    getUserData,
+    isAuthenticated,
+    getAuthToken,
+    logoutUser,
+    loginUser,
+    
+    // پروفایل
+    getUserProfile,
+    updateUserProfile,
+    uploadAvatar,
+    changePassword,
+    
+    // فراموشی رمز (این دو خط را حتماً اضافه کن)
+    forgotPassword,
+    resetPassword,
+    
+    // پروژه و فاکتور
+    getUserProjects,
+    getInvoices
 };
