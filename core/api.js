@@ -544,5 +544,18 @@ export {
     getServices,
     getServiceBySlug,
     submitContactForm,
-    subscribeNewsletter
+    subscribeNewsletter,
+    getUserData,        // ✅ این خط را اضافه کن
+    isAuthenticated,    // ✅ این خط را اضافه کن
+    getAuthToken,       // ✅ این خط را اضافه کن
+    logoutUser,         // ✅ این خط را اضافه کن
+    loginUser,          // ✅ این خط را اضافه کن
+    getUserProfile,     // ✅ این خط را اضافه کن
+    updateUserProfile,  // ✅ این خط را اضافه کن
+    uploadAvatar,       // ✅ این خط را اضافه کن
+    changePassword,     // ✅ این خط را اضافه کن
+    forgotPassword,     // ✅ این خط را اضافه کن
+    resetPassword,      // ✅ این خط را اضافه کن
+    getUserProjects,    // ✅ این خط را اضافه کن
+    getInvoices         // ✅ این خط را اضافه کن
 };
