@@ -1,4 +1,4 @@
-// core/api.js - نسخه نهایی کامل با تمام exportها
+// core/api.js - نسخه نهایی کامل با تمام APIها
 
 import { i18n } from './i18n.js';
 
@@ -7,10 +7,10 @@ import { i18n } from './i18n.js';
 // ============================================================
 
 // برای سرور آنلاین
-const API_BASE = 'https://api.cardifygroup.com/api';
+// const API_BASE = 'https://api.cardifygroup.com/api';
 
 // برای لوکال (توسعه) - در زمان توسعه کامنت را بردار
-// const API_BASE = 'http://127.0.0.1:8000/api';
+const API_BASE = 'http://127.0.0.1:8000/api';
 
 // ============================================================
 
@@ -315,6 +315,7 @@ export async function getUserProjects() {
         if (!response.ok) return [];
         
         const data = await response.json();
+        console.log('📥 User projects response:', data);
         return data?.data || [];
     } catch (error) {
         console.error('Get user projects error:', error);
@@ -342,10 +343,72 @@ export async function getInvoices() {
         if (!response.ok) return [];
         
         const data = await response.json();
+        console.log('📥 Invoices response:', data);
         return data?.data || [];
     } catch (error) {
         console.error('Get invoices error:', error);
         return [];
+    }
+}
+
+// ============================================================
+// 📤 آپلود فاکتور
+// ============================================================
+
+export async function uploadInvoice(projectId, invoiceNumber, file) {
+    const token = getAuthToken();
+    if (!token) return { success: false, error: 'Not authenticated' };
+    
+    const formData = new FormData();
+    formData.append('client_project_id', projectId);
+    formData.append('invoice_number', invoiceNumber);
+    formData.append('file', file);
+    
+    try {
+        const response = await fetch(`${API_BASE}/user/invoices/upload`, {
+            method: 'POST',
+            headers: {
+                'Authorization': `Bearer ${token}`
+                // 'Content-Type' is not set because FormData sets it automatically
+            },
+            body: formData
+        });
+        
+        const data = await response.json();
+        console.log('📥 Upload invoice response:', data);
+        
+        if (response.ok && data.status) {
+            return { success: true, invoice: data.data, message: data.message };
+        }
+        
+        return { success: false, error: data.message || 'Upload failed' };
+    } catch (error) {
+        console.error('Upload invoice error:', error);
+        return { success: false, error: error.message };
+    }
+}
+// core/api.js - اضافه کن
+export async function updateProjectProgress(projectId, progress) {
+    const token = getAuthToken();
+    if (!token) return { success: false, error: 'Not authenticated' };
+    
+    try {
+        const response = await fetch(`${API_BASE}/user/projects/${projectId}/progress`, {
+            method: 'PUT',
+            headers: {
+                'Authorization': `Bearer ${token}`,
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({ progress })
+        });
+        
+        const data = await response.json();
+        console.log('📥 Update progress response:', data);
+        
+        return { success: response.ok && data.status, error: data.message };
+    } catch (error) {
+        console.error('Update project progress error:', error);
+        return { success: false, error: error.message };
     }
 }
 
@@ -515,24 +578,5 @@ export {
     submitContactForm,
     subscribeNewsletter,
     
-    // // احراز هویت
-    // getUserData,
-    // isAuthenticated,
-    // getAuthToken,
-    // logoutUser,
-    // loginUser,
     
-    // // پروفایل
-    // getUserProfile,
-    // updateUserProfile,
-    // uploadAvatar,
-    // changePassword,
-    
-    // // فراموشی رمز
-    // forgotPassword,
-    // resetPassword,
-    
-    // // پروژه و فاکتور
-    // getUserProjects,
-    // getInvoices
 };

@@ -12,13 +12,14 @@ import {
   uploadAvatar,
   getUserProjects,
   getInvoices,
-  getAuthToken
+  getAuthToken,
+  uploadInvoice
 } from '../core/api.js';
 
 // ============================================================
 // ⚡ تنظیمات آدرس API
 // ============================================================
-const API_BASE = 'http://127.0.0.1:8000/api';
+const API_BASE = 'https://api.cardifygroup.com/api';
 
 // وضعیت سایدبار (باز/بسته در موبایل)
 let mobileMenuOpen = false;
@@ -82,17 +83,27 @@ export async function renderProfile() {
     };
   }
   
-  // دریافت پروژه‌ها و فاکتورها
-  let projects = [];
-  let invoices = [];
-  try {
+ // ===== دریافت پروژه‌ها و فاکتورها =====
+let projects = [];
+let invoices = [];
+let projectProgress = 0;  // مقدار پیش‌فرض
+
+try {
     projects = await getUserProjects();
     invoices = await getInvoices();
     console.log('Projects:', projects);
     console.log('Invoices:', invoices);
-  } catch (err) {
+    
+    // ✅ گرفتن درصد پیشرفت از اولین پروژه (یا پروژه فعال)
+    if (projects && projects.length > 0) {
+        // می‌توانی پروژه فعال را پیدا کنی یا از اولین استفاده کنی
+        const activeProject = projects.find(p => p.status === 'active') || projects[0];
+        projectProgress = activeProject?.project_progress || 0;
+        console.log('📊 Project progress from API:', projectProgress);
+    }
+} catch (err) {
     console.error('Failed to fetch projects/invoices:', err);
-  }
+}
   
   // مقادیر از userData
   const userName = userData?.full_name || '';
@@ -101,7 +112,6 @@ export async function renderProfile() {
   const userCompany = userData?.company_name || '';
   const userWebsite = userData?.website || '';
   const userAvatar = userData?.avatar || '/assets/img/default-avatar.png';
-  const projectProgress = userData?.project_progress || 0;
   const projectAmount = userData?.amount || 0;
   const userStatus = userData?.status || 'active';
   
@@ -111,7 +121,6 @@ export async function renderProfile() {
   let completedProjects = 0;
   
   if (projects && projects.length > 0) {
-    // محاسبه از روی پروژه اول (یا جمع کل)
     const allPayments = [];
     projects.forEach(project => {
       if (project.payments) {
@@ -233,12 +242,10 @@ export async function renderProfile() {
           <div id="tab-projects" class="profile-tab">
             ${renderProjectsTab(projects)}
           </div>
-          
-          <!-- Tab: Timeline -->
-          <div id="tab-timeline" class="profile-tab">
-            ${renderTimelineTab(projectProgress)}
-          </div>
-          
+         <!-- Tab: Timeline -->
+<div id="tab-timeline" class="profile-tab">
+    ${renderTimelineTab(projects || [])}
+</div>
           <!-- Tab: Messages -->
           <div id="tab-messages" class="profile-tab">
             ${renderMessagesTab()}
@@ -400,48 +407,136 @@ function renderProjectsTab(projects) {
   
   return projectsHtml;
 }
-
 // ============================================================
-// Timeline Tab
+// Timeline Tab - نمایش همه پروژه‌ها به صورت لیستی
 // ============================================================
-function renderTimelineTab(projectProgress) {
-  return `
+function renderTimelineTab(projects) {
+  if (!projects || !Array.isArray(projects) || projects.length === 0) {
+    return `
+      <div class="timeline-header">
+        <h1>${i18n.t('project_timeline') || 'پیشرفت پروژه‌ها'}</h1>
+      </div>
+      <div class="no-projects-timeline">
+        <p>${i18n.t('no_projects') || 'هیچ پروژه‌ای یافت نشد'}</p>
+      </div>
+    `;
+  }
+  
+  // رندر کردن همه پروژه‌ها
+  let projectsHtml = `
     <div class="timeline-header">
-      <h1>${i18n.t('project_timeline') || 'Project Timeline'}</h1>
-      <p>${i18n.t('timeline_subtitle') || 'Track your project progress from start to finish'}</p>
+      <h1>${i18n.t('project_timeline') || 'پیشرفت پروژه‌ها'}</h1>
+      <p>${i18n.t('timeline_subtitle') || 'مراحل پیشرفت پروژه‌های خود را پیگیری کنید'}</p>
     </div>
-    
-    <div class="timeline-container">
-      <div class="timeline-stats">
-        <div class="timeline-stat">
-          <span class="stat-label">${i18n.t('current_progress') || 'Current Progress'}</span>
-          <span class="stat-value" id="timelineProgress">${projectProgress}%</span>
-        </div>
-      </div>
-      
-      <div class="timeline-progress-container">
-        <div class="timeline-progress-bar">
-          <div class="timeline-progress-fill" id="timelineProgressFill" style="width: ${projectProgress}%;"></div>
-        </div>
-      </div>
-    </div>
-    
-    <div class="progress-update">
-      <h3>${i18n.t('update_progress') || 'Update Project Progress'}</h3>
-      <div class="progress-slider-container">
-        <input type="range" id="progressSlider" min="0" max="100" value="${projectProgress}" step="5" />
-        <div class="slider-value">
-          <span>${i18n.t('progress') || 'Progress'}:</span>
-          <strong id="sliderValue">${projectProgress}%</strong>
-        </div>
-        <button class="btn-update-progress" id="updateProgressBtn">
-          ${i18n.t('update') || 'Update'}
-        </button>
-      </div>
-    </div>
+    <div class="projects-timeline-list">
   `;
+  
+  projects.forEach(project => {
+    const projectProgress = project?.project_progress || 0;
+    const progress = Math.min(100, projectProgress);
+    const projectName = project.project_name || 'بدون نام';
+    const projecttype = project.project_type || 'web';
+    const startDate = project.created_start || project.created_at?.split('T')[0] || 'نامشخص';
+    const endDate = project.created_end || 'نامشخص';
+    
+    
+    // نقاط عطف بر اساس درصد پیشرفت
+    const milestones = [
+      { title: i18n.t('start') || 'شروع پروژه', status: 'completed' },
+      { title: i18n.t('research_phase') || 'تحلیل نیازمندی‌ها', status: progress >= 25 ? 'completed' : progress >= 10 ? 'active' : 'pending' },
+      { title: i18n.t('design_phase') || 'طراحی', status: progress >= 50 ? 'completed' : progress >= 35 ? 'active' : 'pending' },
+      { title: i18n.t('development_phase') || 'توسعه', status: progress >= 75 ? 'completed' : progress >= 50 ? 'active' : 'pending' },
+      { title: i18n.t('launch') || 'راه‌اندازی', status: progress >= 100 ? 'completed' : progress >= 90 ? 'active' : 'pending' }
+    ];
+    
+    // محاسبه روزهای باقیمانده (تقریبی)
+    const today = new Date();
+    const start = new Date(startDate);
+    const end = new Date(endDate);
+    const totalDays = !isNaN(end) && end !== 'نامشخص' ? Math.ceil((end - start) / (1000 * 60 * 60 * 24)) : 0;
+    const passedDays = !isNaN(start) && start !== 'نامشخص' ? Math.ceil((today - start) / (1000 * 60 * 60 * 24)) : 0;
+    const remainingDays = Math.max(0, totalDays - passedDays);
+    
+    projectsHtml += `
+      <div class="project-timeline-card">
+        <div class="project-timeline-header">
+          <div class="project-title-section">
+            <h3 class="project-timeline-name">${escapeHtml(projectName)}</h3>
+            <span class="project-progress-badge">${progress}%</span>
+          </div>
+          
+          <div class="project-timeline-dates">
+            <div class="date-item">
+              <span class="date-label">${i18n.t('project_type') || 'project_type'}:</span>
+              <span class="date-value">${(projecttype)}</span>
+            </div>
+            <div class="date-item">
+              <span class="date-label">${i18n.t('start_date') || 'شروع'}:</span>
+              <span class="date-value">${formatDate(startDate)}</span>
+            </div>
+            
+            <div class="date-item">
+              <span class="date-label">${i18n.t('end_date') || 'پایان'}:</span>
+              <span class="date-value">${formatDate(endDate)}</span>
+            </div>
+            ${totalDays > 0 ? `
+              <div class="date-item">
+                <span class="date-label">${i18n.t('days_remaining') || 'باقیمانده'}:</span>
+                <span class="date-value ${remainingDays < 0 ? 'overdue' : ''}">${remainingDays > 0 ? remainingDays : 0}</span>
+              </div>
+            ` : ''}
+          </div>
+        </div>
+        
+        <!-- نوار پیشرفت -->
+        <div class="timeline-progress-container">
+          <div class="timeline-progress-bar">
+            <div class="timeline-progress-fill" style="width: ${progress}%;">
+              <span class="progress-tooltip">${progress}%</span>
+            </div>
+          </div>
+        </div>
+        
+        <!-- نقاط عطف -->
+        <div class="timeline-milestones-container">
+          <div class="milestones-timeline">
+            ${milestones.map((milestone, idx) => {
+              let statusClass = '';
+              let statusIcon = '';
+              if (milestone.status === 'completed') {
+                statusClass = 'completed';
+                statusIcon = '✓';
+              } else if (milestone.status === 'active') {
+                statusClass = 'active';
+                statusIcon = '●';
+              } else {
+                statusClass = 'pending';
+                statusIcon = '○';
+              }
+              
+              return `
+                <div class="timeline-milestone-item ${statusClass}" style="--milestone-index: ${idx};">
+                  <div class="milestone-connector"></div>
+                  <div class="milestone-node">
+                    <span class="milestone-icon">${statusIcon}</span>
+                  </div>
+                  <div class="milestone-info">
+                    <h4 class="milestone-title">${escapeHtml(milestone.title)}</h4>
+                    <p class="milestone-status">${getStatusText(milestone.status)}</p>
+                  </div>
+                </div>
+              `;
+            }).join('')}
+          </div>
+        </div>
+      </div>
+    `;
+  });
+  
+  projectsHtml += `</div>`;
+  
+  return projectsHtml;
 }
-
 // ============================================================
 // Messages Tab
 // ============================================================
@@ -534,14 +629,14 @@ function renderInvoicesTab(invoices) {
     <div class="invoice-card">
       <div class="invoice-status ${invoice.status === 'paid' ? 'paid' : 'pending'}"></div>
       <div class="invoice-info">
-        <h4>${escapeHtml(invoice.title || 'Invoice')}</h4>
+        <h4>${escapeHtml(invoice.invoice_number || invoice.title || 'Invoice')}</h4>
         <p>${escapeHtml(invoice.description || '')}</p>
         <span class="invoice-date">${i18n.t('issued') || 'Issued'}: ${new Date(invoice.created_at).toLocaleDateString()}</span>
       </div>
       <div class="invoice-amount">$${parseInt(invoice.amount || 0).toLocaleString()}</div>
       <div class="invoice-actions">
-        ${invoice.status === 'pending' ? `<button class="btn-pay">${i18n.t('pay_now') || 'Pay Now'}</button>` : ''}
-        <button class="btn-download" title="${i18n.t('download') || 'Download'}">
+        ${invoice.status === 'pending' ? `<button class="btn-pay" data-invoice-id="${invoice.id}">${i18n.t('pay_now') || 'Pay Now'}</button>` : ''}
+        <button class="btn-download" data-file-url="${invoice.file_url || ''}" title="${i18n.t('download') || 'Download'}">
           <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor">
             <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
             <polyline points="7 10 12 15 17 10"/>
@@ -588,6 +683,16 @@ function renderInvoicesTab(invoices) {
             <input type="file" id="invoiceFile" accept=".pdf,.jpg,.jpeg,.png" style="display: none;" />
             <button class="btn-browse" id="browseFileBtn">${i18n.t('browse_files') || 'Browse Files'}</button>
           </div>
+          
+          <div class="auth-input-group" style="margin-top: 15px;">
+            <label>${i18n.t('project_id') || 'Project ID'}</label>
+            <input type="text" id="invoiceProjectId" class="auth-input" placeholder="${i18n.t('enter_project_id') || 'Enter project ID'}" />
+          </div>
+          <div class="auth-input-group">
+            <label>${i18n.t('invoice_number') || 'Invoice Number'}</label>
+            <input type="text" id="invoiceNumber" class="auth-input" placeholder="INV-001" />
+          </div>
+          
           <div id="uploadProgress" style="display: none;">
             <div class="progress-bar">
               <div class="progress-fill" style="width: 0%;"></div>
@@ -708,7 +813,7 @@ function attachProfileEvents() {
     });
   });
   
-  // ===== Accordion for Projects (بعد از رندر تب Projects) =====
+  // ===== Accordion for Projects =====
   function initProjectsAccordion() {
     document.querySelectorAll('.project-accordion-header').forEach(header => {
       const newHeader = header.cloneNode(true);
@@ -732,7 +837,6 @@ function attachProfileEvents() {
     });
   }
   
-  // وقتی تب Projects کلیک شد، اکاردئون راه‌اندازی شود
   const projectsTab = document.querySelector('.nav-item[data-tab="projects"]');
   if (projectsTab) {
     projectsTab.addEventListener('click', () => {
@@ -740,7 +844,6 @@ function attachProfileEvents() {
     });
   }
   
-  // همچنین هنگام لود اولیه اگر تب Projects فعال بود
   if (document.querySelector('.nav-item.active')?.getAttribute('data-tab') === 'projects') {
     setTimeout(() => initProjectsAccordion(), 200);
   }
@@ -780,34 +883,36 @@ function attachProfileEvents() {
     });
   }
   
-  // Update progress
-  const progressSlider = document.getElementById('progressSlider');
-  const sliderValue = document.getElementById('sliderValue');
-  const timelineProgressFill = document.getElementById('timelineProgressFill');
-  const timelineProgress = document.getElementById('timelineProgress');
-  const updateBtn = document.getElementById('updateProgressBtn');
-  
-  if (progressSlider) {
-    const newSlider = progressSlider.cloneNode(true);
-    progressSlider.parentNode.replaceChild(newSlider, progressSlider);
-    
-    newSlider.addEventListener('input', (e) => {
-      const val = e.target.value;
-      if (sliderValue) sliderValue.textContent = `${val}%`;
-      if (timelineProgressFill) timelineProgressFill.style.width = `${val}%`;
-      if (timelineProgress) timelineProgress.textContent = `${val}%`;
-    });
-  }
-  
-  if (updateBtn) {
+
+// Update progress button
+const updateBtn = document.getElementById('updateProgressBtn');
+if (updateBtn) {
     const newUpdateBtn = updateBtn.cloneNode(true);
     updateBtn.parentNode.replaceChild(newUpdateBtn, updateBtn);
     
-    newUpdateBtn.addEventListener('click', () => {
-      const val = progressSlider?.value || 0;
-      showToast(`${i18n.t('progress_updated') || 'Progress updated to'} ${val}%!`, 'success');
+    newUpdateBtn.addEventListener('click', async () => {
+        // ✅ متغیر progressSlider را از DOM بگیر
+        const progressSlider = document.getElementById('progressSlider');
+        const val = progressSlider?.value || 0;
+        
+        // پیدا کردن پروژه فعال
+        const projects = await getUserProjects();
+        const activeProject = projects?.find(p => p.status === 'active') || projects?.[0];
+        
+        if (activeProject && activeProject.id) {
+            const result = await updateProjectProgress(activeProject.id, val);
+            
+            if (result.success) {
+                showToast(`پیشرفت پروژه به ${val}% به‌روزرسانی شد!`, 'success');
+                setTimeout(() => window.location.reload(), 1500);
+            } else {
+                showToast(result.error || 'خطا در به‌روزرسانی', 'error');
+            }
+        } else {
+            showToast('پروژه‌ای یافت نشد', 'error');
+        }
     });
-  }
+}
   
   // Save profile settings
   const saveBtn = document.getElementById('saveSettingsBtn');
@@ -893,15 +998,165 @@ function attachProfileEvents() {
     });
   }
   
+  // Upload Invoice
+  const uploadBtn = document.getElementById('uploadInvoiceBtn');
+  const uploadModal = document.getElementById('uploadInvoiceModal');
+  const browseBtn = document.getElementById('browseFileBtn');
+  const invoiceFile = document.getElementById('invoiceFile');
+  const uploadArea = document.getElementById('uploadArea');
+  const uploadProgress = document.getElementById('uploadProgress');
+  const confirmUploadBtn = document.getElementById('confirmUploadBtn');
+  let selectedFile = null;
+  
+  if (uploadBtn && uploadModal) {
+    const newUploadBtn = uploadBtn.cloneNode(true);
+    uploadBtn.parentNode.replaceChild(newUploadBtn, uploadBtn);
+    
+    newUploadBtn.addEventListener('click', () => {
+      uploadModal.style.display = 'flex';
+    });
+  }
+  
+  const modalClose = document.querySelectorAll('.modal-close, .btn-cancel');
+  modalClose.forEach(btn => {
+    const newBtn = btn.cloneNode(true);
+    btn.parentNode.replaceChild(newBtn, btn);
+    
+    newBtn.addEventListener('click', () => {
+      const modal = newBtn.closest('.modal');
+      if (modal) modal.style.display = 'none';
+    });
+  });
+  
+  if (browseBtn && invoiceFile) {
+    const newBrowseBtn = browseBtn.cloneNode(true);
+    browseBtn.parentNode.replaceChild(newBrowseBtn, browseBtn);
+    
+    newBrowseBtn.addEventListener('click', () => {
+      invoiceFile.click();
+    });
+    
+    invoiceFile.addEventListener('change', (e) => {
+      selectedFile = e.target.files[0];
+      const projectId = document.getElementById('invoiceProjectId')?.value.trim();
+      const invoiceNumber = document.getElementById('invoiceNumber')?.value.trim();
+      
+      if (selectedFile && projectId && invoiceNumber && confirmUploadBtn) {
+        confirmUploadBtn.disabled = false;
+      } else if (confirmUploadBtn) {
+        confirmUploadBtn.disabled = true;
+      }
+    });
+    
+    const projectIdInput = document.getElementById('invoiceProjectId');
+    const invoiceNumberInput = document.getElementById('invoiceNumber');
+    
+    if (projectIdInput && invoiceNumberInput) {
+      const checkFields = () => {
+        const hasProjectId = projectIdInput.value.trim();
+        const hasInvoiceNumber = invoiceNumberInput.value.trim();
+        if (selectedFile && hasProjectId && hasInvoiceNumber && confirmUploadBtn) {
+          confirmUploadBtn.disabled = false;
+        } else if (confirmUploadBtn) {
+          confirmUploadBtn.disabled = true;
+        }
+      };
+      
+      projectIdInput.addEventListener('input', checkFields);
+      invoiceNumberInput.addEventListener('input', checkFields);
+    }
+    
+    if (uploadArea) {
+      uploadArea.addEventListener('dragover', (e) => {
+        e.preventDefault();
+        uploadArea.classList.add('dragover');
+      });
+      
+      uploadArea.addEventListener('dragleave', () => {
+        uploadArea.classList.remove('dragover');
+      });
+      
+      uploadArea.addEventListener('drop', (e) => {
+        e.preventDefault();
+        uploadArea.classList.remove('dragover');
+        selectedFile = e.dataTransfer.files[0];
+        const projectId = document.getElementById('invoiceProjectId')?.value.trim();
+        const invoiceNumber = document.getElementById('invoiceNumber')?.value.trim();
+        
+        if (selectedFile && projectId && invoiceNumber && confirmUploadBtn) {
+          confirmUploadBtn.disabled = false;
+        } else if (confirmUploadBtn) {
+          confirmUploadBtn.disabled = true;
+        }
+      });
+    }
+  }
+  
+  if (confirmUploadBtn) {
+    const newConfirmBtn = confirmUploadBtn.cloneNode(true);
+    confirmUploadBtn.parentNode.replaceChild(newConfirmBtn, confirmUploadBtn);
+    
+    newConfirmBtn.addEventListener('click', async () => {
+      const projectId = document.getElementById('invoiceProjectId')?.value.trim();
+      const invoiceNumber = document.getElementById('invoiceNumber')?.value.trim();
+      
+      if (!projectId) {
+        showToast('لطفاً Project ID را وارد کنید', 'error');
+        return;
+      }
+      
+      if (!invoiceNumber) {
+        showToast('لطفاً شماره فاکتور را وارد کنید', 'error');
+        return;
+      }
+      
+      if (!selectedFile) {
+        showToast('لطفاً فایل را انتخاب کنید', 'error');
+        return;
+      }
+      
+      if (uploadArea) uploadArea.style.display = 'none';
+      if (uploadProgress) uploadProgress.style.display = 'block';
+      
+      newConfirmBtn.disabled = true;
+      
+      const result = await uploadInvoice(projectId, invoiceNumber, selectedFile);
+      
+      if (result.success) {
+        showToast('فاکتور با موفقیت آپلود شد!', 'success');
+        
+        const modal = newConfirmBtn.closest('.modal');
+        if (modal) modal.style.display = 'none';
+        
+        if (uploadArea) uploadArea.style.display = 'flex';
+        if (uploadProgress) uploadProgress.style.display = 'none';
+        
+        document.getElementById('invoiceProjectId').value = '';
+        document.getElementById('invoiceNumber').value = '';
+        selectedFile = null;
+        
+        setTimeout(() => {
+          window.location.reload();
+        }, 1500);
+      } else {
+        showToast(result.error || 'آپلود فاکتور ناموفق بود', 'error');
+        if (uploadArea) uploadArea.style.display = 'flex';
+        if (uploadProgress) uploadProgress.style.display = 'none';
+      }
+      
+      newConfirmBtn.disabled = false;
+    });
+  }
+  
   // Message panel
   const newMessageBtn = document.getElementById('newMessageBtn');
   const newMessageModal = document.getElementById('newMessageModal');
   
   if (newMessageBtn && newMessageModal) {
-    const newBtn = newMessageBtn.cloneNode(true);
-    newMessageBtn.parentNode.replaceChild(newBtn, newMessageBtn);
+    const newMsgBtn = newMessageBtn.cloneNode(true);
+    newMessageBtn.parentNode.replaceChild(newMsgBtn, newMessageBtn);
     
-    newBtn.addEventListener('click', () => {
+    newMsgBtn.addEventListener('click', () => {
       newMessageModal.style.display = 'flex';
     });
   }
@@ -918,19 +1173,6 @@ function attachProfileEvents() {
     });
   }
   
-  // Modal close
-  const modalClose = document.querySelectorAll('.modal-close, .btn-cancel');
-  modalClose.forEach(btn => {
-    const newBtn = btn.cloneNode(true);
-    btn.parentNode.replaceChild(newBtn, btn);
-    
-    newBtn.addEventListener('click', () => {
-      const modal = newBtn.closest('.modal');
-      if (modal) modal.style.display = 'none';
-    });
-  });
-  
-  // Message panel conversation
   const messageItems = document.querySelectorAll('.message-item');
   const messagesList = document.getElementById('messagesList');
   const messagePanel = document.getElementById('messagePanel');
@@ -988,6 +1230,22 @@ function attachProfileEvents() {
     });
   });
   
+  // Download buttons
+  const downloadBtns = document.querySelectorAll('.btn-download');
+  downloadBtns.forEach(btn => {
+    const newBtn = btn.cloneNode(true);
+    btn.parentNode.replaceChild(newBtn, btn);
+    
+    newBtn.addEventListener('click', () => {
+      const fileUrl = newBtn.getAttribute('data-file-url');
+      if (fileUrl) {
+        window.open(fileUrl, '_blank');
+      } else {
+        showToast('فایل موجود نیست', 'error');
+      }
+    });
+  });
+  
   // Delete account
   const deleteBtn = document.getElementById('deleteAccountBtn');
   if (deleteBtn) {
@@ -1000,98 +1258,9 @@ function attachProfileEvents() {
       }
     });
   }
-  
-  // Upload invoice modal
-  const uploadBtn = document.getElementById('uploadInvoiceBtn');
-  const uploadModal = document.getElementById('uploadInvoiceModal');
-  
-  if (uploadBtn && uploadModal) {
-    const newUploadBtn = uploadBtn.cloneNode(true);
-    uploadBtn.parentNode.replaceChild(newUploadBtn, uploadBtn);
-    
-    newUploadBtn.addEventListener('click', () => {
-      uploadModal.style.display = 'flex';
-    });
-  }
-  
-  // File upload handling
-  const browseBtn = document.getElementById('browseFileBtn');
-  const invoiceFile = document.getElementById('invoiceFile');
-  const uploadArea = document.getElementById('uploadArea');
-  const uploadProgress = document.getElementById('uploadProgress');
-  const confirmUploadBtn = document.getElementById('confirmUploadBtn');
-  let selectedFile = null;
-  
-  if (browseBtn && invoiceFile) {
-    const newBrowseBtn = browseBtn.cloneNode(true);
-    browseBtn.parentNode.replaceChild(newBrowseBtn, browseBtn);
-    
-    newBrowseBtn.addEventListener('click', () => {
-      invoiceFile.click();
-    });
-    
-    invoiceFile.addEventListener('change', (e) => {
-      selectedFile = e.target.files[0];
-      if (selectedFile && confirmUploadBtn) {
-        confirmUploadBtn.disabled = false;
-      }
-    });
-    
-    if (uploadArea) {
-      uploadArea.addEventListener('dragover', (e) => {
-        e.preventDefault();
-        uploadArea.classList.add('dragover');
-      });
-      
-      uploadArea.addEventListener('dragleave', () => {
-        uploadArea.classList.remove('dragover');
-      });
-      
-      uploadArea.addEventListener('drop', (e) => {
-        e.preventDefault();
-        uploadArea.classList.remove('dragover');
-        selectedFile = e.dataTransfer.files[0];
-        if (selectedFile && confirmUploadBtn) {
-          confirmUploadBtn.disabled = false;
-        }
-      });
-    }
-  }
-  
-  if (confirmUploadBtn) {
-    const newConfirmBtn = confirmUploadBtn.cloneNode(true);
-    confirmUploadBtn.parentNode.replaceChild(newConfirmBtn, confirmUploadBtn);
-    
-    newConfirmBtn.addEventListener('click', () => {
-      if (selectedFile) {
-        if (uploadArea) uploadArea.style.display = 'none';
-        if (uploadProgress) uploadProgress.style.display = 'block';
-        
-        let progress = 0;
-        const interval = setInterval(() => {
-          progress += 10;
-          const fill = document.querySelector('#uploadProgress .progress-fill');
-          if (fill) fill.style.width = `${progress}%`;
-          
-          if (progress >= 100) {
-            clearInterval(interval);
-            setTimeout(() => {
-              if (uploadModal) uploadModal.style.display = 'none';
-              if (uploadArea) uploadArea.style.display = 'flex';
-              if (uploadProgress) uploadProgress.style.display = 'none';
-              selectedFile = null;
-              if (confirmUploadBtn) confirmUploadBtn.disabled = true;
-              showToast('Invoice uploaded successfully!', 'success');
-            }, 500);
-          }
-        }, 200);
-      }
-    });
-  }
 }
 
 function showToast(message, type = 'info') {
-  // حذف توست قبلی اگر وجود داشت
   const existingToast = document.querySelector('.toast-message');
   if (existingToast) existingToast.remove();
   
@@ -1116,3 +1285,41 @@ function escapeHtml(text) {
   div.textContent = text;
   return div.innerHTML;
 }
+// ============================================================
+// تنظیمات و render functions قبلی...
+// ============================================================
+
+// ... (renderDashboard, renderProjectsTab, renderTimelineTab, renderMessagesTab, renderInvoicesTab, renderSettingsTab)
+
+// ============================================================
+// توابع کمکی برای Timeline
+// ============================================================
+
+function formatDate(dateString) {
+  if (!dateString || dateString === 'نامشخص' || dateString === 'undefined') return 'نامشخص';
+  try {
+    const date = new Date(dateString);
+    if (isNaN(date.getTime())) return 'نامشخص';
+    return date.toLocaleDateString('fa-IR');
+  } catch (e) {
+    return 'نامشخص';
+  }
+}
+
+function getCurrentPhase(milestones) {
+  if (!milestones || milestones.length === 0) return '';
+  const activeMilestone = milestones.find(m => m.status === 'active');
+  if (activeMilestone) return activeMilestone.title;
+  const completedMilestones = milestones.filter(m => m.status === 'completed');
+  if (completedMilestones.length === milestones.length) return i18n.t('completed') || 'تکمیل شده';
+  return milestones[0]?.title || '';
+}
+
+function getStatusText(status) {
+  switch(status) {
+    case 'completed': return i18n.t('completed') || 'تکمیل شده';
+    case 'active': return i18n.t('in_progress') || 'در حال انجام';
+    default: return i18n.t('pending') || 'در انتظار';
+  }
+}
+
