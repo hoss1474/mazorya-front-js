@@ -7,10 +7,10 @@ import { i18n } from './i18n.js';
 // ============================================================
 
 // برای سرور آنلاین
-// const API_BASE = 'https://api.cardifygroup.com/api';
+const API_BASE = 'https://api.cardifygroup.com/api';
 
 // برای لوکال (توسعه) - در زمان توسعه کامنت را بردار
-const API_BASE = 'http://127.0.0.1:8000/api';
+// const API_BASE = 'http://127.0.0.1:8000/api';
 
 // ============================================================
 
@@ -416,30 +416,30 @@ export async function updateProjectProgress(projectId, progress) {
 // 📝 پروژه‌های عمومی (بدون توکن)
 // ============================================================
 
-async function fetchAPI(endpoint, params = {}) {
-    const lang = i18n.getCurrentLanguage();
-    const queryParams = new URLSearchParams({ lang, ...params });
-    const url = `${API_BASE}${endpoint}?${queryParams}`;
+// async function fetchAPI(endpoint, params = {}) {
+//     const lang = i18n.getCurrentLanguage();
+//     const queryParams = new URLSearchParams({ lang, ...params });
+//     const url = `${API_BASE}${endpoint}?${queryParams}`;
     
-    const cacheKey = `${endpoint}_${lang}_${JSON.stringify(params)}`;
-    if (cache.has(cacheKey)) {
-        return cache.get(cacheKey);
-    }
+//     const cacheKey = `${endpoint}_${lang}_${JSON.stringify(params)}`;
+//     if (cache.has(cacheKey)) {
+//         return cache.get(cacheKey);
+//     }
     
-    try {
-        const response = await fetch(url);
-        if (!response.ok) throw new Error(`API Error: ${response.status}`);
-        const data = await response.json();
+//     try {
+//         const response = await fetch(url);
+//         if (!response.ok) throw new Error(`API Error: ${response.status}`);
+//         const data = await response.json();
         
-        cache.set(cacheKey, data);
-        setTimeout(() => cache.delete(cacheKey), 5 * 60 * 1000);
+//         cache.set(cacheKey, data);
+//         setTimeout(() => cache.delete(cacheKey), 5 * 60 * 1000);
         
-        return data;
-    } catch (error) {
-        console.error('API Fetch Error:', error);
-        return null;
-    }
-}
+//         return data;
+//     } catch (error) {
+//         console.error('API Fetch Error:', error);
+//         return null;
+//     }
+// }
 
 async function loadInitialData() {
     if (!window.appState.data) {
