@@ -567,7 +567,7 @@ async function subscribeNewsletter(email) {
 
 export {
     // عمومی
-    fetchAPI,
+    // fetchAPI,
     loadInitialData,
     getProjects,
     getProjectBySlug,
