@@ -16,11 +16,6 @@ import {
   uploadInvoice
 } from '../core/api.js';
 
-// ============================================================
-// ⚡ تنظیمات آدرس API
-// ============================================================
-const API_BASE = 'https://api.cardifygroup.com/api';
-
 // وضعیت سایدبار (باز/بسته در موبایل)
 let mobileMenuOpen = false;
 
@@ -153,7 +148,7 @@ try {
                   <circle cx="12" cy="13" r="4"/>
                 </svg>
               </label>
-              <input type="file" id="avatarUpload" accept="image/*" style="display: none;" />
+               <input type="file" id="avatarUpload" accept="image/*" style="display: none;" />
             </div>
             <h3 id="profileName">${escapeHtml(userName)}</h3>
             <p id="profileEmail">${escapeHtml(userEmail)}</p>
