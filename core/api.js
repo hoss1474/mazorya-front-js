@@ -1,16 +1,28 @@
-// core/api.js - نسخه نهایی با دیباگ کامل
+// core/api.js - نسخه نهایی با تشخیص خودکار محیط
 
 import { i18n } from './i18n.js';
 
 // ============================================================
-// ⚡ تنظیمات آدرس API
+// ⚡ تشخیص خودکار محیط (محلی یا آنلاین)
 // ============================================================
 
-// برای سرور آنلاین (در زمان دیپلوی فعال کنید)
-// const API_BASE = 'https://api.cardifygroup.com/api';
+const isLocal = window.location.hostname === 'localhost' || 
+                window.location.hostname === '127.0.0.1' ||
+                window.location.hostname === '0.0.0.0' ||
+                window.location.hostname.includes('192.168.') ||
+                window.location.hostname.includes('10.') ||
+                window.location.hostname.includes('172.');
 
-// برای لوکال (توسعه)
-const API_BASE = 'http://127.0.0.1:8000/api';
+// ============================================================
+// 🌐 تنظیم آدرس API بر اساس محیط
+// ============================================================
+
+const API_BASE = isLocal 
+    ? 'http://127.0.0.1:8000/api'  // محیط محلی
+    : 'https://api.cardifygroup.com/api';  // محیط آنلاین
+
+console.log(`🌍 Environment: ${isLocal ? 'LOCAL' : 'PRODUCTION'}`);
+console.log(`🔗 API Base URL: ${API_BASE}`);
 
 // ============================================================
 
@@ -22,9 +34,8 @@ const cache = new Map();
 
 export function getAuthToken() {
     const token = localStorage.getItem('auth_token');
-    console.log('🔑 GetAuthToken - Token exists:', !!token);
     if (token) {
-        console.log('🔑 Token first 20 chars:', token.substring(0, 20) + '...');
+        console.log('🔑 Token found');
     }
     return token;
 }
@@ -34,19 +45,16 @@ export function isAuthenticated() {
     const expiresAt = localStorage.getItem('token_expires_at');
     
     if (!token) {
-        console.log('❌ isAuthenticated: No token');
         return false;
     }
     
     if (expiresAt && Date.now() > parseInt(expiresAt)) {
-        console.log('⏰ isAuthenticated: Token expired');
         localStorage.removeItem('auth_token');
         localStorage.removeItem('user_data');
         localStorage.removeItem('token_expires_at');
         return false;
     }
     
-    console.log('✅ isAuthenticated: User is authenticated');
     return true;
 }
 
@@ -54,12 +62,9 @@ export function getUserData() {
     try {
         const userDataStr = localStorage.getItem('user_data');
         if (userDataStr && userDataStr !== 'undefined' && userDataStr !== 'null') {
-            const userData = JSON.parse(userDataStr);
-            console.log('👤 getUserData:', userData);
-            return userData;
+            return JSON.parse(userDataStr);
         }
     } catch (e) {
-        console.error('Parse user data error:', e);
         localStorage.removeItem('user_data');
     }
     return null;
@@ -84,119 +89,61 @@ export async function logoutUser() {
         localStorage.removeItem('user_data');
         localStorage.removeItem('token_expires_at');
     }
-    console.log('✅ User logged out');
     window.location.href = '/';
     return { success: true };
 }
 
 // ============================================================
-// 🚀 لاگین کاربر - نسخه دیباگ کامل
+// 🚀 لاگین کاربر
 // ============================================================
 
 export async function loginUser(email, password, rememberMe = false) {
-    console.log('=== 🚀 LOGIN FUNCTION STARTED ===');
+    console.log('=== 🚀 LOGIN ===');
     console.log('📧 Email:', email);
-    console.log('🔗 API_BASE:', API_BASE);
-    console.log('📍 Full URL:', `${API_BASE}/auth/login`);
+    console.log('🔗 API:', API_BASE);
     
     try {
-        const requestBody = JSON.stringify({ email, password });
-        console.log('📦 Request body:', requestBody);
-        
         const response = await fetch(`${API_BASE}/auth/login`, {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
-                'Accept': 'application/json',
-                'X-Requested-With': 'XMLHttpRequest'
+                'Accept': 'application/json'
             },
-            body: requestBody
+            body: JSON.stringify({ email, password })
         });
         
         console.log('📡 Response status:', response.status);
-        console.log('📡 Response status text:', response.statusText);
-        console.log('📡 Response OK?', response.ok);
-        
-        // لاگ کردن هدرهای response
-        console.log('📡 Response headers:', {
-            contentType: response.headers.get('content-type'),
-            cors: response.headers.get('access-control-allow-origin')
-        });
         
         const data = await response.json();
         console.log('📦 Response data:', data);
-        console.log('📦 Data type:', typeof data);
-        console.log('📦 Data keys:', Object.keys(data));
         
-        // بررسی ساختار پاسخ (هر دو حالت status و is_status)
         const isSuccess = response.ok && (data.status === true || data.is_status === true);
         const hasToken = data.data?.access_token || data.access_token;
-        
-        console.log('🔍 Checking conditions:', {
-            responseOk: response.ok,
-            dataStatus: data.status,
-            dataIsStatus: data.is_status,
-            isSuccess: isSuccess,
-            hasToken: hasToken,
-            tokenValue: hasToken ? (data.data?.access_token || data.access_token)?.substring(0, 20) : null
-        });
         
         if (isSuccess && hasToken) {
             const token = data.data?.access_token || data.access_token;
             const user = data.data?.user || data.user;
             
-            console.log('💾 Saving token to localStorage...');
             localStorage.setItem('auth_token', token);
             localStorage.setItem('user_data', JSON.stringify(user));
             
-            // زمان انقضا (پیش‌فرض 2 ساعت)
             const expiresIn = (data.data?.expires_in || data.expires_in || 7200);
-            const expiresAt = Date.now() + (expiresIn * 1000);
-            localStorage.setItem('token_expires_at', expiresAt);
+            localStorage.setItem('token_expires_at', Date.now() + (expiresIn * 1000));
             
-            console.log('✅ Token saved successfully!');
-            console.log('✅ Token value:', token.substring(0, 30) + '...');
-            console.log('✅ User saved:', user);
-            console.log('✅ Expires at:', new Date(expiresAt));
-            
-            // بررسی اینکه توکن ذخیره شده یا نه
-            const savedToken = localStorage.getItem('auth_token');
-            console.log('🔍 Verification - Token in localStorage:', !!savedToken);
-            
-            return { 
-                success: true, 
-                user: user,
-                token: token
-            };
+            console.log('✅ Login successful');
+            return { success: true, user: user, token: token };
         }
         
-        console.log('❌ Login failed - conditions not met');
         return { 
             success: false, 
-            error: data.message || data.error || 'ورود ناموفق بود',
-            details: data
+            error: data.message || data.error || 'ورود ناموفق بود'
         };
         
     } catch (error) {
-        console.error('=== ❌ LOGIN ERROR ===');
-        console.error('Error name:', error.name);
-        console.error('Error message:', error.message);
-        console.error('Error stack:', error.stack);
-        
-        let errorMessage = 'خطا در ارتباط با سرور';
-        if (error.name === 'TypeError' && error.message.includes('Failed to fetch')) {
-            errorMessage = '❌ سرور در دسترس نیست. آیا سرور لاراول در حال اجراست؟';
-            console.error('Server is not running! Run: php artisan serve');
-        } else if (error.name === 'AbortError') {
-            errorMessage = '❌ درخواست timeout شد';
-        } else {
-            errorMessage = `❌ خطا: ${error.message}`;
-        }
-        
+        console.error('❌ Login error:', error);
         return { 
             success: false, 
-            error: errorMessage,
-            details: error.message
+            error: 'خطا در ارتباط با سرور'
         };
     }
 }
@@ -207,27 +154,19 @@ export async function loginUser(email, password, rememberMe = false) {
 
 export async function getUserProfile() {
     const token = getAuthToken();
-    if (!token) {
-        console.log('❌ getUserProfile: No token');
-        return null;
-    }
+    if (!token) return null;
     
     try {
-        console.log('📤 Fetching user profile...');
         const response = await fetch(`${API_BASE}/user/profile`, {
             method: 'GET',
             headers: {
                 'Authorization': `Bearer ${token}`,
-                'Content-Type': 'application/json',
-                'Accept': 'application/json'
+                'Content-Type': 'application/json'
             }
         });
         
-        console.log('📡 Profile response status:', response.status);
-        
         if (!response.ok) {
             if (response.status === 401) {
-                console.log('⚠️ Token expired or invalid');
                 localStorage.removeItem('auth_token');
                 localStorage.removeItem('user_data');
                 return null;
@@ -236,8 +175,6 @@ export async function getUserProfile() {
         }
         
         const data = await response.json();
-        console.log('📥 Profile data:', data);
-        
         if ((data.status || data.is_status) && data.data) {
             localStorage.setItem('user_data', JSON.stringify(data.data));
             return data.data;
@@ -287,9 +224,7 @@ export async function uploadAvatar(file) {
     try {
         const response = await fetch(`${API_BASE}/user/avatar`, {
             method: 'POST',
-            headers: {
-                'Authorization': `Bearer ${token}`
-            },
+            headers: { 'Authorization': `Bearer ${token}` },
             body: formData
         });
         
@@ -345,16 +280,11 @@ export async function forgotPassword(email) {
     try {
         const response = await fetch(`${API_BASE}/forgot-password`, {
             method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-                'Accept': 'application/json'
-            },
+            headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ email })
         });
         
         const data = await response.json();
-        console.log('📥 Forgot password response:', data);
-        
         return { success: response.ok, message: data.message };
     } catch (error) {
         console.error('Forgot password error:', error);
@@ -366,10 +296,7 @@ export async function resetPassword(email, code, password) {
     try {
         const response = await fetch(`${API_BASE}/reset-password`, {
             method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-                'Accept': 'application/json'
-            },
+            headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ 
                 email, 
                 code, 
@@ -379,8 +306,6 @@ export async function resetPassword(email, code, password) {
         });
         
         const data = await response.json();
-        console.log('📥 Reset password response:', data);
-        
         return { success: response.ok, message: data.message };
     } catch (error) {
         console.error('Reset password error:', error);
@@ -394,10 +319,7 @@ export async function resetPassword(email, code, password) {
 
 export async function getUserProjects() {
     const token = getAuthToken();
-    if (!token) {
-        console.log('❌ getUserProjects: No token');
-        return [];
-    }
+    if (!token) return [];
     
     try {
         const response = await fetch(`${API_BASE}/user/projects`, {
@@ -408,13 +330,8 @@ export async function getUserProjects() {
             }
         });
         
-        if (!response.ok) {
-            console.log('❌ getUserProjects failed:', response.status);
-            return [];
-        }
-        
+        if (!response.ok) return [];
         const data = await response.json();
-        console.log('📥 User projects:', data?.data?.length || 0, 'projects');
         return data?.data || [];
     } catch (error) {
         console.error('Get user projects error:', error);
@@ -437,8 +354,6 @@ export async function updateProjectProgress(projectId, progress) {
         });
         
         const data = await response.json();
-        console.log('📥 Update progress response:', data);
-        
         return { success: response.ok && (data.status || data.is_status), error: data.message };
     } catch (error) {
         console.error('Update project progress error:', error);
@@ -464,9 +379,7 @@ export async function getInvoices() {
         });
         
         if (!response.ok) return [];
-        
         const data = await response.json();
-        console.log('📥 Invoices:', data?.data?.length || 0, 'invoices');
         return data?.data || [];
     } catch (error) {
         console.error('Get invoices error:', error);
@@ -486,19 +399,14 @@ export async function uploadInvoice(projectId, invoiceNumber, file) {
     try {
         const response = await fetch(`${API_BASE}/user/invoices/upload`, {
             method: 'POST',
-            headers: {
-                'Authorization': `Bearer ${token}`
-            },
+            headers: { 'Authorization': `Bearer ${token}` },
             body: formData
         });
         
         const data = await response.json();
-        console.log('📥 Upload invoice response:', data);
-        
         if (response.ok && (data.status || data.is_status)) {
             return { success: true, invoice: data.data, message: data.message };
         }
-        
         return { success: false, error: data.message || 'Upload failed' };
     } catch (error) {
         console.error('Upload invoice error:', error);
@@ -517,7 +425,7 @@ async function fetchAPI(endpoint, params = {}) {
     
     const cacheKey = `${endpoint}_${lang}_${JSON.stringify(params)}`;
     if (cache.has(cacheKey)) {
-        console.log(`🔄 Using cached data for: ${endpoint}`);
+        console.log(`🔄 Using cached: ${endpoint}`);
         return cache.get(cacheKey);
     }
     
@@ -527,9 +435,7 @@ async function fetchAPI(endpoint, params = {}) {
         
         const response = await fetch(url, { 
             signal: controller.signal,
-            headers: {
-                'Accept': 'application/json'
-            }
+            headers: { 'Accept': 'application/json' }
         });
         clearTimeout(timeoutId);
         
@@ -562,18 +468,18 @@ export async function loadInitialData() {
         if (projectsData?.data) {
             window.appState.data.projects = projectsData.data.filter(p => p.is_active);
         }
-        
         if (blogsData?.data) {
             window.appState.data.blogs = blogsData.data.filter(b => b.is_active);
         }
-        
         if (servicesData?.data) {
             window.appState.data.services = servicesData.data;
         }
         
-        console.log('✅ Initial data loaded successfully');
+        console.log('✅ Initial data loaded');
+        return window.appState.data;
     } catch (error) {
         console.error('Failed to load initial data:', error);
+        return window.appState.data;
     }
 }
 
@@ -588,12 +494,7 @@ export async function getProjectBySlug(slug) {
     const url = `${API_BASE}/projects/${lang}/${slug}`;
     
     try {
-        const controller = new AbortController();
-        const timeoutId = setTimeout(() => controller.abort(), 10000);
-        
-        const response = await fetch(url, { signal: controller.signal });
-        clearTimeout(timeoutId);
-        
+        const response = await fetch(url);
         if (!response.ok) return null;
         const data = await response.json();
         return data?.data || null;
@@ -612,12 +513,7 @@ export async function getBlogs(limit = null) {
 export async function getBlogById(id) {
     const url = `${API_BASE}/blogs/${id}`;
     try {
-        const controller = new AbortController();
-        const timeoutId = setTimeout(() => controller.abort(), 10000);
-        
-        const response = await fetch(url, { signal: controller.signal });
-        clearTimeout(timeoutId);
-        
+        const response = await fetch(url);
         if (!response.ok) return null;
         const data = await response.json();
         return data?.data || null;
@@ -637,12 +533,7 @@ export async function getServiceBySlug(slug) {
     const url = `${API_BASE}/Services/${lang}/${slug}`;
     
     try {
-        const controller = new AbortController();
-        const timeoutId = setTimeout(() => controller.abort(), 10000);
-        
-        const response = await fetch(url, { signal: controller.signal });
-        clearTimeout(timeoutId);
-        
+        const response = await fetch(url);
         if (!response.ok) return null;
         const data = await response.json();
         return data?.data || null;
@@ -662,7 +553,6 @@ export async function submitContactForm(formData) {
         });
         
         const data = await response.json();
-        
         if (!response.ok) throw new Error(data.message || 'Server error');
         return { success: true, message: data.message };
     } catch (error) {
