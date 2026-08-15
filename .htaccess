@@ -1,59 +1,16 @@
-# ============================================================
-# CORS Headers - حل مشکل CORS
-# ============================================================
-<IfModule mod_headers.c>
-    # اجازه دسترسی از همه دامنه‌ها
-    Header set Access-Control-Allow-Origin "*"
-    Header set Access-Control-Allow-Methods "GET, POST, PUT, DELETE, OPTIONS"
-    Header set Access-Control-Allow-Headers "Origin, X-Requested-With, Content-Type, Accept, Authorization"
-    Header set Access-Control-Allow-Credentials "true"
-    
-    # تنظیم MIME types برای فایل‌های مختلف
-    <FilesMatch "\.(json)$">
-        Header set Content-Type "application/json; charset=utf-8"
-        Header set Cache-Control "public, max-age=3600"
-    </FilesMatch>
-    
-    <FilesMatch "\.(svg|png|jpg|jpeg|gif|ico|webp)$">
-        Header set Cache-Control "public, max-age=31536000, immutable"
-    </FilesMatch>
-    
-    <FilesMatch "\.(css|js)$">
-        Header set Cache-Control "public, max-age=86400"
-    </FilesMatch>
-</IfModule>
-
-# ============================================================
-# Rewrite Rules - برای SPA
-# ============================================================
 <IfModule mod_rewrite.c>
-    RewriteEngine On
-    RewriteBase /
-    
-    # 1. فایل‌های استاتیک رو مستقیم سرو کن (اجازه نده به index.html برن)
-    RewriteRule \.(json|ico|png|jpg|jpeg|gif|svg|js|css|woff|woff2|ttf|eot|mp4|webm|pdf|webp|xml|txt)$ - [L]
-    
-    # 2. اگر فایل یا پوشه وجود داره، سرو کن
-    RewriteCond %{REQUEST_FILENAME} -f [OR]
-    RewriteCond %{REQUEST_FILENAME} -d
-    RewriteRule ^ - [L]
-    
-    # 3. بقیه درخواست‌ها رو به index.html هدایت کن (برای روتینگ SPA)
-    RewriteRule ^ index.html [L]
+  RewriteEngine On
+  RewriteBase /
+  
+  # اگر فایل یا پوشه وجود دارد، مستقیماً سرو کن
+  RewriteCond %{REQUEST_FILENAME} !-f
+  RewriteCond %{REQUEST_FILENAME} !-d
+  
+  # بقیه درخواست‌ها را به index.html هدایت کن
+  RewriteRule . /index.html [L]
 </IfModule>
 
-# ============================================================
-# Proxy برای API (اگر API روی هاست دیگه‌ایه)
-# ============================================================
-# اگر API روی localhost:8000 هست، این رو فعال کن
-# <IfModule mod_proxy.c>
-#     ProxyPass /api/ http://127.0.0.1:8000/api/
-#     ProxyPassReverse /api/ http://127.0.0.1:8000/api/
-# </IfModule>
-
-# جلوگیری از لیست شدن دایرکتوری‌ها
-Options -Indexes
-
-# Error Documents
-ErrorDocument 404 /index.html
-ErrorDocument 403 /index.html
+# فعال کردن CORS (اختیاری)
+<IfModule mod_headers.c>
+  Header set Access-Control-Allow-Origin "*"
+</IfModule>
