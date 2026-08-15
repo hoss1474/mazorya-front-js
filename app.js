@@ -110,7 +110,7 @@ async function init() {
     // 1. تشخیص زبان از URL
     const path = window.location.pathname;
     const match = path.match(/^\/([a-z]{2})\//);
-    const lang = match ? match[1] : 'en';
+    const lang = match ? match[1] : 'fa';
 
     // 2. تنظیم زبان
     await i18n.setLanguage(lang);

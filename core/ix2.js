@@ -16,7 +16,7 @@ const IX2_DATA = {
 
 let isIX2Initialized = false;
 let retryCount = 0;
-const MAX_RETRIES = 30;
+const MAX_RETRIES = 10; // کاهش از 30 به 10
 
 // سیستم ساده انیمیشن برای جایگزینی IX2
 class SimpleIX2 {
@@ -24,13 +24,23 @@ class SimpleIX2 {
     this.data = data;
     this.animations = [];
     this.observers = [];
+    this._initialized = false;
   }
   
   init(data) {
-    console.log('🎬 Simple IX2 initialized with data:', data);
+    if (this._initialized) return this;
+    
+    console.log('🎬 Simple IX2 initializing...');
     this.data = data || this.data;
-    this.setupScrollAnimations();
-    this.setupInteractionAnimations();
+    
+    // تاخیر کوتاه برای اطمینان از رندر DOM
+    setTimeout(() => {
+      this.setupScrollAnimations();
+      this.setupInteractionAnimations();
+      this._initialized = true;
+      console.log('✅ Simple IX2 initialized successfully');
+    }, 300);
+    
     return this;
   }
   
@@ -43,6 +53,7 @@ class SimpleIX2 {
     });
     this.animations = [];
     this.observers = [];
+    this._initialized = false;
     console.log('🛑 Simple IX2 destroyed');
   }
   
@@ -106,27 +117,56 @@ class SimpleIX2 {
       });
     });
   }
+  
+  // متدهای سازگاری با Webflow IX2
+  initAction(actionListId, elementId, eventType, actionType) {
+    console.log('🎯 IX2 Action:', { actionListId, elementId, eventType, actionType });
+    return this;
+  }
+  
+  ready(callback) {
+    if (this._initialized) {
+      callback();
+    } else {
+      setTimeout(() => this.ready(callback), 100);
+    }
+    return this;
+  }
 }
 
 const simpleIX2 = new SimpleIX2();
 
+// ============================================================
 // تابع اصلی که جایگزین Webflow.require('ix2') می‌شه
+// ============================================================
 export function initIX2() {
-  if (isIX2Initialized) return;
+  // اگر قبلاً مقداردهی شده، برگرد
+  if (isIX2Initialized) {
+    console.log('ℹ️ IX2 already initialized');
+    return;
+  }
+  
+  // اگر بیش از حداکثر تلاش
   if (retryCount >= MAX_RETRIES) {
-    console.error('❌ Failed to load IX2 after maximum retries');
+    console.warn('⚠️ Max retries reached, forcing initialization...');
+    forceInitIX2();
     return;
   }
   
   retryCount++;
   
-  // صبر برای لود شدن کامل DOM
-  if (document.readyState !== 'complete') {
+  // اگر DOM آماده نیست، منتظر بمان
+  if (document.readyState !== 'complete' && document.readyState !== 'interactive') {
     console.warn(`⏳ Waiting for DOM... (${retryCount}/${MAX_RETRIES})`);
-    setTimeout(initIX2, 200);
+    setTimeout(initIX2, 300);
     return;
   }
   
+  // مقداردهی نهایی
+  forceInitIX2();
+}
+
+function forceInitIX2() {
   try {
     // از سیستم ساده استفاده کن
     simpleIX2.init(IX2_DATA);
@@ -139,7 +179,8 @@ export function initIX2() {
     
   } catch (err) {
     console.error('❌ IX2 init error:', err);
-    setTimeout(initIX2, 500);
+    // اگر ارور داشت، باز هم علامت بزن که مقداردهی شده
+    isIX2Initialized = true;
   }
 }
 
@@ -155,19 +196,27 @@ export function destroyIX2() {
 
 export function checkWebflowStatus() {
   console.log('🔍 IX2 Status Check:');
-  console.log('- DOM Ready:', document.readyState === 'complete' ? '✅' : '⏳');
+  console.log('- DOM Ready:', document.readyState);
   console.log('- IX2 Initialized:', isIX2Initialized ? '✅' : '❌');
-  console.log('- SimpleIX2 Active:', simpleIX2 ? '✅' : '❌');
+  console.log('- SimpleIX2 Active:', simpleIX2._initialized ? '✅' : '❌');
 }
 
-// اجرای خودکار
+// ============================================================
+// اجرای خودکار با مدیریت بهتر
+// ============================================================
 if (document.readyState === 'loading') {
   document.addEventListener('DOMContentLoaded', () => {
-    setTimeout(initIX2, 100);
+    setTimeout(initIX2, 200);
   });
 } else {
+  // اگر DOM از قبل آماده است، با تاخیر کم اجرا کن
   setTimeout(initIX2, 100);
 }
+
+// همچنین اجرا بعد از کامل شدن کامل صفحه
+window.addEventListener('load', () => {
+  setTimeout(initIX2, 100);
+});
 
 // Export پیش‌فرض برای سازگاری
 export default { initIX2, destroyIX2, checkWebflowStatus };

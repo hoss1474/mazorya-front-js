@@ -2,15 +2,56 @@
   RewriteEngine On
   RewriteBase /
   
-  # اگر فایل یا پوشه وجود دارد، مستقیماً سرو کن
-  RewriteCond %{REQUEST_FILENAME} !-f
-  RewriteCond %{REQUEST_FILENAME} !-d
+  # ============================================================
+  # اجازه دسترسی به فایل‌های استاتیک (JSON, assets, etc.)
+  # ============================================================
+  RewriteRule \.(json|ico|png|jpg|jpeg|gif|svg|js|css|woff|woff2|ttf|eot|mp4|webm|pdf)$ - [L]
   
-  # بقیه درخواست‌ها را به index.html هدایت کن
-  RewriteRule . /index.html [L]
+  # ============================================================
+  # اگر فایل یا پوشه وجود دارد، مستقیماً سرو کن
+  # ============================================================
+  RewriteCond %{REQUEST_FILENAME} -f [OR]
+  RewriteCond %{REQUEST_FILENAME} -d
+  RewriteRule ^ - [L]
+  
+  # ============================================================
+  # بقیه درخواست‌ها را به index.html هدایت کن (برای SPA)
+  # ============================================================
+  RewriteRule ^ index.html [L]
 </IfModule>
 
-# فعال کردن CORS (اختیاری)
+# ============================================================
+# فعال کردن CORS و تنظیم MIME types
+# ============================================================
 <IfModule mod_headers.c>
   Header set Access-Control-Allow-Origin "*"
+  Header set Access-Control-Allow-Methods "GET, POST, OPTIONS"
+  Header set Access-Control-Allow-Headers "Origin, X-Requested-With, Content-Type, Accept"
+  
+  # تنظیم MIME type برای JSON
+  <FilesMatch "\.(json)$">
+    Header set Content-Type "application/json; charset=utf-8"
+    Header set Cache-Control "public, max-age=3600"
+  </FilesMatch>
+  
+  # تنظیم MIME type برای JS
+  <FilesMatch "\.(js)$">
+    Header set Content-Type "application/javascript; charset=utf-8"
+  </FilesMatch>
+  
+  # تنظیم MIME type برای CSS
+  <FilesMatch "\.(css)$">
+    Header set Content-Type "text/css; charset=utf-8"
+  </FilesMatch>
 </IfModule>
+
+# ============================================================
+# جلوگیری از لیست شدن دایرکتوری‌ها
+# ============================================================
+Options -Indexes
+
+# ============================================================
+# تنظیم Error Documents
+# ============================================================
+ErrorDocument 404 /index.html
+ErrorDocument 403 /index.html
