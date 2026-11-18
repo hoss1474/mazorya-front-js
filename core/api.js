@@ -6,7 +6,7 @@ import { i18n } from './i18n.js';
 // ⚡ تنظیمات آدرس API - استفاده از متغیر محیطی
 // ============================================================
 
-const API_BASE = import.meta.env.VITE_API_URL || 'https://api.mazoryagroup.ir/api';
+const API_BASE = 'https://api.mazoryagroup.com/api';
 
 // ============================================================
 // 📦 State Management - جایگزین window.appState
