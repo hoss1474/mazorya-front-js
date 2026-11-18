@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<html lang="en" dir="ltr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Mazorya Group</title>
+  
+  <!-- CSS -->
+  
+  <!-- Fonts -->
+  <link href="https://fonts.googleapis.com" rel="preconnect">
+  <link href="https://fonts.gstatic.com" rel="preconnect" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Ubuntu:wght@300;400;500;700&family=Syne:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  
+  <!-- Lottie -->
+  <script src="https://unpkg.com/@lottiefiles/lottie-player@latest/dist/lottie-player.js"></script>
+  
+  <!-- Favicon -->
+  <link href="/assets/1-C6Rh-nJn.png" rel="shortcut icon">
+  <link href="/assets/1-C6Rh-nJn.png" rel="apple-touch-icon">
+
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: 'Ubuntu', sans-serif;
+      overflow-x: hidden;
+    }
+
+    h1, h2, h3, h4, h5, h6 {
+      font-family: 'Syne', sans-serif;
+    }
+
+    /* RTL Support */
+    body[dir="rtl"] {
+      direction: rtl;
+      text-align: right;
+    }
+
+    body[dir="ltr"] {
+      direction: ltr;
+      text-align: left;
+    }
+
+    /* Loading Spinner (موقتی - قبل از لود شدن app.js) */
+    #app {
+      min-height: 100vh;
+    }
+
+    .loading-spinner {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: 100vh;
+      font-size: 1.2rem;
+      color: #ff6b6b;
+      background: linear-gradient(135deg, #0f0f1a 0%, #1a1a2e 50%, #16213e 100%);
+      margin: 0;
+      padding: 0;
+    }
+
+    /* Container */
+    .container-regular {
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 0 20px;
+    }
+
+    .align-center {
+      text-align: center;
+    }
+  </style>
+  <script type="module" crossorigin src="/assets/index-OOzpxp90.js"></script>
+  <link rel="stylesheet" crossorigin href="/assets/index-zk7l-9C3.css">
+</head>
+<body>
+  <div id="app">
+    <div class="loading-spinner">
+      <div class="simple-loader">
+        <div class="simple-loader-ring"></div>
+        <div class="simple-loader-logo"></div>
+      </div>
+    </div>
+  </div>
+  
+  <!-- jQuery (نیاز Webflow) -->
+  <script src="https://code.jquery.com/jquery-3.5.1.min.js"></script>
+  
+  <!-- Webflow Core Libraries - CDN درست -->
+  <script src="https://cdn.jsdelivr.net/npm/webflow@2.0.0/dist/webflow.min.js"></script>
+  
+  <!-- Main App -->
+</body>
+</html>

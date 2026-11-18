@@ -6,9 +6,15 @@ let currentLang = 'en';
 let translations = {};
 const cache = {};
 
+/**
+ * Load language JSON file
+ */
 async function loadLanguage(lang) {
-  if (!SUPPORTED_LANGS.includes(lang)) lang = 'en';
+  if (!SUPPORTED_LANGS.includes(lang)) {
+    lang = 'en';
+  }
 
+  // Use cached translation if available
   if (cache[lang]) {
     translations = cache[lang];
     currentLang = lang;
@@ -16,8 +22,17 @@ async function loadLanguage(lang) {
   }
 
   try {
-    // ✅ تغییر مسیر از /lang/ به ./lang/
-    const res = await fetch(`./lang/${lang}.json`);
+    // Load language file from public root
+    const res = await fetch(`/lang/${lang}.json`, {
+      cache: 'no-cache'
+    });
+
+    if (!res.ok) {
+      throw new Error(
+        `Failed to load language file: ${lang}.json (${res.status})`
+      );
+    }
+
     const data = await res.json();
 
     cache[lang] = data;
@@ -26,70 +41,132 @@ async function loadLanguage(lang) {
 
     return true;
   } catch (err) {
-    console.error('Language load failed:', err);
+    console.error(`Language load failed for "${lang}":`, err);
 
-    try {
-      // ✅ تغییر مسیر fallback
-      const res = await fetch(`./lang/en.json`);
-      const data = await res.json();
+    // Fallback to English
+    if (lang !== 'en') {
+      try {
+        if (cache.en) {
+          translations = cache.en;
+          currentLang = 'en';
+          return false;
+        }
 
-      cache['en'] = data;
-      translations = data;
-      currentLang = 'en';
+        const res = await fetch('/lang/en.json', {
+          cache: 'no-cache'
+        });
 
-      return false;
-    } catch (fallbackErr) {
-      console.error('Fallback language load also failed:', fallbackErr);
-      // اگر باز هم ارور داد، از translations خالی استفاده کن
-      translations = {};
-      currentLang = 'en';
-      return false;
+        if (!res.ok) {
+          throw new Error(
+            `Failed to load fallback language: en.json (${res.status})`
+          );
+        }
+
+        const data = await res.json();
+
+        cache.en = data;
+        translations = data;
+        currentLang = 'en';
+
+        return false;
+      } catch (fallbackErr) {
+        console.error(
+          'Fallback language load also failed:',
+          fallbackErr
+        );
+
+        translations = {};
+        currentLang = 'en';
+
+        return false;
+      }
     }
+
+    translations = {};
+    currentLang = 'en';
+
+    return false;
   }
 }
 
+/**
+ * Get translated text
+ */
 function t(key, params = {}) {
-  let text = key.split('.').reduce((obj, k) => obj?.[k], translations) || key;
+  let text =
+    key
+      .split('.')
+      .reduce((obj, k) => obj?.[k], translations) || key;
 
-  Object.keys(params).forEach(p => {
-    text = text.replace(new RegExp(`{{${p}}}`, 'g'), params[p]);
+  // Make sure the result is a string
+  text = String(text);
+
+  // Replace {{parameter}} placeholders
+  Object.keys(params).forEach((param) => {
+    text = text.replace(
+      new RegExp(`{{${param}}}`, 'g'),
+      params[param]
+    );
   });
 
   return text;
 }
 
+/**
+ * Change current language
+ */
 async function setLanguage(lang) {
-  // 1. لود فایل زبان
-  await loadLanguage(lang);
-  
-  // 2. تنظیم currentLang
-  currentLang = lang;
-  
-  // 3. تنظیم lang در HTML
+  if (!SUPPORTED_LANGS.includes(lang)) {
+    lang = 'en';
+  }
+
+  // Load language
+  const success = await loadLanguage(lang);
+
+  // If requested language failed, loadLanguage already
+  // switched to English.
+  const activeLang = success ? lang : currentLang;
+
+  currentLang = activeLang;
+
+  // Set HTML language
   document.documentElement.lang = currentLang;
-  
-  // 4. تنظیم RTL برای فارسی و عربی
-  const isRTL = currentLang === 'fa' || currentLang === 'ar';
-  document.documentElement.dir = isRTL ? 'rtl' : 'ltr';
-  document.documentElement.setAttribute('dir', isRTL ? 'rtl' : 'ltr');
-  
-  // 5. ذخیره در localStorage
+
+  // Set RTL/LTR
+  const rtl = currentLang === 'fa' || currentLang === 'ar';
+
+  document.documentElement.dir = rtl ? 'rtl' : 'ltr';
+
+  document.documentElement.setAttribute(
+    'dir',
+    rtl ? 'rtl' : 'ltr'
+  );
+
+  // Save language preference
   localStorage.setItem('lang', currentLang);
-  
-  // 6. ارسال event برای اطلاع به کامپوننت‌ها
+
+  // Notify application
   window.dispatchEvent(
     new CustomEvent('languageChanged', {
-      detail: { lang: currentLang }
+      detail: {
+        lang: currentLang
+      }
     })
   );
-  
-  return true;
+
+  return success;
 }
 
+/**
+ * Get current language
+ */
 function getCurrentLanguage() {
   return currentLang;
 }
 
+/**
+ * Check RTL language
+ */
 function isRTL() {
   return currentLang === 'ar' || currentLang === 'fa';
 }
