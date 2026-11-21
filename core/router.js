@@ -1,148 +1,558 @@
-// core/router.js
+
+/**
+ * Mazorya Group - Router
+ * File: core/router.js
+ */
 
 import { i18n } from './i18n.js';
+
+// ============================================================
+// CONFIGURATION
+// ============================================================
+
+const SUPPORTED_LANGS = [
+  'en',
+  'fr',
+  'fa',
+  'ar',
+  'de',
+  'es',
+  'tr'
+];
+
+const DEFAULT_LANG = 'en';
+
+// ============================================================
+// ROUTE LOADERS
+// ============================================================
+
+const routeLoaders = {
+  home: () =>
+    import('../pages/home.js').then(
+      module => module.renderHome
+    ),
+
+  about: () =>
+    import('../pages/about.js').then(
+      module => module.renderAbout
+    ),
+
+  services: () =>
+    import('../pages/services.js').then(
+      module => module.renderServices
+    ),
+
+  service: () =>
+    import('../pages/serviceDetails.js').then(
+      module => module.renderServiceDetails
+    ),
+
+  projects: () =>
+    import('../pages/projects.js').then(
+      module => module.renderProjects
+    ),
+
+  project: () =>
+    import('../pages/projectDetails.js').then(
+      module => module.renderProjectDetails
+    ),
+
+  blog: () =>
+    import('../pages/blog.js').then(
+      module => module.renderBlog
+    ),
+
+  blogDetails: () =>
+    import('../pages/blogDetails.js').then(
+      module => module.renderBlogDetails
+    ),
+
+  contact: () =>
+    import('../pages/contact.js').then(
+      module => module.renderContact
+    ),
+
+  auth: () =>
+    import('../pages/auth.js').then(
+      module => module.renderAuth
+    ),
+
+  profile: () =>
+    import('../pages/profile.js').then(
+      module => module.renderProfile
+    ),
+
+  '404': () =>
+    import('../pages/404.js').then(
+      module => module.render404
+    )
+};
+
+// ============================================================
+// ROUTER CLASS
+// ============================================================
 
 class Router {
   constructor() {
     this.currentRoute = null;
     this.currentParams = {};
+
     this.afterRender = null;
+
+    this._initialized = false;
+    this._navigationId = 0;
   }
+
+  // ==========================================================
+  // INITIALIZATION
+  // ==========================================================
 
   init() {
-    window.addEventListener('popstate', () => this.handleRoute());
-    window.addEventListener('navigate', (e) => {
-      if (e.detail?.path) this.navigateTo(e.detail.path);
-    });
-
-    this.handleRoute();
-  }
-
-  async navigateTo(path) {
-    window.history.pushState({}, '', path);
-    await this.handleRoute();
-  }
-
-  async handleRoute() {
-    const path = window.location.pathname;
-
-    const { routeName, params, lang } = this.parsePath(path);
-
-    if (lang && lang !== i18n.getCurrentLanguage()) {
-      await i18n.setLanguage(lang);
+    if (this._initialized) {
+      return;
     }
 
-    this.currentRoute = routeName;
-    this.currentParams = params;
+    this._initialized = true;
 
+    window.addEventListener('popstate', () => {
+      void this.handleRoute();
+    });
+
+    window.addEventListener('navigate', event => {
+      const path = event.detail?.path;
+
+      if (typeof path === 'string' && path) {
+        void this.navigateTo(path);
+      }
+    });
+
+    return this.handleRoute();
+  }
+
+  // ==========================================================
+  // NAVIGATION
+  // ==========================================================
+
+  async navigateTo(path, replace = false) {
+    if (typeof path !== 'string' || !path.trim()) {
+      return false;
+    }
+
+    let target;
+
+    try {
+      target = new URL(path, window.location.origin);
+    } catch (error) {
+      console.error(
+        '[Router] Invalid navigation URL:',
+        error
+      );
+      return false;
+    }
+
+    // External URLs are not handled by the SPA router.
+    if (target.origin !== window.location.origin) {
+      window.location.assign(target.href);
+      return true;
+    }
+
+    const targetPath =
+      target.pathname + target.search + target.hash;
+
+    const currentPath =
+      window.location.pathname +
+      window.location.search +
+      window.location.hash;
+
+    if (targetPath === currentPath) {
+      return true;
+    }
+
+    if (replace) {
+      window.history.replaceState(
+        {},
+        '',
+        targetPath
+      );
+    } else {
+      window.history.pushState(
+        {},
+        '',
+        targetPath
+      );
+    }
+
+    await this.handleRoute();
+
+    return true;
+  }
+
+  // ==========================================================
+  // PARSE URL
+  // ==========================================================
+
+  parsePath(path) {
+    const pathname =
+      typeof path === 'string'
+        ? path.split(/[?#]/)[0]
+        : '/';
+
+    const cleanPath =
+      pathname.replace(/\/+$/, '') || '/';
+
+    const rawSegments = cleanPath
+      .split('/')
+      .filter(Boolean);
+
+    let segments;
+
+    try {
+      segments = rawSegments.map(segment =>
+        decodeURIComponent(segment)
+      );
+    } catch (error) {
+      return {
+        routeName: '404',
+        params: {},
+        lang: DEFAULT_LANG
+      };
+    }
+
+    let lang = DEFAULT_LANG;
+
+    // Only remove the first segment if it is a
+    // supported language.
+    if (
+      segments.length > 0 &&
+      SUPPORTED_LANGS.includes(segments[0])
+    ) {
+      lang = segments.shift();
+    }
+
+    const first = segments[0] || 'home';
+
+    const notFound = {
+      routeName: '404',
+      params: {},
+      lang
+    };
+
+    // ========================================================
+    // HOME
+    // ========================================================
+
+    if (
+      segments.length === 0 ||
+      (first === 'home' && segments.length === 1)
+    ) {
+      return {
+        routeName: 'home',
+        params: {},
+        lang
+      };
+    }
+
+    // ========================================================
+    // DYNAMIC ROUTES
+    // ========================================================
+
+    if (first === 'service' && segments.length === 2) {
+      if (!segments[1]) return notFound;
+
+      return {
+        routeName: 'service',
+        params: {
+          slug: segments[1]
+        },
+        lang
+      };
+    }
+
+    if (first === 'project' && segments.length === 2) {
+      if (!segments[1]) return notFound;
+
+      return {
+        routeName: 'project',
+        params: {
+          slug: segments[1]
+        },
+        lang
+      };
+    }
+
+    if (
+      first === 'blog-details' &&
+      segments.length === 2
+    ) {
+      if (!segments[1]) return notFound;
+
+      return {
+        routeName: 'blogDetails',
+        params: {
+          id: segments[1]
+        },
+        lang
+      };
+    }
+
+    // ========================================================
+    // PROFILE
+    // ========================================================
+
+    if (
+      first === 'profile' &&
+      segments.length === 1
+    ) {
+      return {
+        routeName: 'profile',
+        params: {},
+        lang
+      };
+    }
+
+    // ========================================================
+    // STATIC ROUTES
+    // ========================================================
+
+    const staticRoutes = [
+      'about',
+      'services',
+      'projects',
+      'blog',
+      'contact',
+      'auth'
+    ];
+
+    if (
+      staticRoutes.includes(first) &&
+      segments.length === 1
+    ) {
+      return {
+        routeName: first,
+        params: {},
+        lang
+      };
+    }
+
+    return notFound;
+  }
+
+  // ==========================================================
+  // HANDLE ROUTE
+  // ==========================================================
+
+  async handleRoute() {
+    const navigationId = ++this._navigationId;
+
+    const path = window.location.pathname;
+
+    const {
+      routeName,
+      params,
+      lang
+    } = this.parsePath(path);
+
+    const app = document.getElementById('app');
+
+    if (!app) {
+      console.error(
+        '[Router] #app element not found.'
+      );
+      return;
+    }
+
+    try {
+      // Synchronize URL language with i18n.
+      if (lang !== i18n.getCurrentLanguage()) {
+        await i18n.setLanguage(lang);
+      }
+
+      // A newer navigation has started.
+      if (navigationId !== this._navigationId) {
+        return;
+      }
+
+      this.currentRoute = routeName;
+      this.currentParams = params;
+
+      // Show loader while importing the page.
+      app.innerHTML = `
+        <div
+          class="loading-spinner"
+          role="status"
+          aria-live="polite"
+        >
+          Loading...
+        </div>
+      `;
+
+      const render = await this.loadRoute(routeName);
+
+      if (navigationId !== this._navigationId) {
+        return;
+      }
+
+      if (typeof render === 'function') {
+        await render(params);
+      } else {
+        await this.render404();
+      }
+
+      if (navigationId !== this._navigationId) {
+        return;
+      }
+
+      // Preserve the animation callback used by app.js.
+      if (typeof this.afterRender === 'function') {
+        await this.afterRender();
+      }
+    } catch (error) {
+      if (navigationId !== this._navigationId) {
+        return;
+      }
+
+      console.error(
+        `[Router] Failed to render "${routeName}":`,
+        error
+      );
+
+      this.renderError(error);
+    }
+  }
+
+  // ==========================================================
+  // LOAD ROUTE
+  // ==========================================================
+
+  async loadRoute(routeName) {
+    const loader = routeLoaders[routeName];
+
+    if (typeof loader !== 'function') {
+      return null;
+    }
+
+    const render = await loader();
+
+    if (typeof render !== 'function') {
+      throw new Error(
+        `Invalid render function for route: ${routeName}`
+      );
+    }
+
+    return render;
+  }
+
+  // ==========================================================
+  // RENDER 404
+  // ==========================================================
+
+  async render404() {
     const app = document.getElementById('app');
 
     if (!app) return;
 
-    app.innerHTML = `<div class="loading-spinner">Loading...</div>`;
-
-    const module = await this.loadRoute(routeName);
-
-    if (module) {
-      await module(params);
-    } else {
-      await this.render404();
-    }
-
-    if (this.afterRender) {
-      this.afterRender();
-    }
-  }
-
-  async loadRoute(routeName) {
-    const routes = {
-      home: () => import('../pages/home.js').then(m => m.renderHome),
-      about: () => import('../pages/about.js').then(m => m.renderAbout),
-      services: () => import('../pages/services.js').then(m => m.renderServices),
-      service: () => import('../pages/serviceDetails.js').then(m => m.renderServiceDetails),
-      projects: () => import('../pages/projects.js').then(m => m.renderProjects),
-      project: () => import('../pages/projectDetails.js').then(m => m.renderProjectDetails),
-      blog: () => import('../pages/blog.js').then(m => m.renderBlog),
-      blogDetails: () => import('../pages/blogDetails.js').then(m => m.renderBlogDetails),
-      contact: () => import('../pages/contact.js').then(m => m.renderContact),
-      auth: () => import('../pages/auth.js').then(m => m.renderAuth),
-      profile: () => import('../pages/profile.js').then(m => m.renderProfile),
-      404: () => import('../pages/404.js').then(m => m.render404)
-    };
-
-    if (!routes[routeName]) return null;
-
-    return routes[routeName]();
-  }
-
-  parsePath(path) {
-    let clean = path.replace(/\/$/, '');
-
-    const langMatch = clean.match(/^\/([a-z]{2})(\/|$)/);
-
-    let lang = 'en';
-    let pathWithoutLang = clean;
-
-    if (langMatch) {
-      lang = langMatch[1];
-      pathWithoutLang = clean.replace(`/${lang}`, '') || '/';
-    }
-    
-
-    const segments = pathWithoutLang.split('/').filter(Boolean);
-    const first = segments[0] || 'home';
-
-    // مسیرهای داینامیک
-    if (first === 'service' && segments[1]) {
-      return { routeName: 'service', params: { slug: segments[1] }, lang };
-    }
-    if (first === 'profile') {
-  return { routeName: 'profile', params: {}, lang };
-}
-
-    if (first === 'project' && segments[1]) {
-      return { routeName: 'project', params: { slug: segments[1] }, lang };
-    }
-
-    if (first === 'blog-details' && segments[1]) {
-      return { routeName: 'blogDetails', params: { id: segments[1] }, lang };
-    }
-
-    // مسیرهای ثابت
-    const validRoutes = ['home', 'about', 'services', 'projects', 'blog', 'contact', 'auth'];
-    
-    if (validRoutes.includes(first)) {
-      return { routeName: first, params: {}, lang };
-    }
-
-    // اگر هیچکدام نبود -> 404
-    return { routeName: '404', params: {}, lang };
-  }
-
-  async render404() {
-    const app = document.getElementById('app');
-    
-    // تلاش برای لود صفحه 404 اختصاصی
     try {
-      const module = await this.loadRoute('404');
-      if (module) {
-        await module({});
+      const render = await this.loadRoute('404');
+
+      if (typeof render === 'function') {
+        await render({});
         return;
       }
-    } catch (err) {
-      console.error('404 page load failed:', err);
+    } catch (error) {
+      console.error(
+        '[Router] Custom 404 page failed:',
+        error
+      );
     }
-    
-    // fallback 404 ساده
+
+    const lang = i18n.getCurrentLanguage();
+
     app.innerHTML = `
-      <div style="text-align:center;padding:100px;min-height:60vh;">
-        <h1 style="font-size:120px;margin-bottom:20px;color:#ff6b6b;">404</h1>
-        <h2 style="margin-bottom:15px;">Page Not Found</h2>
-        <p style="margin-bottom:30px;color:#666;">The page you are looking for does not exist.</p>
-        <a href="/${i18n.getCurrentLanguage()}/" class="primary-button" style="display:inline-block;">Go Home</a>
-      </div>
+      <section
+        style="
+          text-align: center;
+          padding: 100px 20px;
+          min-height: 60vh;
+        "
+      >
+        <h1
+          style="
+            font-size: 100px;
+            margin-bottom: 20px;
+          "
+        >
+          404
+        </h1>
+
+        <h2>Page Not Found</h2>
+
+        <p style="margin: 20px 0 30px;">
+          The page you are looking for does not exist.
+        </p>
+
+        <a
+          href="/${lang}/"
+          class="primary-button"
+        >
+          Go Home
+        </a>
+      </section>
     `;
   }
+
+  // ==========================================================
+  // RENDER ERROR
+  // ==========================================================
+
+  renderError(error) {
+    const app = document.getElementById('app');
+
+    if (!app) return;
+
+    const lang = i18n.getCurrentLanguage();
+
+    app.innerHTML = `
+      <section
+        style="
+          text-align: center;
+          padding: 100px 20px;
+          min-height: 60vh;
+        "
+      >
+        <h1>Something went wrong</h1>
+
+        <p style="margin: 20px 0 30px;">
+          We couldn't load this page.
+          Please try again.
+        </p>
+
+        <a
+          href="/${lang}/"
+          class="primary-button"
+        >
+          Back to Home
+        </a>
+      </section>
+    `;
+
+    console.error('[Router] Render error:', error);
+  }
+
+  // ==========================================================
+  // GET CURRENT ROUTE
+  // ==========================================================
+
+  getCurrentRoute() {
+    return this.currentRoute;
+  }
+
+  getCurrentParams() {
+    return this.currentParams;
+  }
 }
+
+// ============================================================
+// EXPORT
+// ============================================================
 
 export const router = new Router();

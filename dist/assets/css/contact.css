@@ -1,0 +1,691 @@
+
+/* ============================================================
+   MAZORYA GROUP — CONTACT PAGE
+   File: public/assets/css/contact.css
+   Version: Clean Corporate
+
+   Dependencies: main.css
+   Scope: .mz-contact
+
+   Brand:
+   Primary: #ff6b6b
+   Dark:    #1f1f2e
+   White:   #ffffff
+   ============================================================ */
+
+
+/* ============================================================
+   01 — PAGE BASE
+   ============================================================ */
+
+.mz-contact {
+  --contact-primary: var(--color-primary, #ff6b6b);
+  --contact-dark: var(--color-dark, #1f1f2e);
+  --contact-white: var(--color-white, #ffffff);
+  --contact-muted: var(--text-secondary, #555562);
+  --contact-border: var(--border-light, #e5e5e9);
+  --contact-soft: var(--bg-secondary, #f7f7f7);
+
+  width: 100%;
+  min-width: 0;
+
+  background: var(--contact-white);
+  color: var(--contact-dark);
+
+  font-family: var(--font-body);
+  font-size: 14px;
+
+  overflow: clip;
+}
+
+.mz-contact *,
+.mz-contact *::before,
+.mz-contact *::after {
+  box-sizing: border-box;
+}
+
+.mz-contact a {
+  text-decoration: none;
+}
+
+.mz-contact img {
+  max-width: 100%;
+}
+
+
+/* ============================================================
+   02 — CONTACT SECTION
+   ============================================================ */
+
+.mz-contact .contact-page-section {
+  position: relative;
+
+  min-height: 75vh;
+  padding: 135px 0 105px;
+
+  background:
+    radial-gradient(
+      circle at 8% 12%,
+      rgba(255, 107, 107, 0.055),
+      transparent 35%
+    ),
+    #ffffff;
+}
+
+
+/* ============================================================
+   03 — TWO COLUMN GRID
+   ============================================================ */
+
+.mz-contact .contact-grid {
+  display: grid;
+
+  grid-template-columns:
+    minmax(0, 0.9fr)
+    minmax(0, 1.1fr);
+
+  align-items: start;
+
+  gap: clamp(35px, 5vw, 75px);
+
+  width: 100%;
+  min-width: 0;
+}
+
+.mz-contact .contact-info-side,
+.mz-contact .contact-form-side {
+  min-width: 0;
+}
+
+
+/* ============================================================
+   04 — CONTACT INTRO
+   ============================================================ */
+
+.mz-contact .contact-info-header {
+  max-width: 490px;
+  margin-bottom: 42px;
+}
+
+.mz-contact .contact-page-title {
+  margin: 0 0 18px;
+
+  color: var(--contact-dark);
+
+  font-family: var(--font-heading);
+  font-size: clamp(36px, 4.4vw, 54px);
+  font-weight: 700;
+  line-height: 1.2;
+  letter-spacing: -0.035em;
+}
+
+.mz-contact .contact-info-header > p {
+  margin: 0;
+
+  color: var(--contact-muted);
+
+  font-size: 15px;
+  font-weight: 400;
+  line-height: 1.9;
+}
+
+
+/* ============================================================
+   05 — CONTACT INFORMATION
+   ============================================================ */
+
+.mz-contact .contact-info-list {
+  display: flex;
+  flex-direction: column;
+
+  gap: 26px;
+
+  width: 100%;
+  max-width: 450px;
+}
+
+/* Single contact row */
+
+.mz-contact .contact-info-item {
+  display: flex;
+  align-items: flex-start;
+
+  gap: 16px;
+  min-width: 0;
+}
+
+/* Icon background */
+
+.mz-contact .contact-info-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  flex: 0 0 48px;
+
+  width: 48px;
+  height: 48px;
+
+  border: 1px solid rgba(255, 107, 107, 0.12);
+  border-radius: 12px;
+
+  background: rgba(255, 107, 107, 0.09);
+}
+
+.mz-contact .contact-info-icon img {
+  display: block;
+
+  width: 23px;
+  height: 23px;
+
+  object-fit: contain;
+  border-radius: 0;
+}
+
+/* Contact text */
+
+.mz-contact .contact-info-item > div:last-child {
+  flex: 1;
+  min-width: 0;
+}
+
+.mz-contact .contact-info-item h3 {
+  margin: 1px 0 7px;
+
+  color: var(--contact-dark);
+
+  font-family: var(--font-heading);
+  font-size: 16px;
+  font-weight: 700;
+  line-height: 1.4;
+}
+
+.mz-contact .contact-info-item p,
+.mz-contact .contact-info-item a {
+  display: inline-block;
+
+  max-width: 100%;
+  margin: 0;
+
+  color: var(--contact-muted);
+
+  font-size: 14px;
+  line-height: 1.75;
+
+  overflow-wrap: anywhere;
+}
+
+.mz-contact .contact-info-item a {
+  transition: color 0.25s ease;
+}
+
+.mz-contact .contact-info-item a:hover {
+  color: var(--contact-primary);
+}
+
+/* Keep contact details readable in RTL */
+
+.mz-contact .contact-info-item a[href^="tel:"],
+.mz-contact .contact-info-item a[href^="mailto:"] {
+  direction: ltr;
+  unicode-bidi: isolate;
+}
+
+
+/* ============================================================
+   06 — FORM CONTAINER
+   ============================================================ */
+
+.mz-contact .contact-form-side {
+  width: 100%;
+}
+
+.mz-contact .contact-form-block {
+  width: 100%;
+
+  padding: clamp(26px, 3vw, 40px);
+
+  border: 1px solid var(--contact-border);
+  border-radius: 16px;
+
+  background: #ffffff;
+
+  box-shadow:
+    0 12px 45px rgba(31, 31, 46, 0.045);
+}
+
+.mz-contact #contact-form {
+  display: flex;
+  flex-direction: column;
+
+  width: 100%;
+  margin: 0;
+}
+
+
+/* ============================================================
+   07 — FORM GRID
+   ============================================================ */
+
+.mz-contact .contact-form-row {
+  display: grid;
+
+  grid-template-columns:
+    repeat(2, minmax(0, 1fr));
+
+  gap: 16px;
+}
+
+.mz-contact .contact-form-group {
+  display: flex;
+  flex-direction: column;
+
+  gap: 9px;
+  margin-bottom: 22px;
+
+  min-width: 0;
+}
+
+/* Labels */
+
+.mz-contact .contact-form-group label {
+  display: block;
+
+  margin: 0;
+
+  color: var(--contact-dark);
+
+  font-family: var(--font-body);
+  font-size: 13px;
+  font-weight: 600;
+  line-height: 1.5;
+}
+
+
+/* ============================================================
+   08 — INPUTS & TEXTAREA
+   ============================================================ */
+
+.mz-contact .contact-input,
+.mz-contact .contact-textarea {
+  display: block;
+
+  width: 100%;
+  min-width: 0;
+
+  margin: 0;
+
+  border: 1px solid #e4e4e9;
+  border-radius: 9px;
+
+  background: #fafafa;
+  color: var(--contact-dark);
+
+  font-family: var(--font-body);
+  font-size: 14px;
+  font-weight: 400;
+  line-height: 1.5;
+
+  outline: none;
+
+  box-shadow: none;
+
+  transition:
+    border-color 0.25s ease,
+    background 0.25s ease,
+    box-shadow 0.25s ease;
+}
+
+/* Input */
+
+.mz-contact .contact-input {
+  height: 49px;
+  min-height: 49px;
+
+  padding: 12px 15px;
+}
+
+/* Textarea */
+
+.mz-contact .contact-textarea {
+  min-height: 145px;
+  padding: 14px 15px;
+
+  resize: vertical;
+}
+
+/* Placeholder */
+
+.mz-contact .contact-input::placeholder,
+.mz-contact .contact-textarea::placeholder {
+  color: #9a9aa5;
+}
+
+/* Focus */
+
+.mz-contact .contact-input:focus,
+.mz-contact .contact-textarea:focus {
+  border-color: var(--contact-primary);
+  background: #ffffff;
+
+  outline: none;
+
+  box-shadow:
+    0 0 0 3px rgba(255, 107, 107, 0.1);
+}
+
+/* Invalid fields */
+
+.mz-contact .contact-input[aria-invalid="true"],
+.mz-contact .contact-textarea[aria-invalid="true"] {
+  border-color: #e05252;
+}
+
+/* Disabled */
+
+.mz-contact .contact-input:disabled,
+.mz-contact .contact-textarea:disabled {
+  cursor: not-allowed;
+  opacity: 0.65;
+}
+
+
+/* ============================================================
+   09 — SUBMIT BUTTON
+   ============================================================ */
+
+.mz-contact .contact-submit-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+
+  align-self: flex-start;
+
+  min-width: 165px;
+  min-height: 47px;
+
+  margin: 3px 0 0;
+  padding: 12px 25px;
+
+  border: 1px solid var(--contact-primary);
+  border-radius: 9px;
+
+  background: var(--contact-primary);
+  color: var(--contact-dark);
+
+  font-family: var(--font-body);
+  font-size: 13px;
+  font-weight: 700;
+  line-height: 1.4;
+  text-align: center;
+
+  cursor: pointer;
+
+  transition:
+    background 0.25s ease,
+    transform 0.25s ease,
+    box-shadow 0.25s ease;
+}
+
+.mz-contact .contact-submit-btn:hover:not(:disabled) {
+  background: #ff8585;
+
+  box-shadow:
+    0 7px 22px rgba(255, 107, 107, 0.23);
+
+  transform: translateY(-2px);
+}
+
+.mz-contact .contact-submit-btn:active:not(:disabled) {
+  transform: translateY(0);
+}
+
+.mz-contact .contact-submit-btn:disabled {
+  opacity: 0.6;
+  cursor: wait;
+}
+
+.mz-contact .contact-submit-btn:focus-visible {
+  outline: 2px solid var(--contact-dark);
+  outline-offset: 3px;
+}
+
+
+/* ============================================================
+   10 — SUCCESS / ERROR MESSAGES
+   ============================================================ */
+
+.mz-contact .contact-success-msg,
+.mz-contact .contact-error-msg {
+  width: 100%;
+
+  margin-top: 17px;
+  padding: 13px 16px;
+
+  border: 1px solid transparent;
+  border-radius: 9px;
+
+  font-size: 13px;
+  line-height: 1.75;
+
+  overflow-wrap: anywhere;
+}
+
+/* Important:
+   The JS controls display through inline styles.
+   Do NOT set display:none !important here.
+*/
+
+.mz-contact .contact-success-msg {
+  background: #eefaf2;
+  border-color: #bbebc8;
+  color: #226d3e;
+}
+
+.mz-contact .contact-error-msg {
+  background: #fff0f0;
+  border-color: #f5c5c5;
+  color: #b33131;
+}
+
+
+/* ============================================================
+   11 — RTL / LTR
+   ============================================================ */
+
+.mz-contact[dir="rtl"],
+.mz-contact .contact-grid.rtl-contact {
+  direction: rtl;
+}
+
+.mz-contact[dir="ltr"] {
+  direction: ltr;
+}
+
+.mz-contact[dir="rtl"] .contact-info-side,
+.mz-contact[dir="rtl"] .contact-form-side {
+  text-align: right;
+}
+
+.mz-contact[dir="rtl"] .contact-input:not([dir="ltr"]),
+.mz-contact[dir="rtl"] .contact-textarea {
+  text-align: right;
+}
+
+.mz-contact[dir="ltr"] .contact-input:not([dir="rtl"]),
+.mz-contact[dir="ltr"] .contact-textarea {
+  text-align: left;
+}
+
+/* Email and phone fields stay LTR */
+
+.mz-contact .contact-input[dir="ltr"] {
+  direction: ltr;
+  text-align: left;
+}
+
+/* Avoid tight Latin letter spacing for Persian */
+
+.mz-contact[dir="rtl"] .contact-page-title {
+  letter-spacing: normal;
+}
+
+
+/* ============================================================
+   12 — TABLET
+   ============================================================ */
+
+@media (max-width: 991px) {
+
+  .mz-contact .contact-page-section {
+    padding: 115px 0 80px;
+  }
+
+  .mz-contact .contact-grid {
+    grid-template-columns:
+      minmax(0, 0.85fr)
+      minmax(0, 1.15fr);
+
+    gap: 30px;
+  }
+
+  .mz-contact .contact-form-block {
+    padding: 27px;
+  }
+
+  .mz-contact .contact-form-row {
+    grid-template-columns: 1fr;
+    gap: 0;
+  }
+
+  .mz-contact .contact-info-header {
+    margin-bottom: 32px;
+  }
+
+}
+
+
+/* ============================================================
+   13 — MOBILE
+   ============================================================ */
+
+@media (max-width: 767px) {
+
+  .mz-contact .contact-page-section {
+    min-height: 0;
+    padding: 95px 0 65px;
+  }
+
+  .mz-contact .contact-grid {
+    grid-template-columns: 1fr;
+    gap: 36px;
+  }
+
+  /* Info */
+
+  .mz-contact .contact-page-title {
+    margin-bottom: 14px;
+    font-size: clamp(33px, 8vw, 42px);
+  }
+
+  .mz-contact .contact-info-header {
+    max-width: 100%;
+    margin-bottom: 28px;
+  }
+
+  .mz-contact .contact-info-header > p {
+    font-size: 14px;
+    line-height: 1.85;
+  }
+
+  .mz-contact .contact-info-list {
+    gap: 22px;
+  }
+
+  /* Form */
+
+  .mz-contact .contact-form-block {
+    padding: 24px 20px;
+
+    border-radius: 12px;
+  }
+
+  .mz-contact .contact-form-row {
+    grid-template-columns: 1fr;
+  }
+
+  .mz-contact .contact-form-group {
+    margin-bottom: 19px;
+  }
+
+  .mz-contact .contact-input {
+    height: 48px;
+  }
+
+  .mz-contact .contact-textarea {
+    min-height: 140px;
+  }
+
+}
+
+
+/* ============================================================
+   14 — SMALL PHONES
+   ============================================================ */
+
+@media (max-width: 480px) {
+
+  .mz-contact .contact-page-section {
+    padding: 92px 0 55px;
+  }
+
+  .mz-contact .contact-page-title {
+    font-size: 34px;
+  }
+
+  .mz-contact .contact-info-icon {
+    flex-basis: 42px;
+    width: 42px;
+    height: 42px;
+  }
+
+  .mz-contact .contact-info-icon img {
+    width: 21px;
+    height: 21px;
+  }
+
+  .mz-contact .contact-info-item h3 {
+    font-size: 15px;
+  }
+
+  .mz-contact .contact-info-item a,
+  .mz-contact .contact-info-item p {
+    font-size: 13px;
+  }
+
+  .mz-contact .contact-form-block {
+    padding: 20px 16px;
+  }
+
+  .mz-contact .contact-submit-btn {
+    width: 100%;
+    align-self: stretch;
+  }
+
+}
+
+
+/* ============================================================
+   15 — REDUCED MOTION
+   ============================================================ */
+
+@media (prefers-reduced-motion: reduce) {
+
+  .mz-contact .contact-input,
+  .mz-contact .contact-textarea,
+  .mz-contact .contact-submit-btn,
+  .mz-contact .contact-info-item a {
+    transition: none;
+  }
+
+}

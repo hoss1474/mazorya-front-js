@@ -1,0 +1,523 @@
+
+/* ==========================================================
+   MAZORYA GROUP - EXON HERO
+   Scoped styles for the new interactive hero
+   ========================================================== */
+
+.banner-main-section.exon-hero-shell,
+.banner-inner-wrap.exon-hero-inner {
+  position: relative;
+  width: 100%;
+  min-height: 100svh;
+  margin: 0;
+  padding: 0;
+  overflow: visible;
+  background: #08090b;
+}
+
+/* ==========================================================
+   HERO LAYOUT
+   ========================================================== */
+
+#mazoryaExonHero.exon-hero {
+  position: relative;
+  isolation: isolate;
+
+  display: flex;
+  justify-content: center;
+  align-items: center;
+
+  width: 100%;
+  min-height: 100svh;
+
+  margin: 0;
+  padding: 115px 24px 80px;
+
+  overflow: hidden;
+  background: #090909;
+  color: #ffffff;
+
+  font-family: 'Inter', 'Ubuntu', sans-serif;
+}
+
+/* ==========================================================
+   THREE.JS BACKGROUND
+   ========================================================== */
+
+#mazoryaExonHero .exon-hero-scene,
+#mazoryaExonHero .exon-hero-grid-fallback,
+#mazoryaExonHero .exon-hero-grid-stage,
+#mazoryaExonHero .exon-hero-scrim {
+  position: absolute;
+  inset: 0;
+
+  width: 100%;
+  height: 100%;
+}
+
+#mazoryaExonHero .exon-hero-scene {
+  z-index: 0;
+  overflow: hidden;
+  pointer-events: none;
+  background: #0a0a0a;
+}
+
+/* Static background while Three.js loads */
+
+#mazoryaExonHero .exon-hero-grid-fallback {
+  --exon-tile-size: clamp(46px, 6vw, 88px);
+
+  background-color: #0a0a0a;
+
+  background-image:
+    radial-gradient(
+      circle closest-side,
+      #14171e 0 73%,
+      #1d222c 75%,
+      transparent 80%
+    ),
+    radial-gradient(
+      circle closest-side,
+      #14171e 0 73%,
+      #1d222c 75%,
+      transparent 80%
+    );
+
+  background-size:
+    var(--exon-tile-size)
+    calc(var(--exon-tile-size) * 1.72);
+
+  background-position:
+    0 0,
+    calc(var(--exon-tile-size) / 2)
+    calc(var(--exon-tile-size) * 0.86);
+
+  -webkit-mask-image:
+    radial-gradient(
+      ellipse at 54% 58%,
+      #000 23%,
+      transparent 84%
+    );
+
+  mask-image:
+    radial-gradient(
+      ellipse at 54% 58%,
+      #000 23%,
+      transparent 84%
+    );
+}
+
+#mazoryaExonHero .exon-hero-grid-stage {
+  opacity: 0;
+  transition: opacity 0.7s ease;
+}
+
+#mazoryaExonHero
+.exon-hero-grid-stage[data-grid-ready] {
+  opacity: 1;
+}
+
+#mazoryaExonHero .exon-hero-canvas {
+  position: absolute;
+  inset: 0;
+
+  display: block;
+
+  width: 100%;
+  height: 100%;
+}
+
+/* Dark layered gradients for readable text */
+
+#mazoryaExonHero .exon-hero-scrim {
+  pointer-events: none;
+
+  background:
+    linear-gradient(
+      180deg,
+      rgba(0, 0, 0, 0.96),
+      transparent 24%,
+      transparent 75%,
+      rgba(0, 0, 0, 0.93)
+    ),
+
+    radial-gradient(
+      ellipse at 50% 46%,
+      rgba(0, 0, 0, 0.77),
+      rgba(0, 0, 0, 0.48) 31%,
+      transparent 64%
+    ),
+
+    radial-gradient(
+      ellipse at 75% 42%,
+      rgba(12, 51, 107, 0.23),
+      transparent 38%
+    ),
+
+    radial-gradient(
+      ellipse at 27% 69%,
+      rgba(5, 65, 102, 0.22),
+      transparent 39%
+    ),
+
+    radial-gradient(
+      ellipse at 52% 57%,
+      transparent 40%,
+      rgba(0, 0, 0, 0.73) 100%
+    );
+}
+
+/* ==========================================================
+   HERO CONTENT
+   ========================================================== */
+
+#mazoryaExonHero .exon-hero-main {
+  position: relative;
+  z-index: 2;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  width: min(100%, 1100px);
+  min-height: min(620px, 75svh);
+
+  margin: 0 auto;
+  text-align: center;
+}
+
+#mazoryaExonHero .exon-hero-content {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+
+  width: 100%;
+  max-width: 1000px;
+}
+
+/* ==========================================================
+   HERO BADGE
+   ========================================================== */
+
+#mazoryaExonHero .exon-hero-badge {
+  display: inline-flex;
+  justify-content: center;
+  align-items: center;
+
+  gap: 10px;
+
+  max-width: 100%;
+  padding: 9px 18px;
+
+  border: 1px solid rgba(255,255,255,0.12);
+  border-radius: 999px;
+
+  background: rgba(255,255,255,0.05);
+
+  box-shadow:
+    inset 0 1px 0 rgba(255,255,255,0.04),
+    0 8px 32px rgba(0,0,0,0.25);
+
+  color: rgba(255,255,255,0.88);
+
+  font-size: clamp(11px, 1.2vw, 14px);
+  font-weight: 500;
+  text-decoration: none;
+
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+
+  transition:
+    background 0.2s ease,
+    border-color 0.2s ease;
+}
+
+#mazoryaExonHero .exon-hero-badge:hover {
+  background: rgba(255,255,255,0.10);
+  border-color: rgba(96,165,250,0.3);
+}
+
+#mazoryaExonHero .exon-hero-badge svg {
+  flex: 0 0 auto;
+  color: #60a5fa;
+}
+
+/* ==========================================================
+   HEADING
+   ========================================================== */
+
+#mazoryaExonHero .exon-hero-heading {
+  width: 100%;
+  margin: 27px 0 0;
+
+  font-family: 'Syne', 'Inter', sans-serif;
+
+  font-size: clamp(42px, 6.2vw, 78px);
+  font-weight: 800;
+  line-height: 1.12;
+  letter-spacing: -0.045em;
+
+  color: #ffffff;
+  text-wrap: balance;
+}
+
+#mazoryaExonHero .exon-hero-title,
+#mazoryaExonHero .exon-hero-gradient {
+  display: block;
+  overflow-wrap: anywhere;
+}
+
+#mazoryaExonHero .exon-hero-gradient {
+  padding-bottom: 0.075em;
+  margin-bottom: -0.075em;
+
+  color: #60a5fa;
+
+  background: linear-gradient(
+    95deg,
+    #60a5fa 15%,
+    #22d3ee 85%
+  );
+
+  -webkit-background-clip: text;
+  background-clip: text;
+
+  -webkit-text-fill-color: transparent;
+}
+
+/* ==========================================================
+   DESCRIPTION
+   ========================================================== */
+
+#mazoryaExonHero .exon-hero-description {
+  max-width: 630px;
+  margin: 22px auto 0;
+
+  color: rgba(255,255,255,0.70);
+
+  font-size: clamp(16px, 1.6vw, 20px);
+  font-weight: 300;
+  line-height: 1.7;
+
+  text-wrap: pretty;
+}
+
+/* ==========================================================
+   HERO BUTTONS
+   ========================================================== */
+
+#mazoryaExonHero .exon-hero-actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: center;
+
+  gap: 14px;
+  margin-top: 34px;
+}
+
+#mazoryaExonHero .exon-hero-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+
+  min-height: 52px;
+  min-width: 175px;
+
+  padding: 14px 28px;
+
+  border: 1px solid transparent;
+  border-radius: 999px;
+
+  color: #ffffff;
+
+  font-size: 14px;
+  font-weight: 600;
+  line-height: 1.2;
+
+  text-align: center;
+  text-decoration: none;
+  white-space: normal;
+
+  cursor: pointer;
+
+  will-change: transform;
+
+  transition:
+    transform 0.2s ease-out,
+    background 0.2s ease,
+    border-color 0.2s ease,
+    box-shadow 0.2s ease;
+}
+
+/* Primary blue button */
+
+#mazoryaExonHero .exon-hero-button-primary {
+  background: linear-gradient(
+    100deg,
+    #2563eb,
+    #3b82f6
+  );
+
+  box-shadow:
+    0 8px 26px -10px rgba(37,99,235,0.8);
+}
+
+#mazoryaExonHero .exon-hero-button-primary:hover {
+  box-shadow:
+    0 9px 34px -8px rgba(59,130,246,0.88);
+
+  filter: brightness(1.10);
+}
+
+/* Glass button */
+
+#mazoryaExonHero .exon-hero-button-glass {
+  border-color: rgba(255,255,255,0.12);
+
+  background: rgba(255,255,255,0.06);
+
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+}
+
+#mazoryaExonHero .exon-hero-button-glass:hover {
+  border-color: rgba(255,255,255,0.22);
+  background: rgba(255,255,255,0.11);
+}
+
+#mazoryaExonHero .exon-hero-button:focus-visible,
+#mazoryaExonHero .exon-hero-badge:focus-visible {
+  outline: 2px solid #22d3ee;
+  outline-offset: 4px;
+}
+
+/* ==========================================================
+   ENTRANCE ANIMATIONS
+   ========================================================== */
+
+#mazoryaExonHero.exon-hero-animate .exon-reveal {
+  opacity: 0;
+
+  animation:
+    exon-reveal-up 0.8s ease-out forwards;
+}
+
+#mazoryaExonHero.exon-hero-animate
+.exon-reveal:nth-child(1) {
+  animation-delay: 0.05s;
+}
+
+#mazoryaExonHero.exon-hero-animate
+.exon-reveal:nth-child(2) {
+  animation-delay: 0.25s;
+}
+
+#mazoryaExonHero.exon-hero-animate
+.exon-reveal:nth-child(3) {
+  animation-delay: 0.45s;
+}
+
+#mazoryaExonHero.exon-hero-animate
+.exon-reveal:nth-child(4) {
+  animation-delay: 0.65s;
+}
+
+@keyframes exon-reveal-up {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* ==========================================================
+   RTL
+   ========================================================== */
+
+html[dir="rtl"]
+#mazoryaExonHero .exon-hero-heading {
+  letter-spacing: 0;
+}
+
+/* ==========================================================
+   TABLET / MOBILE
+   ========================================================== */
+
+@media (max-width: 767px) {
+  #mazoryaExonHero.exon-hero {
+    min-height: 100svh;
+    padding: 115px 20px 76px;
+  }
+
+  #mazoryaExonHero .exon-hero-main {
+    min-height: 65svh;
+  }
+
+  #mazoryaExonHero .exon-hero-heading {
+    font-size: clamp(40px, 9vw, 60px);
+    line-height: 1.14;
+  }
+
+  #mazoryaExonHero .exon-hero-scrim {
+    background:
+      radial-gradient(
+        ellipse at 50% 47%,
+        rgba(0,0,0,0.82),
+        rgba(0,0,0,0.32) 68%,
+        transparent 100%
+      ),
+
+      linear-gradient(
+        180deg,
+        rgba(0,0,0,0.63),
+        transparent 25%,
+        transparent 80%,
+        rgba(0,0,0,0.60)
+      );
+  }
+}
+
+@media (max-width: 450px) {
+  #mazoryaExonHero .exon-hero-actions {
+    width: 100%;
+    gap: 12px;
+  }
+
+  #mazoryaExonHero .exon-hero-button {
+    width: 100%;
+    max-width: 320px;
+  }
+
+  #mazoryaExonHero .exon-hero-heading {
+    font-size: clamp(36px, 10vw, 46px);
+  }
+
+  #mazoryaExonHero .exon-hero-badge {
+    padding-inline: 13px;
+  }
+}
+
+/* ==========================================================
+   REDUCED MOTION
+   ========================================================== */
+
+@media (prefers-reduced-motion: reduce) {
+  #mazoryaExonHero .exon-hero-grid-stage {
+    display: none;
+  }
+
+  #mazoryaExonHero .exon-reveal {
+    opacity: 1 !important;
+    animation: none !important;
+  }
+
+  #mazoryaExonHero .exon-hero-button {
+    transition: none;
+    will-change: auto;
+  }
+}

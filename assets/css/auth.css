@@ -1,0 +1,850 @@
+/* ==========================================================
+   MAZORYA GROUP — PORTAL 02
+   File: assets/css/auth-portal.css
+   Load AFTER the existing auth.css
+   Includes login and approved recovery modal styling.
+   ========================================================== */
+
+.mz-auth .auth-portal {
+  --portal-coral: #ff6b6b;
+  --portal-x: 0;
+  --portal-y: 0;
+  position: relative;
+  isolation: isolate;
+  min-height: max(690px, calc(100svh - 84px));
+  overflow: hidden;
+  background: #0c0f17;
+  color: #f7f5f4;
+  font-family: 'Ubuntu', Arial, sans-serif;
+  direction: ltr;
+}
+
+.mz-auth .auth-portal,
+.mz-auth .auth-portal *,
+.mz-auth .auth-portal *::before,
+.mz-auth .auth-portal *::after { box-sizing: border-box; }
+
+.mz-auth .auth-portal .portal-noise {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  pointer-events: none;
+  opacity: .27;
+  background-image: radial-gradient(rgba(255,255,255,.27) .5px,transparent .7px);
+  background-size: 5px 5px;
+}
+
+.mz-auth .auth-portal .portal-glow {
+  position: absolute;
+  left: 50%;
+  top: 12%;
+  width: min(1000px, 120vw);
+  height: 660px;
+  transform: translateX(-50%);
+  background: radial-gradient(ellipse,rgba(255,107,107,.15) 0%,rgba(255,107,107,.035) 42%,transparent 72%);
+  pointer-events: none;
+}
+
+/* 3D portal stage */
+.mz-auth .portal-stage {
+  position: relative;
+  z-index: 2;
+  min-height: 580px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: 48px 20px 65px;
+  perspective: 1200px;
+  overflow: hidden;
+}
+
+.mz-auth .portal-floor {
+  position: absolute;
+  top: 53%;
+  right: -15%;
+  bottom: -10%;
+  left: -15%;
+  background:
+    linear-gradient(transparent 33%, #0c0f17 94%),
+    repeating-linear-gradient(0deg, transparent 0 44px, rgba(255,107,107,.075) 45px 46px),
+    repeating-linear-gradient(90deg,transparent 0 44px,rgba(255,107,107,.075) 45px 46px);
+  transform: perspective(420px) rotateX(66deg) scale(2.1);
+  transform-origin: center top;
+  opacity: .6;
+  pointer-events: none;
+}
+
+.mz-auth .portal-giant-title {
+  position: absolute;
+  top: 5%;
+  width: 100%;
+  color: rgba(255,255,255,.043);
+  font: 900 clamp(66px, 15vw, 190px)/1 'Syne',sans-serif;
+  letter-spacing: -.09em;
+  text-align: center;
+  white-space: nowrap;
+  pointer-events: none;
+  user-select: none;
+}
+
+.mz-auth .portal-tunnel {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  transform-style: preserve-3d;
+  transform:
+    rotateY(calc(var(--portal-x) * 8deg))
+    rotateX(calc(var(--portal-y) * -6deg));
+  transition: transform .32s ease-out;
+  pointer-events: none;
+}
+
+.mz-auth .portal-frame {
+  position: absolute;
+  width: min(73vw, 700px);
+  height: min(85%, 510px);
+  border: 2px solid rgba(255,107,107,.28);
+  border-radius: 17px;
+  box-shadow: 0 0 19px rgba(255,107,107,.14), inset 0 0 20px rgba(255,107,107,.04);
+  opacity: var(--frame-opacity);
+  transform: translateZ(var(--frame-depth)) rotateZ(-9deg);
+  transform-style: preserve-3d;
+}
+
+.mz-auth .portal-frame--1 { --frame-depth: -480px; --frame-opacity: .24; }
+.mz-auth .portal-frame--2 { --frame-depth: -340px; --frame-opacity: .36; }
+.mz-auth .portal-frame--3 { --frame-depth: -210px; --frame-opacity: .5; }
+.mz-auth .portal-frame--4 { --frame-depth: -100px; --frame-opacity: .7; }
+.mz-auth .portal-frame--5 {
+  --frame-depth: 15px;
+  --frame-opacity: .95;
+  border-color: rgba(255,107,107,.45);
+  box-shadow: 0 0 30px rgba(255,107,107,.17), inset 0 0 30px rgba(255,107,107,.08);
+}
+
+.mz-auth .portal-frame::before,
+.mz-auth .portal-frame::after {
+  content: '';
+  position: absolute;
+  width: 9px;
+  height: 9px;
+  border-radius: 50%;
+  background: var(--portal-coral);
+  box-shadow: 0 0 20px var(--portal-coral);
+}
+.mz-auth .portal-frame::before { left: -5px; top: 12%; }
+.mz-auth .portal-frame::after { right: -5px; bottom: 15%; }
+
+.mz-auth .portal-star {
+  position: absolute;
+  color: rgba(255,107,107,.45);
+  font-size: 15px;
+  pointer-events: none;
+}
+.mz-auth .portal-star--one { top: 23%; left: 9%; }
+.mz-auth .portal-star--two { right: 11%; bottom: 16%; }
+
+/* Login card */
+.mz-auth .portal-card {
+  position: relative;
+  z-index: 4;
+  width: min(100%, 385px);
+  padding: 34px 31px 27px;
+  background: linear-gradient(145deg,rgba(35,38,53,.97),rgba(16,19,29,.98));
+  border: 1px solid rgba(255,255,255,.2);
+  border-radius: 17px;
+  box-shadow: 0 28px 90px rgba(0,0,0,.7),0 0 60px rgba(255,107,107,.075),inset 0 1px rgba(255,255,255,.08);
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
+  transform: translate(calc(var(--portal-x) * -8px),calc(var(--portal-y) * -6px));
+  transition: transform .32s ease-out;
+}
+
+.mz-auth .portal-overline {
+  color: #ff817a;
+  font-size: 9px;
+  font-weight: 800;
+  letter-spacing: .19em;
+}
+
+.mz-auth .portal-intro h1 {
+  color: #fff;
+  margin: 14px 0 9px;
+  font: 800 clamp(25px, 3vw, 33px)/1.2 'Syne',sans-serif;
+  letter-spacing: -.035em;
+}
+
+.mz-auth .portal-intro p {
+  color: #a7a9b5;
+  margin: 0 0 28px;
+  font-size: 12px;
+  line-height: 1.7;
+}
+
+.mz-auth .portal-label {
+  display: block;
+  margin: 0 0 9px;
+  color: #cbccd3;
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: .04em;
+}
+
+.mz-auth .portal-field {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  height: 49px;
+  padding: 0 12px;
+  margin-bottom: 18px;
+  border: 1px solid rgba(255,255,255,.14);
+  border-radius: 8px;
+  background: rgba(16,19,29,.82);
+  transition: border-color .2s ease,box-shadow .2s ease;
+}
+
+.mz-auth .portal-field:focus-within {
+  border-color: #ff7971;
+  box-shadow: 0 0 0 3px rgba(255,107,107,.07);
+}
+
+.mz-auth .portal-field-icon {
+  flex: none;
+  display: flex;
+  align-items: center;
+  color: #ff817a;
+}
+
+.mz-auth .portal-field-icon svg { width: 17px; height: 17px; }
+
+.mz-auth .portal-field input {
+  flex: 1;
+  width: 100%;
+  min-width: 0;
+  padding: 10px 0;
+  border: 0;
+  outline: 0;
+  box-shadow: none;
+  background: transparent;
+  color: #fff;
+  font-size: 13px;
+  font-family: inherit;
+}
+
+.mz-auth .portal-field input::placeholder { color: #777c8c; }
+.mz-auth .portal-field input[dir='ltr'] { text-align: left; }
+
+.mz-auth .portal-eye.password-toggle {
+  flex: none;
+  position: static;
+  display: grid;
+  place-items: center;
+  transform: none;
+  height: 30px;
+  width: 30px;
+  padding: 0;
+  border: 0;
+  background: none;
+  color: #a9aab3;
+  cursor: pointer;
+}
+.mz-auth .portal-eye.password-toggle:hover { color: #fff; }
+.mz-auth .portal-eye svg { width: 17px; height: 17px; }
+
+.mz-auth .portal-options {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 9px;
+  margin: 1px 0 24px;
+}
+
+.mz-auth .portal-remember {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  color: #a8abb7;
+  font-size: 11px;
+  cursor: pointer;
+}
+.mz-auth .portal-remember input { accent-color: #ff6b6b; }
+
+.mz-auth .portal-forgot {
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: #ff8881;
+  font-size: 11px;
+  cursor: pointer;
+}
+.mz-auth .portal-forgot:hover { color: #fff; }
+
+.mz-auth .portal-submit {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 14px;
+  width: 100%;
+  min-height: 50px;
+  padding: 0 17px;
+  margin: 0;
+  border: 0;
+  border-radius: 8px;
+  background: #ff786f;
+  color: #14151e;
+  font-size: 13px;
+  font-weight: 800;
+  cursor: pointer;
+  transition: background .2s ease,transform .2s ease;
+}
+.mz-auth .portal-submit:hover:not(:disabled) {
+  background: #ff9b91;
+  transform: translateY(-2px);
+}
+.mz-auth .portal-submit:disabled { cursor: wait; opacity: .75; }
+.mz-auth .portal-submit-arrow { font-size: 22px; font-weight: 400; }
+
+.mz-auth .portal-message { margin-top: 12px; line-height: 1.6; }
+
+.mz-auth .portal-card-footer {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 10px;
+  margin-top: 24px;
+  padding-top: 18px;
+  border-top: 1px solid rgba(255,255,255,.09);
+  color: #777c8b;
+  font-size: 9px;
+  font-weight: 700;
+  letter-spacing: .08em;
+}
+.mz-auth .portal-online { color: #ff8b82; }
+
+/* Keep the existing recovery modal above the new portal. */
+.mz-auth > .auth-modal { z-index: 2147480000; }
+
+/* RTL form while portal artwork stays symmetric */
+.mz-auth .portal-card[dir='rtl'] { text-align: right; }
+.mz-auth .portal-card[dir='rtl'] .portal-submit-arrow { transform: scaleX(-1); }
+
+/* Narrow screens */
+@media (max-width: 620px) {
+  .mz-auth .auth-portal { min-height: max(650px, 100svh); }
+  .mz-auth .portal-stage { min-height: 535px; padding: 58px 19px 67px; }
+  .mz-auth .portal-frame { width: 99%; height: 455px; transform: translateZ(var(--frame-depth)) rotateZ(-6deg); }
+  .mz-auth .portal-giant-title { top: 7%; font-size: 19vw; }
+  .mz-auth .portal-card { padding: 29px 24px 24px; }
+}
+
+@media (max-width: 390px) {
+  .mz-auth .portal-card { padding: 26px 19px 23px; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .mz-auth .portal-tunnel,
+  .mz-auth .portal-card,
+  .mz-auth .portal-submit { transition: none !important; }
+}
+
+/* ==========================================================
+   PORTAL 02 — FULL-BLEED SCENE + ORIGINAL GLASS HEADER
+   Keep this file loaded after header.css and auth.css.
+   Only affects the authentication page.
+   ========================================================== */
+
+.mz-auth-shell {
+  position: relative;
+  isolation: isolate;
+  width: 100%;
+  min-height: 100vh;
+  min-height: 100svh;
+  overflow: clip;
+  background: #0c0f17;
+}
+
+/* Real website header over the 3D scene, not in its own grey strip. */
+.mz-auth-shell > .site-header.mz-header,
+.mz-auth-shell > .site-header.mz-header.is-scrolled {
+  --mz-header-surface: rgba(12, 15, 23, .12);
+  --mz-header-line: rgba(255, 255, 255, .085);
+  position: absolute;
+  inset: 0 0 auto;
+  z-index: 1200;
+  width: 100%;
+  margin: 0;
+  background: var(--mz-header-surface);
+  border: 0;
+  border-bottom: 1px solid var(--mz-header-line);
+  box-shadow: none;
+  -webkit-backdrop-filter: blur(15px) saturate(150%);
+  backdrop-filter: blur(15px) saturate(150%);
+}
+
+.mz-auth-shell > .mz-auth {
+  position: relative;
+  z-index: auto;
+  width: 100%;
+  min-height: 100svh;
+  margin: 0;
+  padding: 0;
+  background: transparent;
+}
+
+/* 3D backdrop begins at the very top, beneath the header. */
+.mz-auth-shell .auth-portal {
+  min-height: 100svh;
+  margin: 0;
+  padding: 0;
+  background:
+    radial-gradient(ellipse at 50% 35%, #1e1827 0%, #10121d 52%, #0c0f17 100%);
+}
+
+.mz-auth-shell .portal-stage {
+  min-height: 100vh;
+  min-height: 100svh;
+  padding: 124px 20px 55px;
+}
+
+.mz-auth-shell .portal-glow { top: 0; }
+.mz-auth-shell .portal-giant-title { top: 14%; }
+
+/* Password-recovery modal must appear above the glass header. */
+.mz-auth-shell .mz-auth > .auth-modal { z-index: 2000; }
+
+@media (max-width: 768px) {
+  .mz-auth-shell .portal-stage { padding: 112px 18px 44px; }
+}
+
+@media (max-width: 480px) {
+  .mz-auth-shell .portal-stage { padding: 100px 16px 32px; }
+}
+
+
+/* ==========================================================
+   PORTAL 02 — RECOVERY EXPERIENCE (APPROVED DESIGN)
+   Page-specific; preserves the existing auth API and events.
+   ========================================================== */
+
+.mz-auth-shell .mz-auth #forgotModal.portal-recovery-modal {
+  position: fixed;
+  inset: 0;
+  z-index: 5000;
+  width: 100%;
+  height: 100dvh;
+  max-height: 100dvh;
+  padding: 0;
+  margin: 0;
+  overflow-y: auto;
+  overflow-x: hidden;
+  overscroll-behavior: contain;
+  align-items: stretch;
+  justify-content: stretch;
+  background: #0c0f17;
+  color: #fff;
+}
+
+.mz-auth-shell .mz-auth #forgotModal .recovery-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 0;
+  background: rgba(8, 10, 17, .94);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  cursor: default;
+}
+
+.mz-auth-shell .mz-auth #forgotModal .recovery-scene {
+  position: relative;
+  isolation: isolate;
+  z-index: 1;
+  width: 100%;
+  max-width: none;
+  min-height: 100dvh;
+  height: auto;
+  margin: 0;
+  padding: 100px 22px 64px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+  background:
+    radial-gradient(ellipse at 50% 42%, #282030 0%, #15151f 48%, #0b0e17 100%);
+  perspective: 1200px;
+}
+
+.mz-auth-shell .mz-auth #forgotModal .recovery-grain {
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  pointer-events: none;
+  opacity: .27;
+  background-image: radial-gradient(rgba(255,255,255,.26) .5px, transparent .8px);
+  background-size: 5px 5px;
+}
+
+.mz-auth-shell .mz-auth #forgotModal .recovery-floor {
+  position: absolute;
+  inset: 42% -30% -25%;
+  z-index: -1;
+  pointer-events: none;
+  background:
+    linear-gradient(transparent 35%, #0b0e17 95%),
+    repeating-linear-gradient(0deg, transparent 0 44px, rgba(255,107,107,.10) 45px 46px),
+    repeating-linear-gradient(90deg, transparent 0 44px, rgba(255,107,107,.10) 45px 46px);
+  transform: perspective(420px) rotateX(65deg) scale(1.5);
+  transform-origin: center top;
+  opacity: .7;
+}
+
+.mz-auth-shell .mz-auth #forgotModal .recovery-arch {
+  position: absolute;
+  z-index: -1;
+  top: 50%;
+  left: 50%;
+  width: min(80vw, 660px);
+  height: 560px;
+  border: 2px solid rgba(255,107,107,.33);
+  border-radius: 17px;
+  box-shadow: 0 0 40px rgba(255,107,107,.1);
+  pointer-events: none;
+  transform-style: preserve-3d;
+  transform: translate(-50%, -50%) rotate(-9deg);
+}
+.mz-auth-shell .mz-auth #forgotModal .recovery-arch--middle {
+  width: min(67vw, 545px);
+  height: 450px;
+  opacity: .57;
+}
+.mz-auth-shell .mz-auth #forgotModal .recovery-arch--back {
+  width: min(54vw, 435px);
+  height: 355px;
+  opacity: .35;
+}
+
+.mz-auth-shell .mz-auth #forgotModal .recovery-scene-brand {
+  position: absolute;
+  z-index: 1;
+  top: 25px;
+  left: 32px;
+  font: 900 19px/1.2 'Syne', 'Ubuntu', sans-serif;
+  letter-spacing: -.045em;
+  direction: ltr;
+}
+.mz-auth-shell .mz-auth #forgotModal .recovery-scene-brand span { color: #ff6b6b; }
+.mz-auth-shell .mz-auth #forgotModal .recovery-scene-label {
+  position: absolute;
+  z-index: 1;
+  top: 30px;
+  right: 32px;
+  font: 700 10px/1.5 'Ubuntu', sans-serif;
+  color: #9c9ba8;
+  letter-spacing: .13em;
+}
+
+.mz-auth-shell .mz-auth #forgotModal .recovery-card {
+  position: relative;
+  z-index: 2;
+  display: block;
+  width: min(100%, 465px);
+  max-width: 465px;
+  max-height: none;
+  height: auto;
+  margin: 0;
+  padding: 31px 34px 28px;
+  overflow: visible;
+  border: 1px solid rgba(255,255,255,.2);
+  border-radius: 22px;
+  background: linear-gradient(138deg, rgba(45,47,63,.97), rgba(24,27,40,.97) 65%, rgba(41,31,43,.97));
+  box-shadow: 0 30px 85px rgba(0,0,0,.55), 0 0 60px rgba(255,107,107,.085), inset 0 1px rgba(255,255,255,.085);
+  backdrop-filter: blur(22px);
+  -webkit-backdrop-filter: blur(22px);
+  color: #fff;
+  font-family: 'Ubuntu', sans-serif;
+  text-align: start;
+}
+.mz-auth-shell .mz-auth #forgotModal .recovery-card * { box-sizing: border-box; }
+
+.mz-auth-shell .mz-auth #forgotModal .recovery-card-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 24px;
+}
+.mz-auth-shell .mz-auth #forgotModal .recovery-kicker {
+  color: #ff8e86;
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: .14em;
+}
+.mz-auth-shell .mz-auth #forgotModal .recovery-close {
+  position: static;
+  inset: auto;
+  display: grid;
+  place-items: center;
+  width: 34px;
+  height: 34px;
+  padding: 0;
+  margin: 0;
+  flex: none;
+  background: rgba(255,255,255,.06);
+  border: 1px solid rgba(255,255,255,.13);
+  border-radius: 50%;
+  color: #dedee7;
+  font: 400 24px/1 'Ubuntu', sans-serif;
+  cursor: pointer;
+  transform: none;
+}
+.mz-auth-shell .mz-auth #forgotModal .recovery-close:hover {
+  background: rgba(255,107,107,.15);
+  color: #fff;
+}
+
+.mz-auth-shell .mz-auth #forgotModal .recovery-symbol {
+  display: grid;
+  place-items: center;
+  width: 62px;
+  height: 62px;
+  margin-bottom: 20px;
+  border: 1px solid rgba(255,107,107,.38);
+  border-radius: 18px;
+  background: linear-gradient(140deg, rgba(255,107,107,.24), rgba(255,107,107,.04));
+  box-shadow: 0 0 35px rgba(255,107,107,.1);
+  color: #ff9288;
+  font-size: 30px;
+}
+.mz-auth-shell .mz-auth #forgotModal .recovery-header {
+  display: block;
+  margin: 0 0 23px;
+  padding: 0;
+  text-align: start;
+}
+.mz-auth-shell .mz-auth #forgotModal .recovery-header h2 {
+  margin: 0 0 12px;
+  padding: 0;
+  color: #fff;
+  font: 900 clamp(29px, 4vw, 39px)/1.12 'Syne', 'Ubuntu', sans-serif;
+  letter-spacing: -.045em;
+}
+.mz-auth-shell .mz-auth #forgotModal .recovery-header p {
+  margin: 0;
+  color: #a7a8b7;
+  font-size: 12px;
+  line-height: 1.75;
+}
+.mz-auth-shell .mz-auth #forgotModal .recovery-progress {
+  display: flex;
+  gap: 7px;
+  width: 100%;
+  margin: 0 0 23px;
+}
+.mz-auth-shell .mz-auth #forgotModal .recovery-progress-segment {
+  flex: 1;
+  height: 3px;
+  border-radius: 20px;
+  background: rgba(255,255,255,.15);
+  transition: background .25s;
+}
+.mz-auth-shell .mz-auth #forgotModal .recovery-progress-segment.active {
+  background: #ff8179;
+  box-shadow: 0 0 12px rgba(255,107,107,.4);
+}
+
+/* The original API-driven setStep() controls which step is visible. */
+.mz-auth-shell .mz-auth #forgotModal .recovery-step { display: block; }
+.mz-auth-shell .mz-auth #forgotModal .recovery-step[hidden] { display: none !important; }
+.mz-auth-shell .mz-auth #forgotModal .recovery-label {
+  display: block;
+  margin: 0 0 9px;
+  color: #dddde5;
+  font-size: 10px;
+  font-weight: 800;
+  line-height: 1.5;
+  letter-spacing: .055em;
+}
+.mz-auth-shell .mz-auth #forgotModal .recovery-field {
+  position: relative;
+  display: flex;
+  align-items: center;
+  width: 100%;
+  height: 50px;
+  margin: 0 0 18px;
+  padding: 0 12px;
+  background: rgba(10,14,24,.72);
+  border: 1px solid rgba(255,255,255,.16);
+  border-radius: 10px;
+  box-shadow: none;
+}
+.mz-auth-shell .mz-auth #forgotModal .recovery-field:focus-within {
+  border-color: rgba(255,129,121,.9);
+  box-shadow: 0 0 0 3px rgba(255,107,107,.08);
+}
+.mz-auth-shell .mz-auth #forgotModal .recovery-field .input-icon {
+  position: static;
+  inset: auto;
+  flex: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 19px;
+  height: 22px;
+  margin: 0 10px 0 0;
+  padding: 0;
+  color: #ff8e86;
+  transform: none;
+  pointer-events: none;
+}
+.mz-auth-shell .mz-auth #forgotModal .recovery-field .input-icon svg { width: 18px; height: 18px; }
+.mz-auth-shell .mz-auth #forgotModal .recovery-field > input {
+  position: static;
+  flex: 1;
+  display: block;
+  min-width: 0;
+  width: 100%;
+  height: 100%;
+  padding: 0;
+  margin: 0;
+  border: 0;
+  border-radius: 0;
+  outline: 0;
+  box-shadow: none;
+  background: transparent;
+  color: #fff;
+  font: 400 13px/1.4 'Ubuntu', sans-serif;
+  transform: none;
+}
+.mz-auth-shell .mz-auth #forgotModal .recovery-field > input::placeholder { color: #777b8c; }
+.mz-auth-shell .mz-auth #forgotModal .recovery-field > input[dir='ltr'] { text-align: left; }
+.mz-auth-shell .mz-auth #forgotModal .recovery-eye.password-toggle {
+  position: static;
+  inset: auto;
+  flex: none;
+  display: grid;
+  place-items: center;
+  width: 32px;
+  height: 32px;
+  padding: 0;
+  margin: 0 0 0 6px;
+  border: 0;
+  background: none;
+  color: #bab9c8;
+  transform: none;
+  cursor: pointer;
+}
+.mz-auth-shell .mz-auth #forgotModal .recovery-eye svg { width: 17px; height: 17px; }
+
+.mz-auth-shell .mz-auth #forgotModal .recovery-primary.auth-modal-btn {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  min-height: 52px;
+  width: 100%;
+  margin: 8px 0 0;
+  padding: 12px 17px;
+  border: 0;
+  border-radius: 10px;
+  background: linear-gradient(115deg, #ff9a88, #ff636b);
+  color: #241c27;
+  font: 800 12px/1.4 'Ubuntu', sans-serif;
+  text-align: start;
+  box-shadow: 0 10px 26px rgba(255,107,107,.14);
+  cursor: pointer;
+  transition: transform .2s ease,filter .2s ease;
+}
+.mz-auth-shell .mz-auth #forgotModal .recovery-primary:hover:not(:disabled) {
+  filter: brightness(1.07);
+  transform: translateY(-1px);
+}
+.mz-auth-shell .mz-auth #forgotModal .recovery-primary:disabled {
+  opacity: .65;
+  cursor: wait;
+}
+.mz-auth-shell .mz-auth #forgotModal .recovery-button-arrow {
+  flex: none;
+  font: 400 22px/1 'Ubuntu', sans-serif;
+}
+
+/* The existing showMessage() keeps its own .auth-message class. */
+.mz-auth-shell .mz-auth #forgotModal #forgot-message {
+  margin: 15px 0 0;
+  padding: 12px 13px;
+  border: 1px solid rgba(255,107,107,.22);
+  border-radius: 9px;
+  background: rgba(255,107,107,.065);
+  color: #ffb5b0;
+  font-size: 12px;
+  line-height: 1.6;
+}
+.mz-auth-shell .mz-auth #forgotModal #forgot-message.success {
+  border-color: rgba(120,215,173,.25);
+  background: rgba(120,215,173,.08);
+  color: #b8edcf;
+}
+
+.mz-auth-shell .mz-auth #forgotModal .recovery-actions.auth-modal-footer {
+  display: block;
+  margin: 20px 0 0;
+  padding: 0;
+  border: 0;
+  text-align: start;
+}
+.mz-auth-shell .mz-auth #forgotModal .recovery-back.auth-modal-back {
+  display: inline-flex;
+  align-items: center;
+  justify-content: flex-start;
+  gap: 8px;
+  padding: 4px 0;
+  border: 0;
+  background: none;
+  color: #bbb9c7;
+  font-size: 12px;
+  font-weight: 700;
+  cursor: pointer;
+}
+.mz-auth-shell .mz-auth #forgotModal .recovery-back:hover { color: #ff8b82; }
+
+.mz-auth-shell .mz-auth #forgotModal .recovery-meta {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+  margin-top: 24px;
+  padding-top: 16px;
+  border-top: 1px solid rgba(255,255,255,.1);
+  color: #858593;
+  font-size: 9px;
+  font-weight: 700;
+  letter-spacing: .075em;
+  direction: ltr;
+}
+.mz-auth-shell .mz-auth #forgotModal .recovery-meta span:last-child { color: #ff8f84; }
+
+/* RTL keeps the portal art in place but mirrors the form layout. */
+.mz-auth-shell .mz-auth #forgotModal .recovery-card[dir='rtl'] .recovery-field .input-icon {
+  margin: 0 0 0 10px;
+}
+.mz-auth-shell .mz-auth #forgotModal .recovery-card[dir='rtl'] .recovery-eye.password-toggle {
+  margin: 0 6px 0 0;
+}
+.mz-auth-shell .mz-auth #forgotModal .recovery-card[dir='rtl'] .recovery-button-arrow {
+  transform: scaleX(-1);
+}
+
+@media (max-width: 520px) {
+  .mz-auth-shell .mz-auth #forgotModal .recovery-scene { padding: 82px 16px 45px; }
+  .mz-auth-shell .mz-auth #forgotModal .recovery-scene-brand { top: 19px; left: 18px; font-size: 17px; }
+  .mz-auth-shell .mz-auth #forgotModal .recovery-scene-label { top: 24px; right: 18px; font-size: 8px; }
+  .mz-auth-shell .mz-auth #forgotModal .recovery-arch { width: 110%; }
+  .mz-auth-shell .mz-auth #forgotModal .recovery-card { padding: 26px 22px 24px; }
+  .mz-auth-shell .mz-auth #forgotModal .recovery-header h2 { font-size: 30px; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .mz-auth-shell .mz-auth #forgotModal .recovery-primary,
+  .mz-auth-shell .mz-auth #forgotModal .recovery-progress-segment { transition: none !important; }
+}

@@ -1,0 +1,462 @@
+
+/* ==========================================================
+   MAZORYA GROUP — BLOG LIST
+   File: public/assets/css/blog.css
+   Scope: .mz-blog
+   ========================================================== */
+
+/* 01 — BASE */
+
+.mz-blog {
+  --blog-accent: var(--color-primary, #ff6b6b);
+  --blog-dark: var(--color-dark, #1f1f2e);
+  --blog-muted: var(--text-secondary, #555562);
+  --blog-line: var(--border-light, #e5e5e9);
+  --blog-soft: var(--bg-secondary, #f7f7f7);
+
+  width: 100%;
+  min-width: 0;
+  overflow: clip;
+
+  background: var(--bg-main, #ffffff);
+  color: var(--blog-dark);
+  font-family: var(--font-body);
+}
+
+.mz-blog,
+.mz-blog *,
+.mz-blog *::before,
+.mz-blog *::after {
+  box-sizing: border-box;
+}
+
+.mz-blog section {
+  scroll-margin-top: 90px;
+}
+
+.mz-blog img {
+  max-width: 100%;
+}
+
+/* 02 — BANNER */
+
+.mz-blog .blog-banner {
+  position: relative;
+  padding: 120px 0 46px;
+
+  background:
+    radial-gradient(
+      circle at 80% 0%,
+      rgba(255, 107, 107, 0.08),
+      transparent 40%
+    ),
+    #ffffff;
+}
+
+.mz-blog .banner-title-wrap {
+  max-width: 700px;
+  margin-inline: auto;
+  text-align: center;
+}
+
+.mz-blog .blog-banner-title {
+  margin: 0 0 16px;
+
+  color: var(--blog-dark);
+  font-family: var(--font-heading);
+  font-size: clamp(36px, 4.4vw, 54px);
+  font-weight: 700;
+  line-height: 1.2;
+  letter-spacing: -0.035em;
+}
+
+.mz-blog .blog-banner-subtitle {
+  max-width: 570px;
+  margin-inline: auto;
+
+  color: var(--blog-muted);
+  font-size: 14px;
+  line-height: 1.85;
+}
+
+/* 03 — BLOG GRID */
+
+.mz-blog .blog-list-section {
+  padding: 30px 0 90px;
+  min-height: 350px;
+}
+
+.mz-blog .blogs-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  align-items: stretch;
+  gap: 22px;
+
+  width: 100%;
+  min-width: 0;
+}
+
+.mz-blog .blog-card {
+  width: 100%;
+  min-width: 0;
+  height: 100%;
+  margin: 0;
+}
+
+.mz-blog .blog-card-inner {
+  display: flex;
+  flex-direction: column;
+
+  width: 100%;
+  height: 100%;
+
+  overflow: hidden;
+  border: 1px solid var(--blog-line);
+  border-radius: 14px;
+  background: #ffffff;
+
+  box-shadow: 0 5px 22px rgba(31, 31, 46, 0.035);
+
+  transition:
+    transform 0.3s ease,
+    border-color 0.3s ease,
+    box-shadow 0.3s ease;
+}
+
+.mz-blog .blog-card-inner:hover {
+  transform: translateY(-5px);
+  border-color: rgba(255, 107, 107, 0.35);
+  box-shadow: 0 15px 38px rgba(31, 31, 46, 0.09);
+}
+
+/* 04 — CARD IMAGE */
+
+.mz-blog .blog-card-image {
+  position: relative;
+  flex-shrink: 0;
+
+  width: 100%;
+  aspect-ratio: 16 / 10;
+
+  overflow: hidden;
+  background: var(--blog-soft);
+}
+
+.mz-blog .blog-image-link {
+  display: block;
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+}
+
+.mz-blog .blog-image-link img {
+  display: block;
+
+  width: 100%;
+  height: 100%;
+
+  object-fit: cover;
+  object-position: center;
+  border-radius: 0;
+
+  transition: transform 0.5s ease;
+}
+
+.mz-blog .blog-card-inner:hover
+.blog-image-link img {
+  transform: scale(1.045);
+}
+
+/* 05 — CARD CONTENT */
+
+.mz-blog .blog-card-content {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+
+  flex: 1;
+  gap: 0;
+
+  min-width: 0;
+  padding: 23px 23px 25px;
+  text-align: start;
+}
+
+.mz-blog .blog-date {
+  display: block;
+  margin-bottom: 13px;
+
+  color: var(--blog-accent);
+  font-size: 12px;
+  font-weight: 600;
+  line-height: 1.5;
+}
+
+.mz-blog .blog-card-title {
+  margin: 0 0 13px;
+
+  color: var(--blog-dark);
+  font-family: var(--font-heading);
+  font-size: clamp(18px, 1.7vw, 21px);
+  font-weight: 700;
+  line-height: 1.5;
+
+  overflow-wrap: anywhere;
+}
+
+.mz-blog .blog-card-title a {
+  color: inherit;
+  text-decoration: none;
+}
+
+.mz-blog .blog-card-title a:hover {
+  color: var(--blog-accent);
+}
+
+.mz-blog .blog-card-excerpt {
+  display: -webkit-box;
+
+  margin: 0 0 22px;
+
+  color: var(--blog-muted);
+  font-size: 13px;
+  line-height: 1.85;
+
+  overflow: hidden;
+  -webkit-line-clamp: 3;
+  -webkit-box-orient: vertical;
+}
+
+.mz-blog .blog-read-more {
+  display: inline-flex;
+  align-items: center;
+
+  gap: 9px;
+  margin-top: auto;
+
+  color: var(--blog-dark);
+  font-size: 13px;
+  font-weight: 700;
+  text-decoration: none;
+
+  transition: color 0.25s ease;
+}
+
+.mz-blog .blog-read-more:hover {
+  color: var(--blog-accent);
+}
+
+.mz-blog .blog-read-more span {
+  color: var(--blog-accent);
+
+  transition: transform 0.25s ease;
+}
+
+.mz-blog .blog-read-more:hover span {
+  transform: translateX(4px);
+}
+
+/* 06 — EMPTY STATE */
+
+.mz-blog .no-blogs {
+  grid-column: 1 / -1;
+
+  width: 100%;
+  padding: 60px 24px;
+
+  border: 1px dashed var(--blog-line);
+  border-radius: 14px;
+
+  background: var(--blog-soft);
+  text-align: center;
+}
+
+.mz-blog .no-blogs p {
+  margin: 0;
+  color: var(--blog-muted);
+  font-size: 14px;
+}
+
+/* 07 — CTA */
+
+.mz-blog .cta-section {
+  padding: 0 0 85px;
+}
+
+.mz-blog .cta-image-wrap {
+  position: relative;
+  isolation: isolate;
+
+  display: grid;
+  place-items: center;
+
+  width: 100%;
+  min-height: 285px;
+
+  overflow: hidden;
+  border-radius: 14px;
+  background: var(--blog-dark);
+}
+
+.mz-blog .cta-image {
+  position: absolute;
+  inset: 0;
+  z-index: -2;
+
+  display: block;
+  width: 100%;
+  height: 100%;
+
+  object-fit: cover;
+  border-radius: 0;
+}
+
+.mz-blog .cta-bg-wrap {
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+
+  background: linear-gradient(
+    110deg,
+    rgba(31, 31, 46, 0.9),
+    rgba(31, 31, 46, 0.55)
+  );
+
+  pointer-events: none;
+}
+
+.mz-blog .cta-title-area {
+  position: relative;
+  z-index: 2;
+
+  width: 100%;
+  padding: 45px 25px;
+
+  text-align: center;
+}
+
+.mz-blog .cta-title-wrap {
+  max-width: 630px;
+  margin-inline: auto;
+}
+
+.mz-blog .cta-title-wrap .section-title {
+  margin: 0;
+
+  color: #ffffff;
+  font-family: var(--font-heading);
+  font-size: clamp(24px, 2.8vw, 34px);
+  line-height: 1.35;
+}
+
+.mz-blog .cta-button-wrap {
+  margin-top: 25px;
+}
+
+.mz-blog .cta-button {
+  min-height: 44px;
+  padding: 11px 26px;
+  font-size: 13px;
+}
+
+/* 08 — RTL */
+
+.mz-blog:dir(rtl),
+.mz-blog .blogs-grid.rtl-blog {
+  direction: rtl;
+}
+
+.mz-blog:dir(rtl) .blog-card-content {
+  text-align: right;
+}
+
+.mz-blog:dir(rtl) .blog-read-more span {
+  transform: scaleX(-1);
+}
+
+.mz-blog:dir(rtl) .blog-read-more:hover span {
+  transform: translateX(-4px) scaleX(-1);
+}
+
+html[lang="fa"] .mz-blog .blog-banner-title,
+html[lang="ar"] .mz-blog .blog-banner-title {
+  letter-spacing: normal;
+}
+
+/* 09 — TABLET */
+
+@media (max-width: 991px) {
+  .mz-blog .blog-banner {
+    padding-top: 110px;
+  }
+
+  .mz-blog .blogs-grid {
+    grid-template-columns:
+      repeat(2, minmax(0, 1fr));
+    gap: 18px;
+  }
+
+  .mz-blog .blog-card-content {
+    padding: 21px;
+  }
+}
+
+/* 10 — MOBILE */
+
+@media (max-width: 767px) {
+  .mz-blog .blog-banner {
+    padding: 95px 0 30px;
+  }
+
+  .mz-blog .blog-banner-title {
+    font-size: clamp(33px, 8vw, 43px);
+  }
+
+  .mz-blog .blog-banner-subtitle {
+    font-size: 13px;
+  }
+
+  .mz-blog .blog-list-section {
+    padding: 20px 0 65px;
+  }
+
+  .mz-blog .blogs-grid {
+    grid-template-columns: 1fr;
+    gap: 16px;
+  }
+
+  .mz-blog .blog-card-image {
+    aspect-ratio: 16 / 10;
+  }
+
+  .mz-blog .blog-card-content {
+    padding: 20px;
+  }
+
+  .mz-blog .blog-card-title {
+    font-size: 19px;
+  }
+
+  .mz-blog .cta-section {
+    padding-bottom: 60px;
+  }
+
+  .mz-blog .cta-image-wrap {
+    min-height: 240px;
+  }
+
+  .mz-blog .cta-title-wrap .section-title {
+    font-size: 25px;
+  }
+}
+
+/* 11 — REDUCED MOTION */
+
+@media (prefers-reduced-motion: reduce) {
+  .mz-blog .blog-card-inner,
+  .mz-blog .blog-image-link img,
+  .mz-blog .blog-read-more span {
+    transition: none;
+    transform: none;
+  }
+}

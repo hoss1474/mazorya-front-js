@@ -1,10 +1,203 @@
-// core/animations.js - انیمیشن‌های صفحه اصلی
+
+/**
+ * Mazorya Group - Animation Manager
+ * File: core/animations.js
+ *
+ * Supports:
+ * - Scroll Reveal
+ * - Hero Animations
+ * - Count Up
+ * - Hover Effects
+ * - FAQ Accordion
+ * - Parallax
+ * - About Page
+ * - Service Details
+ * - SPA Cleanup
+ */
 
 // ============================================================
-// 1. انیمیشن اسکرول (Fade In / Slide Up)
+// ANIMATION LIFECYCLE
 // ============================================================
+
+const observers = new Set();
+const listeners = [];
+const timers = new Set();
+const frames = new Set();
+const originalStyles = new Map();
+
+let initialized = false;
+
+// ============================================================
+// HELPERS
+// ============================================================
+
+function reducedMotion() {
+  return (
+    typeof window.matchMedia === 'function' &&
+    window.matchMedia(
+      '(prefers-reduced-motion: reduce)'
+    ).matches
+  );
+}
+
+function saveStyle(element, property) {
+  if (!element) return;
+
+  if (!originalStyles.has(element)) {
+    originalStyles.set(element, new Map());
+  }
+
+  const properties = originalStyles.get(element);
+
+  if (!properties.has(property)) {
+    properties.set(property, {
+      value: element.style.getPropertyValue(property),
+      priority: element.style.getPropertyPriority(property)
+    });
+  }
+}
+
+function setStyle(element, property, value) {
+  if (!element) return;
+
+  saveStyle(element, property);
+  element.style.setProperty(property, String(value));
+}
+
+function addListener(target, event, handler, options) {
+  target.addEventListener(event, handler, options);
+
+  listeners.push({
+    target,
+    event,
+    handler,
+    options
+  });
+}
+
+function addTimeout(callback, delay) {
+  const id = setTimeout(() => {
+    timers.delete(id);
+    callback();
+  }, delay);
+
+  timers.add(id);
+  return id;
+}
+
+function addFrame(callback) {
+  const id = requestAnimationFrame(() => {
+    frames.delete(id);
+    callback();
+  });
+
+  frames.add(id);
+  return id;
+}
+
+function restoreStyles() {
+  originalStyles.forEach((properties, element) => {
+    properties.forEach((original, property) => {
+      if (original.value) {
+        element.style.setProperty(
+          property,
+          original.value,
+          original.priority
+        );
+      } else {
+        element.style.removeProperty(property);
+      }
+    });
+  });
+
+  originalStyles.clear();
+}
+
+/**
+ * Observe an element once.
+ */
+function observeOnScroll(
+  element,
+  callback,
+  options = {}
+) {
+  if (!element) return;
+
+  if (
+    reducedMotion() ||
+    typeof IntersectionObserver === 'undefined'
+  ) {
+    callback();
+    return;
+  }
+
+  const observer = new IntersectionObserver(
+    entries => {
+      entries.forEach(entry => {
+        if (!entry.isIntersecting) return;
+
+        observer.unobserve(entry.target);
+
+        if (element.isConnected) {
+          callback();
+        }
+
+        observer.disconnect();
+        observers.delete(observer);
+      });
+    },
+    {
+      threshold: options.threshold ?? 0.2,
+      rootMargin:
+        options.rootMargin ?? '0px 0px -30px 0px'
+    }
+  );
+
+  observer.observe(element);
+  observers.add(observer);
+}
+
+/**
+ * Standard scroll reveal effect.
+ */
+function revealElement(
+  element,
+  {
+    transform = 'translateY(30px)',
+    transition = 'all 0.6s ease',
+    threshold = 0.2,
+    rootMargin = '0px 0px -30px 0px'
+  } = {}
+) {
+  if (!element) return;
+
+  if (reducedMotion()) {
+    setStyle(element, 'opacity', '1');
+    return;
+  }
+
+  setStyle(element, 'opacity', '0');
+  setStyle(element, 'transform', transform);
+  setStyle(element, 'transition', transition);
+
+  observeOnScroll(
+    element,
+    () => {
+      addFrame(() => {
+        setStyle(element, 'opacity', '1');
+        setStyle(element, 'transform', 'none');
+      });
+    },
+    { threshold, rootMargin }
+  );
+}
+
+// ============================================================
+// 1. SCROLL ANIMATIONS
+// ============================================================
+
 export function initScrollAnimations() {
-  const animatedElements = document.querySelectorAll(`
+  const elements = document.querySelectorAll(`
     .client-section,
     .feature-card,
     .service-post-card,
@@ -14,164 +207,410 @@ export function initScrollAnimations() {
     .count-item-wrap,
     .cta-section
   `);
-  
-  const observer = new IntersectionObserver((entries) => {
-    entries.forEach(entry => {
-      if (entry.isIntersecting) {
-        entry.target.classList.add('animate-in');
-        observer.unobserve(entry.target);
+
+  elements.forEach(element => {
+    // Service Details has its own CTA animation.
+    if (
+      element.matches('.cta-section') &&
+      document.querySelector('.service-details-title')
+    ) {
+      return;
+    }
+
+    element.classList.add('animate-ready');
+
+    if (reducedMotion()) {
+      element.classList.add('animate-in');
+      return;
+    }
+
+    observeOnScroll(
+      element,
+      () => {
+        element.classList.add('animate-in');
+      },
+      {
+        threshold: 0.2,
+        rootMargin: '0px 0px -30px 0px'
       }
-    });
-  }, { threshold: 0.2, rootMargin: '0px 0px -30px 0px' });
-  
-  animatedElements.forEach(el => {
-    el.classList.add('animate-ready');
-    observer.observe(el);
+    );
   });
 }
 
 // ============================================================
-// 2. Hero Title (Fade In Up با تاخیر)
+// 2. HERO ANIMATION
 // ============================================================
+
 export function initHeroAnimation() {
-  const heroTitle = document.querySelector('.hero-title');
-  const heroSubtitle = document.querySelector('.hero-subtitle');
-  const heroBtn = document.querySelector('.hero-btn');
-  const heroCharacter = document.querySelector('.hero-character');
-  
-  if (heroTitle) {
-    heroTitle.style.animation = 'fadeInUp 0.8s ease forwards';
-  }
-  if (heroSubtitle) {
-    heroSubtitle.style.animation = 'fadeInUp 0.8s ease 0.2s forwards';
-    heroSubtitle.style.opacity = '0';
-  }
-  if (heroBtn) {
-    heroBtn.style.animation = 'fadeInUp 0.8s ease 0.4s forwards';
-    heroBtn.style.opacity = '0';
-  }
-  if (heroCharacter) {
-    heroCharacter.style.animation = 'float 6s ease-in-out infinite';
-  }
-}
+  const heroTitle = document.querySelector(
+    '.hero-title'
+  );
 
-// ============================================================
-// 3. Count Up (شمارنده اعداد)
-// ============================================================
-export function initCountUp() {
-  const countElements = document.querySelectorAll('.count-title');
-  
-  const observer = new IntersectionObserver((entries) => {
-    entries.forEach(entry => {
-      if (entry.isIntersecting) {
-        const el = entry.target;
-        const text = el.innerText;
-        const match = text.match(/(\d+)/);
-        
-        if (match) {
-          const targetNumber = parseInt(match[0], 10);
-          const suffix = text.replace(targetNumber.toString(), '');
-          let current = 0;
-          const increment = targetNumber / 50;
-          const timer = setInterval(() => {
-            current += increment;
-            if (current >= targetNumber) {
-              el.innerText = targetNumber + suffix;
-              clearInterval(timer);
-            } else {
-              el.innerText = Math.floor(current) + suffix;
-            }
-          }, 30);
-        }
-        observer.unobserve(el);
+  const heroSubtitle = document.querySelector(
+    '.hero-subtitle'
+  );
+
+  const heroBtn = document.querySelector(
+    '.hero-btn'
+  );
+
+  const heroCharacter = document.querySelector(
+    '.hero-character'
+  );
+
+  if (reducedMotion()) {
+    [heroTitle, heroSubtitle, heroBtn].forEach(el => {
+      if (el) {
+        setStyle(el, 'opacity', '1');
+        setStyle(el, 'animation', 'none');
       }
     });
-  }, { threshold: 0.5 });
-  
-  countElements.forEach(el => observer.observe(el));
+
+    return;
+  }
+
+  if (heroTitle) {
+    setStyle(
+      heroTitle,
+      'animation',
+      'fadeInUp 0.8s ease forwards'
+    );
+  }
+
+  if (heroSubtitle) {
+    setStyle(heroSubtitle, 'opacity', '0');
+
+    setStyle(
+      heroSubtitle,
+      'animation',
+      'fadeInUp 0.8s ease 0.2s forwards'
+    );
+  }
+
+  if (heroBtn) {
+    setStyle(heroBtn, 'opacity', '0');
+
+    setStyle(
+      heroBtn,
+      'animation',
+      'fadeInUp 0.8s ease 0.4s forwards'
+    );
+  }
+
+  if (heroCharacter) {
+    setStyle(
+      heroCharacter,
+      'animation',
+      'float 6s ease-in-out infinite'
+    );
+  }
 }
 
 // ============================================================
-// 4. Hover Animations (CSS)
+// 3. COUNT UP
 // ============================================================
-export function initHoverAnimations() {
-  // کارت‌های ویژگی‌ها
-  const featureCards = document.querySelectorAll('.feature-card');
-  featureCards.forEach(card => {
-    card.addEventListener('mouseenter', () => {
-      card.style.transform = 'translateY(-8px)';
-    });
-    card.addEventListener('mouseleave', () => {
-      card.style.transform = 'translateY(0)';
-    });
-  });
-  
-  // کارت‌های خدمات
-  const serviceCards = document.querySelectorAll('.service-post-card');
-  serviceCards.forEach(card => {
-    card.addEventListener('mouseenter', () => {
-      const line = card.querySelector('.service-card-title-line-wrap');
-      if (line) line.style.width = '50px';
-    });
-    card.addEventListener('mouseleave', () => {
-      const line = card.querySelector('.service-card-title-line-wrap');
-      if (line) line.style.width = '0';
-    });
-  });
-  
-  // کارت‌های پروژه
-  const projectCards = document.querySelectorAll('.project-card-wrap');
-  projectCards.forEach(card => {
-    card.addEventListener('mouseenter', () => {
-      const overlay = card.querySelector('.project-overlay-wrap');
-      if (overlay) overlay.style.opacity = '1';
-    });
-    card.addEventListener('mouseleave', () => {
-      const overlay = card.querySelector('.project-overlay-wrap');
-      if (overlay) overlay.style.opacity = '0';
-    });
-  });
-}
 
-// ============================================================
-// 5. FAQ Accordion (باز و بسته شدن)
-// ============================================================
-export function initFaqAccordion() {
-  const faqItems = document.querySelectorAll('.faq-wrap');
-  
-  faqItems.forEach(item => {
-    const question = item.querySelector('.faq-question-wrap');
-    const answer = item.querySelector('.faq-answer-wrap');
-    const arrowLite = item.querySelector('.faq-arrow-lite');
-    const arrowDark = item.querySelector('.faq-arrow-dark');
-    
-    if (question && answer) {
-      // بستن همه در ابتدا
-      answer.style.display = 'none';
-      
-      question.addEventListener('click', () => {
-        const isOpen = answer.style.display === 'block';
-        
-        // بستن بقیه
-        faqItems.forEach(otherItem => {
-          const otherAnswer = otherItem.querySelector('.faq-answer-wrap');
-          const otherArrowLite = otherItem.querySelector('.faq-arrow-lite');
-          const otherArrowDark = otherItem.querySelector('.faq-arrow-dark');
-          if (otherAnswer && otherAnswer !== answer) {
-            otherAnswer.style.display = 'none';
-            if (otherArrowLite) otherArrowLite.style.transform = 'rotate(0deg)';
-            if (otherArrowDark) otherArrowDark.style.transform = 'rotate(0deg)';
+export function initCountUp() {
+  const elements = document.querySelectorAll(
+    '.count-title'
+  );
+
+  elements.forEach(element => {
+    const originalText =
+      element.textContent?.trim() || '';
+
+    const match = originalText.match(
+      /(\d[\d,]*)/
+    );
+
+    if (!match) return;
+
+    const target = Number(
+      match[1].replace(/,/g, '')
+    );
+
+    if (!Number.isFinite(target) || target < 0) {
+      return;
+    }
+
+    const originalNumber = match[1];
+    const useGrouping = originalNumber.includes(',');
+
+    const prefix = originalText.slice(
+      0,
+      match.index
+    );
+
+    const suffix = originalText.slice(
+      match.index + originalNumber.length
+    );
+
+    if (reducedMotion() || target === 0) {
+      return;
+    }
+
+    const formatNumber = value => {
+      const number = Math.floor(value);
+
+      return useGrouping
+        ? number.toLocaleString('en-US')
+        : String(number);
+    };
+
+    observeOnScroll(
+      element,
+      () => {
+        const duration = 1500;
+        let startTime = null;
+
+        function animate(timestamp) {
+          if (!element.isConnected) return;
+
+          if (startTime === null) {
+            startTime = timestamp;
           }
-        });
-        
-        if (isOpen) {
-          answer.style.display = 'none';
-          if (arrowLite) arrowLite.style.transform = 'rotate(0deg)';
-          if (arrowDark) arrowDark.style.transform = 'rotate(0deg)';
-        } else {
-          answer.style.display = 'block';
-          if (arrowLite) arrowLite.style.transform = 'rotate(180deg)';
-          if (arrowDark) arrowDark.style.transform = 'rotate(180deg)';
+
+          const elapsed = timestamp - startTime;
+
+          const progress = Math.min(
+            elapsed / duration,
+            1
+          );
+
+          // Ease-out cubic.
+          const eased =
+            1 - Math.pow(1 - progress, 3);
+
+          const value = target * eased;
+
+          element.textContent =
+            prefix +
+            formatNumber(value) +
+            suffix;
+
+          if (progress < 1) {
+            addFrame(animate);
+          } else {
+            element.textContent = originalText;
+          }
+        }
+
+        addFrame(animate);
+      },
+      { threshold: 0.5 }
+    );
+  });
+}
+
+// ============================================================
+// 4. HOVER ANIMATIONS
+// ============================================================
+
+export function initHoverAnimations() {
+  if (reducedMotion()) return;
+
+  // Feature cards.
+  document.querySelectorAll(
+    '.feature-card'
+  ).forEach(card => {
+    const originalTransform = card.style.transform;
+
+    addListener(card, 'mouseenter', () => {
+      setStyle(
+        card,
+        'transform',
+        'translateY(-8px)'
+      );
+    });
+
+    addListener(card, 'mouseleave', () => {
+      setStyle(
+        card,
+        'transform',
+        originalTransform || 'none'
+      );
+    });
+  });
+
+  // Service cards.
+  document.querySelectorAll(
+    '.service-post-card'
+  ).forEach(card => {
+    const line = card.querySelector(
+      '.service-card-title-line-wrap'
+    );
+
+    if (!line) return;
+
+    const originalWidth = line.style.width;
+
+    addListener(card, 'mouseenter', () => {
+      setStyle(line, 'width', '50px');
+    });
+
+    addListener(card, 'mouseleave', () => {
+      setStyle(
+        line,
+        'width',
+        originalWidth || '0px'
+      );
+    });
+  });
+
+  // Project cards.
+  document.querySelectorAll(
+    '.project-card-wrap'
+  ).forEach(card => {
+    const overlay = card.querySelector(
+      '.project-overlay-wrap'
+    );
+
+    if (!overlay) return;
+
+    const originalOpacity = overlay.style.opacity;
+
+    addListener(card, 'mouseenter', () => {
+      setStyle(overlay, 'opacity', '1');
+    });
+
+    addListener(card, 'mouseleave', () => {
+      setStyle(
+        overlay,
+        'opacity',
+        originalOpacity || '0'
+      );
+    });
+  });
+}
+
+// ============================================================
+// 5. FAQ ACCORDION
+// ============================================================
+
+export function initFaqAccordion() {
+  const faqItems = [
+    ...document.querySelectorAll('.faq-wrap')
+  ];
+
+  if (!faqItems.length) return;
+
+  const closeItem = item => {
+    const answer = item.querySelector(
+      '.faq-answer-wrap'
+    );
+
+    const question = item.querySelector(
+      '.faq-question-wrap'
+    );
+
+    const arrows = item.querySelectorAll(
+      '.faq-arrow-lite, .faq-arrow-dark'
+    );
+
+    if (answer) {
+      setStyle(answer, 'display', 'none');
+      answer.setAttribute('aria-hidden', 'true');
+    }
+
+    if (question) {
+      question.setAttribute(
+        'aria-expanded',
+        'false'
+      );
+    }
+
+    arrows.forEach(arrow => {
+      setStyle(
+        arrow,
+        'transform',
+        'rotate(0deg)'
+      );
+    });
+  };
+
+  const openItem = item => {
+    const answer = item.querySelector(
+      '.faq-answer-wrap'
+    );
+
+    const question = item.querySelector(
+      '.faq-question-wrap'
+    );
+
+    const arrows = item.querySelectorAll(
+      '.faq-arrow-lite, .faq-arrow-dark'
+    );
+
+    if (answer) {
+      setStyle(answer, 'display', 'block');
+      answer.setAttribute('aria-hidden', 'false');
+    }
+
+    if (question) {
+      question.setAttribute(
+        'aria-expanded',
+        'true'
+      );
+    }
+
+    arrows.forEach(arrow => {
+      setStyle(
+        arrow,
+        'transform',
+        'rotate(180deg)'
+      );
+    });
+  };
+
+  // Start with all FAQs closed.
+  faqItems.forEach(closeItem);
+
+  faqItems.forEach(item => {
+    const question = item.querySelector(
+      '.faq-question-wrap'
+    );
+
+    const answer = item.querySelector(
+      '.faq-answer-wrap'
+    );
+
+    if (!question || !answer) return;
+
+    const toggle = () => {
+      const isOpen =
+        answer.style.display === 'block';
+
+      faqItems.forEach(closeItem);
+
+      if (!isOpen) {
+        openItem(item);
+      }
+    };
+
+    addListener(question, 'click', toggle);
+
+    // Support keyboard interaction for
+    // non-native interactive elements.
+    if (
+      !question.matches(
+        'button, a, input, select, textarea'
+      )
+    ) {
+      if (!question.hasAttribute('tabindex')) {
+        question.setAttribute('tabindex', '0');
+      }
+
+      if (!question.hasAttribute('role')) {
+        question.setAttribute('role', 'button');
+      }
+
+      addListener(question, 'keydown', event => {
+        if (
+          event.key === 'Enter' ||
+          event.key === ' '
+        ) {
+          event.preventDefault();
+          toggle();
         }
       });
     }
@@ -179,291 +618,409 @@ export function initFaqAccordion() {
 }
 
 // ============================================================
-// 6. Parallax Effect (حرکت آهسته)
+// 6. PARALLAX
 // ============================================================
+
 export function initParallax() {
-  const heroCharacter = document.querySelector('.hero-character');
-  
-  window.addEventListener('scroll', () => {
+  const heroCharacter = document.querySelector(
+    '.hero-character'
+  );
+
+  if (!heroCharacter || reducedMotion()) {
+    return;
+  }
+
+  let ticking = false;
+
+  const updateParallax = () => {
+    ticking = false;
+
+    if (!heroCharacter.isConnected) return;
+
     const scrolled = window.scrollY;
-    if (heroCharacter) {
-      heroCharacter.style.transform = `translateY(${scrolled * 0.2}px)`;
+    const offset = scrolled * 0.2;
+
+    // Individual translate property avoids
+    // overwriting the CSS float animation.
+    setStyle(
+      heroCharacter,
+      'translate',
+      `0px ${offset}px`
+    );
+  };
+
+  const onScroll = () => {
+    if (ticking) return;
+
+    ticking = true;
+    addFrame(updateParallax);
+  };
+
+  addListener(
+    window,
+    'scroll',
+    onScroll,
+    { passive: true }
+  );
+
+  updateParallax();
+}
+
+// ============================================================
+// 7. ABOUT PAGE ANIMATIONS
+// ============================================================
+
+export function initAboutAnimations() {
+  const bannerTitle = document.querySelector(
+    '.banner-title'
+  );
+
+  if (bannerTitle && !reducedMotion()) {
+    setStyle(
+      bannerTitle,
+      'animation',
+      'fadeInUp 0.8s ease forwards'
+    );
+  }
+
+  // Count Cards
+  document.querySelectorAll(
+    '.count-card-wrap'
+  ).forEach((card, index) => {
+    revealElement(card, {
+      transform: 'translateY(30px)',
+      transition:
+        `all 0.5s ease ${index * 0.15}s`,
+      threshold: 0.3
+    });
+  });
+
+  // Mission
+  const missionGrid = document.querySelector(
+    '.about-intro-top-grid'
+  );
+
+  if (missionGrid) {
+    revealElement(
+      missionGrid.querySelector(
+        '.about-intro-image-wrap'
+      ),
+      {
+        transform: 'translateX(-50px)',
+        transition: 'all 0.7s ease'
+      }
+    );
+
+    revealElement(
+      missionGrid.querySelector(
+        '.about-intro-content-wrap'
+      ),
+      {
+        transform: 'translateX(50px)',
+        transition: 'all 0.7s ease 0.2s'
+      }
+    );
+  }
+
+  // Vision
+  const visionGrid = document.querySelector(
+    '.about-intro-bottom-grid'
+  );
+
+  if (visionGrid) {
+    revealElement(
+      visionGrid.querySelector(
+        '.about-intro-content-wrap'
+      ),
+      {
+        transform: 'translateX(-50px)',
+        transition: 'all 0.7s ease'
+      }
+    );
+
+    revealElement(
+      visionGrid.querySelector(
+        '.about-intro-image-wrap'
+      ),
+      {
+        transform: 'translateX(50px)',
+        transition: 'all 0.7s ease 0.2s'
+      }
+    );
+  }
+
+  // Value Cards
+  document.querySelectorAll(
+    '.value-card-wrap'
+  ).forEach((card, index) => {
+    revealElement(card, {
+      transform: 'translateY(40px)',
+      transition:
+        `all 0.5s ease ${index * 0.1}s`
+    });
+  });
+
+  // History Items
+  document.querySelectorAll(
+    '.history-card-wrap'
+  ).forEach((item, index) => {
+    const left = item.querySelector(
+      '.history-left-wrap'
+    );
+
+    const right = item.querySelector(
+      '.history-right-wrap'
+    );
+
+    if (reducedMotion()) {
+      return;
     }
+
+    if (left) {
+      setStyle(left, 'opacity', '0');
+      setStyle(
+        left,
+        'transform',
+        index % 2 === 0
+          ? 'translateX(-40px)'
+          : 'translateX(40px)'
+      );
+
+      setStyle(
+        left,
+        'transition',
+        'all 0.6s ease'
+      );
+    }
+
+    if (right) {
+      setStyle(right, 'opacity', '0');
+      setStyle(
+        right,
+        'transform',
+        index % 2 === 0
+          ? 'translateX(40px)'
+          : 'translateX(-40px)'
+      );
+
+      setStyle(
+        right,
+        'transition',
+        'all 0.6s ease 0.15s'
+      );
+    }
+
+    observeOnScroll(item, () => {
+      addFrame(() => {
+        [left, right].forEach(element => {
+          if (!element) return;
+
+          setStyle(element, 'opacity', '1');
+          setStyle(
+            element,
+            'transform',
+            'none'
+          );
+        });
+      });
+    });
+  });
+
+  // History Steps
+  document.querySelectorAll(
+    '.history-step-wrap'
+  ).forEach((step, index) => {
+    revealElement(step, {
+      transform: 'scale(0)',
+      transition:
+        `all 0.3s ease ${index * 0.1}s`
+    });
   });
 }
 
 // ============================================================
-// 7. تابع اصلی راه‌اندازی همه انیمیشن‌ها
+// 8. SERVICE DETAILS ANIMATIONS
 // ============================================================
+
+export function initServiceDetailsAnimations() {
+  const animateEntrance = (
+    selector,
+    transform,
+    transition,
+    delay
+  ) => {
+    const element = document.querySelector(
+      selector
+    );
+
+    if (!element) return;
+
+    if (reducedMotion()) {
+      setStyle(element, 'opacity', '1');
+      return;
+    }
+
+    setStyle(element, 'opacity', '0');
+    setStyle(element, 'transform', transform);
+    setStyle(element, 'transition', transition);
+
+    addTimeout(() => {
+      if (!element.isConnected) return;
+
+      setStyle(element, 'opacity', '1');
+      setStyle(element, 'transform', 'none');
+    }, delay);
+  };
+
+  // Title
+  animateEntrance(
+    '.service-details-title',
+    'translateY(30px)',
+    'all 0.6s ease',
+    100
+  );
+
+  // Main Image
+  animateEntrance(
+    '.service-details-image-main',
+    'scale(0.95)',
+    'all 0.7s ease 0.2s',
+    200
+  );
+
+  // Description
+  animateEntrance(
+    '.service-details-description',
+    'translateY(30px)',
+    'all 0.6s ease 0.3s',
+    300
+  );
+
+  // Secondary Image
+  animateEntrance(
+    '.service-details-image-secondary',
+    'translateX(-30px)',
+    'all 0.6s ease 0.4s',
+    400
+  );
+
+  // Content Blocks
+  document.querySelectorAll(
+    '.service-details-block'
+  ).forEach((block, index) => {
+    revealElement(block, {
+      transform: 'translateY(40px)',
+      transition:
+        `all 0.5s ease ${index * 0.15}s`,
+      rootMargin: '0px 0px -50px 0px'
+    });
+  });
+
+  // Service CTA
+  const serviceTitle = document.querySelector(
+    '.service-details-title'
+  );
+
+  if (serviceTitle) {
+    revealElement(
+      document.querySelector('.cta-section'),
+      {
+        transform: 'translateY(40px)',
+        transition: 'all 0.6s ease 0.5s'
+      }
+    );
+  }
+}
+
+// ============================================================
+// 9. CLEANUP
+// ============================================================
+
+export function destroyAllAnimations() {
+  // Disconnect all IntersectionObservers.
+  observers.forEach(observer => {
+    observer.disconnect();
+  });
+
+  observers.clear();
+
+  // Remove all registered event listeners.
+  listeners.forEach(
+    ({ target, event, handler, options }) => {
+      target.removeEventListener(
+        event,
+        handler,
+        options
+      );
+    }
+  );
+
+  listeners.length = 0;
+
+  // Cancel scheduled timeouts.
+  timers.forEach(timer => {
+    clearTimeout(timer);
+  });
+
+  timers.clear();
+
+  // Cancel animation frames.
+  frames.forEach(frame => {
+    cancelAnimationFrame(frame);
+  });
+
+  frames.clear();
+
+  // Restore previous inline styles.
+  restoreStyles();
+
+  initialized = false;
+}
+
+// ============================================================
+// 10. INITIALIZE ALL
+// ============================================================
+
 export function initAllAnimations() {
-  // تاخیر کوچک برای اطمینان از لود DOM
-  setTimeout(() => {
+  if (initialized) {
+    destroyAllAnimations();
+  }
+
+  initialized = true;
+
+  try {
     initHeroAnimation();
     initScrollAnimations();
     initCountUp();
     initHoverAnimations();
     initFaqAccordion();
     initParallax();
-     initServiceDetailsAnimations();
+
+    initServiceDetailsAnimations();
     initAboutAnimations();
-  }, 100);
+
+    console.log(
+      '[Animations] All animations initialized.'
+    );
+  } catch (error) {
+    console.error(
+      '[Animations] Initialization error:',
+      error
+    );
+
+    destroyAllAnimations();
+  }
 }
 
 // ============================================================
-// پاک کردن و راه‌اندازی مجدد (برای route changes)
+// 11. REINITIALIZE FOR SPA NAVIGATION
 // ============================================================
+
 export function reinitAnimations() {
+  destroyAllAnimations();
   initAllAnimations();
 }
-// ============================================================
-// 8. About Page Animations
-// ============================================================
-
-export function initAboutAnimations() {
-  // Banner Title
-  const bannerTitle = document.querySelector('.banner-title');
-  if (bannerTitle) {
-    bannerTitle.style.animation = 'fadeInUp 0.8s ease forwards';
-  }
-  
-  // Count Cards (با تاخیر متوالی)
-  const countCards = document.querySelectorAll('.count-card-wrap');
-  countCards.forEach((card, index) => {
-    card.style.opacity = '0';
-    card.style.transform = 'translateY(30px)';
-    card.style.transition = `all 0.5s ease ${index * 0.15}s`;
-    
-    const observer = new IntersectionObserver((entries) => {
-      entries.forEach(entry => {
-        if (entry.isIntersecting) {
-          card.style.opacity = '1';
-          card.style.transform = 'translateY(0)';
-          observer.unobserve(card);
-        }
-      });
-    }, { threshold: 0.3 });
-    observer.observe(card);
-  });
-  
-  // Mission & Vision Sections (Slide In)
-  const missionGrid = document.querySelector('.about-intro-top-grid');
-  const visionGrid = document.querySelector('.about-intro-bottom-grid');
-  
-  if (missionGrid) {
-    const missionImage = missionGrid.querySelector('.about-intro-image-wrap');
-    const missionContent = missionGrid.querySelector('.about-intro-content-wrap');
-    
-    if (missionImage) {
-      missionImage.style.opacity = '0';
-      missionImage.style.transform = 'translateX(-50px)';
-      missionImage.style.transition = 'all 0.7s ease';
-      observeOnScroll(missionImage, () => {
-        missionImage.style.opacity = '1';
-        missionImage.style.transform = 'translateX(0)';
-      });
-    }
-    
-    if (missionContent) {
-      missionContent.style.opacity = '0';
-      missionContent.style.transform = 'translateX(50px)';
-      missionContent.style.transition = 'all 0.7s ease 0.2s';
-      observeOnScroll(missionContent, () => {
-        missionContent.style.opacity = '1';
-        missionContent.style.transform = 'translateX(0)';
-      });
-    }
-  }
-  
-  if (visionGrid) {
-    const visionContent = visionGrid.querySelector('.about-intro-content-wrap');
-    const visionImage = visionGrid.querySelector('.about-intro-image-wrap');
-    
-    if (visionContent) {
-      visionContent.style.opacity = '0';
-      visionContent.style.transform = 'translateX(-50px)';
-      visionContent.style.transition = 'all 0.7s ease';
-      observeOnScroll(visionContent, () => {
-        visionContent.style.opacity = '1';
-        visionContent.style.transform = 'translateX(0)';
-      });
-    }
-    
-    if (visionImage) {
-      visionImage.style.opacity = '0';
-      visionImage.style.transform = 'translateX(50px)';
-      visionImage.style.transition = 'all 0.7s ease 0.2s';
-      observeOnScroll(visionImage, () => {
-        visionImage.style.opacity = '1';
-        visionImage.style.transform = 'translateX(0)';
-      });
-    }
-  }
-  
-  // Value Cards
-  const valueCards = document.querySelectorAll('.value-card-wrap');
-  valueCards.forEach((card, index) => {
-    card.style.opacity = '0';
-    card.style.transform = 'translateY(40px)';
-    card.style.transition = `all 0.5s ease ${index * 0.1}s`;
-    
-    observeOnScroll(card, () => {
-      card.style.opacity = '1';
-      card.style.transform = 'translateY(0)';
-    });
-  });
-  
-  // History Items
-  const historyItems = document.querySelectorAll('.history-card-wrap');
-  historyItems.forEach((item, index) => {
-    const leftWrap = item.querySelector('.history-left-wrap');
-    const rightWrap = item.querySelector('.history-right-wrap');
-    
-    if (leftWrap) {
-      leftWrap.style.opacity = '0';
-      leftWrap.style.transform = index % 2 === 0 ? 'translateX(-40px)' : 'translateX(40px)';
-      leftWrap.style.transition = 'all 0.6s ease';
-    }
-    if (rightWrap) {
-      rightWrap.style.opacity = '0';
-      rightWrap.style.transform = index % 2 === 0 ? 'translateX(40px)' : 'translateX(-40px)';
-      rightWrap.style.transition = 'all 0.6s ease 0.15s';
-    }
-    
-    observeOnScroll(item, () => {
-      if (leftWrap) {
-        leftWrap.style.opacity = '1';
-        leftWrap.style.transform = 'translateX(0)';
-      }
-      if (rightWrap) {
-        rightWrap.style.opacity = '1';
-        rightWrap.style.transform = 'translateX(0)';
-      }
-    });
-  });
-  
-  // History Steps (خط عمودی)
-  const historySteps = document.querySelectorAll('.history-step-wrap');
-  historySteps.forEach((step, index) => {
-    step.style.opacity = '0';
-    step.style.transform = 'scale(0)';
-    step.style.transition = `all 0.3s ease ${index * 0.1}s`;
-    
-    observeOnScroll(step, () => {
-      step.style.opacity = '1';
-      step.style.transform = 'scale(1)';
-    });
-  });
-}
 
 // ============================================================
-// تابع کمکی برای اسکرول
+// END
 // ============================================================
-function observeOnScroll(element, callback) {
-  const observer = new IntersectionObserver((entries) => {
-    entries.forEach(entry => {
-      if (entry.isIntersecting) {
-        callback();
-        observer.unobserve(element);
-      }
-    });
-  }, { threshold: 0.2, rootMargin: '0px 0px -30px 0px' });
-  
-  observer.observe(element);
-}
-// ============================================================
-// 9. Service Details Page Animations
-// ============================================================
-
-export function initServiceDetailsAnimations() {
-  // عنوان (Fade In Up)
-  const serviceTitle = document.querySelector('.service-details-title');
-  if (serviceTitle) {
-    serviceTitle.style.opacity = '0';
-    serviceTitle.style.transform = 'translateY(30px)';
-    serviceTitle.style.transition = 'all 0.6s ease';
-    
-    setTimeout(() => {
-      serviceTitle.style.opacity = '1';
-      serviceTitle.style.transform = 'translateY(0)';
-    }, 100);
-  }
-  
-  // تصویر اصلی (Scale In + Fade)
-  const mainImage = document.querySelector('.service-details-image-main');
-  if (mainImage) {
-    mainImage.style.opacity = '0';
-    mainImage.style.transform = 'scale(0.95)';
-    mainImage.style.transition = 'all 0.7s ease 0.2s';
-    
-    setTimeout(() => {
-      mainImage.style.opacity = '1';
-      mainImage.style.transform = 'scale(1)';
-    }, 200);
-  }
-  
-  // توضیحات (Slide Up)
-  const description = document.querySelector('.service-details-description');
-  if (description) {
-    description.style.opacity = '0';
-    description.style.transform = 'translateY(30px)';
-    description.style.transition = 'all 0.6s ease 0.3s';
-    
-    setTimeout(() => {
-      description.style.opacity = '1';
-      description.style.transform = 'translateY(0)';
-    }, 300);
-  }
-  
-  // تصویر دوم (Fade In + Slide)
-  const secondaryImage = document.querySelector('.service-details-image-secondary');
-  if (secondaryImage) {
-    secondaryImage.style.opacity = '0';
-    secondaryImage.style.transform = 'translateX(-30px)';
-    secondaryImage.style.transition = 'all 0.6s ease 0.4s';
-    
-    setTimeout(() => {
-      secondaryImage.style.opacity = '1';
-      secondaryImage.style.transform = 'translateX(0)';
-    }, 400);
-  }
-  
-  // بخش‌های محتوایی (با اسکرول)
-  const contentBlocks = document.querySelectorAll('.service-details-block');
-  contentBlocks.forEach((block, index) => {
-    block.style.opacity = '0';
-    block.style.transform = 'translateY(40px)';
-    block.style.transition = `all 0.5s ease ${index * 0.15}s`;
-    
-    const observer = new IntersectionObserver((entries) => {
-      entries.forEach(entry => {
-        if (entry.isIntersecting) {
-          block.style.opacity = '1';
-          block.style.transform = 'translateY(0)';
-          observer.unobserve(block);
-        }
-      });
-    }, { threshold: 0.2, rootMargin: '0px 0px -50px 0px' });
-    
-    observer.observe(block);
-  });
-  
-  // CTA Section (Fade In Up)
-  const ctaSection = document.querySelector('.cta-section');
-  if (ctaSection) {
-    ctaSection.style.opacity = '0';
-    ctaSection.style.transform = 'translateY(40px)';
-    ctaSection.style.transition = 'all 0.6s ease 0.5s';
-    
-    const observer = new IntersectionObserver((entries) => {
-      entries.forEach(entry => {
-        if (entry.isIntersecting) {
-          ctaSection.style.opacity = '1';
-          ctaSection.style.transform = 'translateY(0)';
-          observer.unobserve(ctaSection);
-        }
-      });
-    }, { threshold: 0.2 });
-    
-    observer.observe(ctaSection);
-  }
-}

@@ -1,166 +1,386 @@
-// app.js - Main Entry Point with Preloader
+
+/**
+ * Mazorya Group - Main Application
+ * File: app.js
+ *
+ * No preloader
+ * Vanilla JS + Vite + SPA Router
+ */
 
 import { router } from './core/router.js';
 import { i18n } from './core/i18n.js';
-import { loadInitialData } from './core/api.js';
-import { initIX2, destroyIX2 } from './core/ix2.js';
-import { initAllAnimations, reinitAnimations } from './core/animations.js';
+
+import {
+  appStore,
+  loadInitialData
+} from './core/api.js';
+
+import {
+  initIX2,
+  destroyIX2
+} from './core/ix2.js';
+
+import {
+  reinitAnimations
+} from './core/animations.js';
 
 // ============================================================
-// Preloader Functions (لودر خفن با لوگو)
+// CONFIGURATION
 // ============================================================
 
-let preloaderTimeout;
+const DEFAULT_LANG = 'en';
+const IX2_INIT_DELAY = 100;
 
-function showPreloader() {
-  // اگر لودر قبلاً وجود دارد، آن را حذف کن
-  const existingPreloader = document.getElementById('preloader');
-  if (existingPreloader) {
-    existingPreloader.remove();
-  }
-  
-  const preloader = document.createElement('div');
-  preloader.className = 'preloader';
-  preloader.id = 'preloader';
-  preloader.innerHTML = `
-    <div class="loader-wrapper">
-      <div class="loader-ring"></div>
-      <div class="loader-ring"></div>
-      <div class="loader-ring"></div>
-      <div class="loader-logo"></div>
-      <div class="loader-brand">
-        <span>MAZORYA</span> GROUP
-      </div>
-      <div class="loader-text">
-        <span>M</span><span>A</span><span>Z</span><span>O</span><span>R</span><span>Y</span><span>A</span>
-      </div>
-      <div class="loader-progress">
-        <div class="progress-bar-bg">
-          <div class="progress-bar-fill"></div>
-        </div>
-        <div class="progress-text">Loading experience...</div>
-      </div>
-    </div>
-  `;
-  document.body.appendChild(preloader);
-  
-  // اطمینان از اینکه لودر حتماً بعد از 5 ثانیه حذف شود
-  preloaderTimeout = setTimeout(() => {
-    hidePreloader();
-  }, 5000);
+// ============================================================
+// APPLICATION STATE
+// ============================================================
+
+let appInitialized = false;
+let ix2InitTimeout = null;
+let initialDataPromise = null;
+
+// Preserve compatibility with existing modules.
+
+window.appState = {
+  currentLanguage: DEFAULT_LANG,
+  currentPage: null,
+  data: appStore.data
+};
+
+// ============================================================
+// LANGUAGE MANAGEMENT
+// ============================================================
+
+function syncLanguageState() {
+  const lang = i18n.getCurrentLanguage();
+
+  const isRTL =
+    lang === 'fa' ||
+    lang === 'ar';
+
+  window.appState.currentLanguage = lang;
+
+  document.documentElement.lang = lang;
+  document.documentElement.dir = isRTL
+    ? 'rtl'
+    : 'ltr';
+
+  // Compatibility with existing CSS using body[dir].
+  document.body.dir = isRTL
+    ? 'rtl'
+    : 'ltr';
+
+  return lang;
 }
 
-function hidePreloader() {
-  const preloader = document.getElementById('preloader');
-  if (preloader) {
-    preloader.classList.add('hide');
-    setTimeout(() => {
-      if (preloader && preloader.parentNode) {
-        preloader.remove();
+// ============================================================
+// DATA MANAGEMENT
+// ============================================================
+
+function syncAppData() {
+  window.appState.data = appStore.data;
+}
+
+/**
+ * Prevent duplicate initial-data requests.
+ *
+ * The page Router can start rendering without
+ * waiting for this shared API preload.
+ */
+
+function initializeData() {
+  if (initialDataPromise) {
+    return initialDataPromise;
+  }
+
+  const requestedLang = i18n.getCurrentLanguage();
+
+  initialDataPromise = (async () => {
+    try {
+      await loadInitialData();
+
+      if (
+        requestedLang !== i18n.getCurrentLanguage()
+      ) {
+        return;
       }
-    }, 800);
-  }
-  if (preloaderTimeout) {
-    clearTimeout(preloaderTimeout);
-  }
+
+      syncAppData();
+
+      if (!appStore.isInitialized(requestedLang)) {
+        console.warn(
+          '[App] Some initial API data could not be loaded.'
+        );
+      }
+    } catch (error) {
+      console.error(
+        '[App] Initial data loading failed:',
+        error
+      );
+    }
+  })().finally(() => {
+    initialDataPromise = null;
+  });
+
+  return initialDataPromise;
 }
 
 // ============================================================
-// تابع راه‌اندازی مجدد IX2 (موشن‌های Webflow)
+// IX2 ANIMATIONS
 // ============================================================
+
 function reinitIX2() {
-  destroyIX2();
-  setTimeout(() => {
-    initIX2();
-  }, 100);
+  if (ix2InitTimeout !== null) {
+    clearTimeout(ix2InitTimeout);
+    ix2InitTimeout = null;
+  }
+
+  try {
+    destroyIX2();
+
+    ix2InitTimeout = setTimeout(() => {
+      ix2InitTimeout = null;
+
+      try {
+        initIX2();
+      } catch (error) {
+        console.error(
+          '[App] IX2 initialization failed:',
+          error
+        );
+      }
+    }, IX2_INIT_DELAY);
+
+  } catch (error) {
+    console.error(
+      '[App] IX2 reset failed:',
+      error
+    );
+  }
 }
 
 // ============================================================
-// تابع راه‌اندازی مجدد همه انیمیشن‌ها
+// ALL PAGE ANIMATIONS
 // ============================================================
+
 function reinitAll() {
-  reinitAnimations();
+  try {
+    reinitAnimations();
+  } catch (error) {
+    console.error(
+      '[App] Page animations failed:',
+      error
+    );
+  }
+
   reinitIX2();
 }
 
 // ============================================================
-// State مدیریت زبان و داده‌ها
+// AFTER PAGE RENDER
 // ============================================================
-window.appState = {
-  currentLanguage: 'en',
-  currentPage: null,
-  data: {
-    services: [],
-    projects: [],
-    blogs: []
+
+
+function afterPageRender() {
+  window.appState.currentPage = router.currentRoute;
+
+  syncLanguageState();
+  syncAppData();
+
+  reinitAll();
+
+  const lang = i18n.getCurrentLanguage();
+
+  if (!appStore.isInitialized(lang)) {
+    void initializeData();
   }
-};
+
+  // Notify the initial site loader that
+  // the first SPA page has been rendered.
+  window.dispatchEvent(
+    new Event('mazorya:app-ready')
+  );
+}
 
 // ============================================================
-// تابع اصلی راه‌اندازی برنامه
+// LANGUAGE CHANGE
 // ============================================================
+
+window.addEventListener(
+  'languageChanged',
+  event => {
+    const lang = event.detail?.lang;
+
+    if (!lang) return;
+
+    syncLanguageState();
+
+    console.log(
+      '[App] Language changed:',
+      lang
+    );
+
+    // The router and i18n module manage language
+    // changes. No loading overlay is created.
+  }
+);
+
+// ============================================================
+// DETECT INITIAL LANGUAGE
+// ============================================================
+
+function getInitialLanguage() {
+  const route = router.parsePath(
+    window.location.pathname
+  );
+
+  return route?.lang || DEFAULT_LANG;
+}
+
+// ============================================================
+// APPLICATION INITIALIZATION
+// ============================================================
+
 async function init() {
+  if (appInitialized) {
+    return;
+  }
+
+  appInitialized = true;
+
   try {
-    // نمایش لودر
-    showPreloader();
-    
-    // شبیه‌سازی حداقل زمان بارگذاری (1.5 ثانیه)
-    const minLoadTime = new Promise(resolve => setTimeout(resolve, 1500));
-    
-    // 1. تشخیص زبان از URL
-    const path = window.location.pathname;
-    const match = path.match(/^\/([a-z]{2})\//);
-    const lang = match ? match[1] : 'fa';
+    console.log(
+      '[App] Initializing Mazorya Group...'
+    );
 
-    // 2. تنظیم زبان
-    await i18n.setLanguage(lang);
-    window.appState.currentLanguage = lang;
+    // --------------------------------------------------------
+    // 1. LANGUAGE
+    // --------------------------------------------------------
 
-    // 3. لود داده‌های اولیه از API
-    const dataPromise = loadInitialData();
-    
-    // منتظر ماندن برای هر دو (لودر + دیتا)
-    await Promise.all([minLoadTime, dataPromise]);
+    const initialLang = getInitialLanguage();
 
-    // 4. ست کردن afterRender روی router
-    router.afterRender = reinitAll;
+    const languageLoaded = await i18n.setLanguage(
+      initialLang
+    );
 
-    // 5. شروع router
-    router.init();
+    if (!languageLoaded) {
+      console.warn(
+        '[App] Requested language unavailable. ' +
+        'Fallback may be active.'
+      );
+    }
 
-    // 6. راه‌اندازی اولیه انیمیشن‌ها
-    setTimeout(() => {
-      initAllAnimations();
-    }, 200);
-    
-    // 7. مخفی کردن لودر
-    hidePreloader();
+    const activeLang = syncLanguageState();
 
-    console.log('✅ App initialized successfully');
+    console.log(
+      '[App] Active language:',
+      activeLang
+    );
 
-  } catch (err) {
-    console.error('❌ App init failed:', err);
-    hidePreloader();
+    // --------------------------------------------------------
+    // 2. ROUTER CALLBACK
+    // --------------------------------------------------------
+
+    router.afterRender = afterPageRender;
+
+    // --------------------------------------------------------
+    // 3. SHARED API DATA
+    // --------------------------------------------------------
+
+    // Start data preloading without holding the
+    // whole page behind a loading screen.
+    //
+    // Individual pages can still fetch the data
+    // they require through their API functions.
+
+    void initializeData();
+
+    // --------------------------------------------------------
+    // 4. ROUTER INITIALIZATION
+    // --------------------------------------------------------
+
+    await router.init();
+
+    // --------------------------------------------------------
+    // 5. STATE SYNCHRONIZATION
+    // --------------------------------------------------------
+
+    syncLanguageState();
+    syncAppData();
+
+    console.log(
+      '[App] Initialized successfully.'
+    );
+
+  } catch (error) {
+    console.error(
+      '[App] Initialization failed:',
+      error
+    );
+    window.dispatchEvent(
+  new Event('mazorya:app-ready')
+);
+
+    const app = document.getElementById('app');
+
+    if (app) {
+      app.innerHTML = `
+        <section
+          style="
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 40px 20px;
+            background: #090909;
+            color: #ffffff;
+            text-align: center;
+          "
+        >
+
+          <h1>
+            Unable to load the website
+          </h1>
+
+          <p style="margin: 20px 0;">
+            Please refresh the page and try again.
+          </p>
+
+          <button
+            type="button"
+            id="appReloadButton"
+            class="primary-button"
+          >
+            Reload Page
+          </button>
+
+        </section>
+      `;
+
+      const button = document.getElementById(
+        'appReloadButton'
+      );
+
+      button?.addEventListener('click', () => {
+        window.location.reload();
+      });
+    }
   }
 }
 
 // ============================================================
-// رفرش صفحه هنگام تغییر زبان
+// START APPLICATION
 // ============================================================
-window.addEventListener('languageChanged', (e) => {
-  console.log('Language changed to:', e.detail.lang);
-  window.appState.currentLanguage = e.detail.lang;
-  
-  // نمایش لودر هنگام تغییر زبان
-  showPreloader();
-  
-  setTimeout(() => {
-    reinitAll();
-    hidePreloader();
-  }, 500);
-});
 
-// ============================================================
-// شروع برنامه
-// ============================================================
-init();
+if (document.readyState === 'loading') {
+  document.addEventListener(
+    'DOMContentLoaded',
+    () => {
+      void init();
+    },
+    { once: true }
+  );
+} else {
+  void init();
+}

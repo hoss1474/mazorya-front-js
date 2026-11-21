@@ -1,16 +1,74 @@
+
+# ==========================================================
+# MAZORYA GROUP
+# Production .htaccess
+# Vite + Vanilla JavaScript SPA
+# Domain: mazoryagroup.com
+# ==========================================================
+
+DirectoryIndex index.html
+
 <IfModule mod_rewrite.c>
-  RewriteEngine On
-  RewriteBase /
-  
-  # اگر فایل یا پوشه وجود دارد، مستقیماً سرو کن
-  RewriteCond %{REQUEST_FILENAME} !-f
-  RewriteCond %{REQUEST_FILENAME} !-d
-  
-  # بقیه درخواست‌ها را به index.html هدایت کن
-  RewriteRule . /index.html [L]
+
+    RewriteEngine On
+
+    # ------------------------------------------------------
+    # 1. Serve real files and directories normally
+    # ------------------------------------------------------
+
+    RewriteCond %{REQUEST_FILENAME} -f [OR]
+    RewriteCond %{REQUEST_FILENAME} -d
+    RewriteRule ^ - [L]
+
+    # ------------------------------------------------------
+    # 2. Static assets and language files
+    # Missing resources must return 404, not index.html
+    # ------------------------------------------------------
+
+    RewriteRule ^(assets|lang)(/|$) - [L,NC]
+
+    # ------------------------------------------------------
+    # 3. Do not redirect API routes to the SPA
+    # ------------------------------------------------------
+
+    RewriteRule ^api(/|$) - [L,NC]
+
+    # ------------------------------------------------------
+    # 4. Missing static files should return real 404 errors
+    # ------------------------------------------------------
+
+    RewriteRule \.(js|mjs|css|json|png|jpg|jpeg|gif|webp|svg|ico|woff|woff2|ttf|otf|map|mp4|webm|pdf)$ - [L,NC]
+
+    # ------------------------------------------------------
+    # 5. SPA fallback
+    # /en/
+    # /fa/
+    # /en/projects
+    # /en/login
+    # /en/profile
+    # ------------------------------------------------------
+
+    RewriteRule ^ index.html [L]
+
 </IfModule>
 
-# فعال کردن CORS (اختیاری)
-<IfModule mod_headers.c>
-  Header set Access-Control-Allow-Origin "*"
+
+# ==========================================================
+# CPANEL PHP SETTINGS
+# BEGIN cPanel-generated php ini directives, do not edit
+# Manual editing of this file may result in unexpected behavior.
+# To make changes to this file, use the cPanel MultiPHP INI Editor (Home >> Software >> MultiPHP INI Editor)
+# For more information, read our documentation (https://go.cpanel.net/EA4ModifyINI)
+
+<IfModule php8_module>
+   php_value error_log "/home/mazory/logs/php.error.log"
+   php_flag log_errors On
 </IfModule>
+
+<IfModule lsapi_module>
+   php_value error_log "/home/mazory/logs/php.error.log"
+   php_flag log_errors On
+</IfModule>
+
+# END cPanel-generated php ini directives, do not edit
+# ==========================================================

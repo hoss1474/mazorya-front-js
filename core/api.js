@@ -1,891 +1,1376 @@
-// core/api.js - نسخه اصلاح شده با بهبودهای کامل
+
+/**
+ * Mazorya Group - API Manager
+ * File: core/api.js
+ */
 
 import { i18n } from './i18n.js';
 
 // ============================================================
-// ⚡ تنظیمات آدرس API - استفاده از متغیر محیطی
+// API CONFIGURATION
 // ============================================================
 
-const API_BASE = 'https://api.mazoryagroup.com/api';
+const DEFAULT_API_URL = '.';
+
+const configuredApiUrl =
+  import.meta.env?.VITE_API_URL || DEFAULT_API_URL;
+
+const API_BASE = String(configuredApiUrl)
+  .trim()
+  .replace(/\/+$/, '');
+
+const REQUEST_TIMEOUT = 15000;
+const PUBLIC_CACHE_TIME = 5 * 60 * 1000;
 
 // ============================================================
-// 📦 State Management - جایگزین window.appState
+// APP STORE
 // ============================================================
 
 class AppStore {
-    constructor() {
-        this.data = {
-            services: [],
-            projects: [],
-            blogs: []
-        };
-        this._initialized = false;
-    }
+  constructor() {
+    this.data = {
+      services: [],
+      projects: [],
+      blogs: []
+    };
 
-    setData(key, value) {
-        this.data[key] = value;
-    }
+    this._initialized = false;
+    this._language = null;
+  }
 
-    getData(key) {
-        return this.data[key] || [];
-    }
+  setData(key, value) {
+    this.data[key] = value;
+  }
 
-    isInitialized() {
-        return this._initialized;
-    }
+  getData(key) {
+    return this.data[key] ?? [];
+  }
 
-    setInitialized() {
-        this._initialized = true;
-    }
+  isInitialized(lang = i18n.getCurrentLanguage()) {
+    return this._initialized && this._language === lang;
+  }
+
+  setInitialized(lang = i18n.getCurrentLanguage()) {
+    this._initialized = true;
+    this._language = lang;
+  }
+
+  reset() {
+    this._initialized = false;
+    this._language = null;
+
+    this.data = {
+      services: [],
+      projects: [],
+      blogs: []
+    };
+  }
 }
 
 export const appStore = new AppStore();
 
 // ============================================================
-// 🔐 مدیریت توکن با حافظه کش
+// STORAGE HELPERS
+// ============================================================
+
+function storageGet(key) {
+  try {
+    return localStorage.getItem(key);
+  } catch {
+    return null;
+  }
+}
+
+function storageSet(key, value) {
+  try {
+    localStorage.setItem(key, String(value));
+  } catch (error) {
+    console.warn('[API] Storage write failed:', error);
+  }
+}
+
+function storageRemove(key) {
+  try {
+    localStorage.removeItem(key);
+  } catch {
+    // Storage might be unavailable.
+  }
+}
+
+// ============================================================
+// AUTH TOKEN MANAGEMENT
 // ============================================================
 
 let _authToken = null;
 let _tokenExpiry = null;
 let _refreshToken = null;
+let refreshPromise = null;
 
-export function setAuthToken(token, expiresIn, refreshToken = null) {
-    _authToken = token;
-    _tokenExpiry = Date.now() + (expiresIn * 1000);
-    
-    if (refreshToken) {
-        _refreshToken = refreshToken;
-        localStorage.setItem('refresh_token', refreshToken);
-    }
-    
-    localStorage.setItem('auth_token', token);
-    localStorage.setItem('token_expires_at', _tokenExpiry);
-    
-    console.log('🔑 Token saved successfully');
+export function setAuthToken(
+  token,
+  expiresIn = 7200,
+  refreshToken = null
+) {
+  if (!token || typeof token !== 'string') {
+    return false;
+  }
+
+  const expires = Number(expiresIn);
+  const duration =
+    Number.isFinite(expires) && expires > 0
+      ? expires
+      : 7200;
+
+  _authToken = token;
+  _tokenExpiry = Date.now() + duration * 1000;
+
+  storageSet('auth_token', token);
+  storageSet('token_expires_at', _tokenExpiry);
+
+  if (refreshToken) {
+    _refreshToken = refreshToken;
+    storageSet('refresh_token', refreshToken);
+  }
+
+  return true;
 }
 
 export function getAuthToken() {
-    // اول از حافظه
-    if (_authToken && _tokenExpiry && Date.now() < _tokenExpiry) {
-        return _authToken;
-    }
-    
-    // fallback به localStorage
-    const token = localStorage.getItem('auth_token');
-    const expiresAt = localStorage.getItem('token_expires_at');
-    
-    if (token && expiresAt && Date.now() < parseInt(expiresAt)) {
-        _authToken = token;
-        _tokenExpiry = parseInt(expiresAt);
-        return token;
-    }
-    
-    // توکن منقضی شده
-    if (token) {
-        clearAuthData();
-    }
-    
-    return null;
+  const now = Date.now();
+
+  if (
+    _authToken &&
+    _tokenExpiry &&
+    now < _tokenExpiry
+  ) {
+    return _authToken;
+  }
+
+  const token = storageGet('auth_token');
+  const expiresAt = Number(
+    storageGet('token_expires_at')
+  );
+
+  if (
+    token &&
+    Number.isFinite(expiresAt) &&
+    expiresAt > now
+  ) {
+    _authToken = token;
+    _tokenExpiry = expiresAt;
+
+    return token;
+  }
+
+  // Keep refresh token available for session renewal.
+  _authToken = null;
+  _tokenExpiry = null;
+
+  return null;
 }
 
 export function getRefreshToken() {
-    return _refreshToken || localStorage.getItem('refresh_token');
+  return _refreshToken || storageGet('refresh_token');
 }
 
 export function clearAuthData() {
-    _authToken = null;
-    _tokenExpiry = null;
-    _refreshToken = null;
-    localStorage.removeItem('auth_token');
-    localStorage.removeItem('user_data');
-    localStorage.removeItem('token_expires_at');
-    localStorage.removeItem('refresh_token');
+  _authToken = null;
+  _tokenExpiry = null;
+  _refreshToken = null;
+
+  [
+    'auth_token',
+    'token_expires_at',
+    'refresh_token',
+    'user_data'
+  ].forEach(storageRemove);
 }
 
 export function isAuthenticated() {
-    const token = getAuthToken();
-    if (!token) {
-        console.log('❌ isAuthenticated: No valid token');
-        return false;
-    }
-    
-    console.log('✅ isAuthenticated: User is authenticated');
-    return true;
+  return Boolean(getAuthToken());
 }
 
 export function getUserData() {
-    try {
-        const userDataStr = localStorage.getItem('user_data');
-        if (userDataStr && userDataStr !== 'undefined' && userDataStr !== 'null') {
-            return JSON.parse(userDataStr);
-        }
-    } catch (e) {
-        console.error('Parse user data error:', e);
-        localStorage.removeItem('user_data');
+  try {
+    const stored = storageGet('user_data');
+
+    if (
+      !stored ||
+      stored === 'undefined' ||
+      stored === 'null'
+    ) {
+      return null;
     }
+
+    return JSON.parse(stored);
+  } catch (error) {
+    console.error('[API] Invalid user data:', error);
+    storageRemove('user_data');
     return null;
+  }
 }
 
 export function setUserData(userData) {
-    localStorage.setItem('user_data', JSON.stringify(userData));
+  if (userData == null) {
+    storageRemove('user_data');
+    return;
+  }
+
+  storageSet('user_data', JSON.stringify(userData));
 }
 
 // ============================================================
-// 🔄 Refresh Token
-// ============================================================
-
-export async function refreshAuthToken() {
-    const refreshToken = getRefreshToken();
-    if (!refreshToken) {
-        console.log('❌ No refresh token available');
-        return false;
-    }
-    
-    try {
-        console.log('🔄 Refreshing token...');
-        const response = await fetch(`${API_BASE}/auth/refresh`, {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-                'Accept': 'application/json'
-            },
-            body: JSON.stringify({ refresh_token: refreshToken })
-        });
-        
-        if (!response.ok) {
-            throw new Error('Refresh failed');
-        }
-        
-        const data = await response.json();
-        
-        if (isSuccessResponse(data) && data.data?.access_token) {
-            setAuthToken(
-                data.data.access_token,
-                data.data.expires_in || 7200,
-                data.data.refresh_token || refreshToken
-            );
-            console.log('✅ Token refreshed successfully');
-            return true;
-        }
-        
-        return false;
-    } catch (error) {
-        console.error('❌ Refresh token error:', error);
-        clearAuthData();
-        return false;
-    }
-}
-
-// ============================================================
-// 🛠️ Helper Functions
+// RESPONSE HELPERS
 // ============================================================
 
 function isSuccessResponse(data) {
-    return data?.status === true || data?.is_status === true;
+  return (
+    data?.status === true ||
+    data?.is_status === true ||
+    data?.success === true
+  );
 }
 
 function getErrorMessage(data) {
-    return data?.message || data?.error || 'خطایی رخ داده است';
+  if (typeof data?.message === 'string') {
+    return data.message;
+  }
+
+  if (typeof data?.error === 'string') {
+    return data.error;
+  }
+
+  return 'An unexpected error occurred.';
+}
+
+async function readJSON(response) {
+  const contentType =
+    response.headers.get('content-type') || '';
+
+  if (!contentType.toLowerCase().includes('json')) {
+    throw new Error(
+      `Expected JSON but received ${
+        contentType || 'unknown content type'
+      } (HTTP ${response.status})`
+    );
+  }
+
+  return response.json();
 }
 
 // ============================================================
-// 🌐 Fetch with Retry & Timeout
+// FETCH WITH TIMEOUT
 // ============================================================
 
-async function fetchWithTimeout(url, options = {}, timeout = 15000) {
-    const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), timeout);
-    
+async function fetchWithTimeout(
+  url,
+  options = {},
+  timeout = REQUEST_TIMEOUT
+) {
+  const controller = new AbortController();
+
+  const timer = setTimeout(() => {
+    controller.abort();
+  }, timeout);
+
+  const externalSignal = options.signal;
+
+  const abortHandler = () => controller.abort();
+
+  if (externalSignal) {
+    if (externalSignal.aborted) {
+      controller.abort();
+    } else {
+      externalSignal.addEventListener(
+        'abort',
+        abortHandler,
+        { once: true }
+      );
+    }
+  }
+
+  try {
+    return await fetch(url, {
+      ...options,
+      signal: controller.signal
+    });
+  } catch (error) {
+    if (error.name === 'AbortError') {
+      throw new Error(
+        externalSignal?.aborted
+          ? 'Request aborted'
+          : 'Request timeout'
+      );
+    }
+
+    throw error;
+  } finally {
+    clearTimeout(timer);
+
+    externalSignal?.removeEventListener(
+      'abort',
+      abortHandler
+    );
+  }
+}
+
+// ============================================================
+// FETCH WITH SAFE RETRY
+// ============================================================
+
+async function fetchWithRetry(
+  url,
+  options = {},
+  retries = 3
+) {
+  const method = (options.method || 'GET')
+    .toUpperCase();
+
+  // Never automatically repeat non-idempotent requests.
+  const attempts = ['GET', 'HEAD'].includes(method)
+    ? Math.max(1, retries)
+    : 1;
+
+  let lastError;
+
+  for (let attempt = 0; attempt < attempts; attempt++) {
     try {
-        const response = await fetch(url, {
-            ...options,
-            signal: controller.signal
-        });
-        clearTimeout(timeoutId);
-        return response;
+      return await fetchWithTimeout(url, options);
     } catch (error) {
-        clearTimeout(timeoutId);
-        if (error.name === 'AbortError') {
-            throw new Error('Request timeout');
-        }
+      lastError = error;
+
+      if (
+        options.signal?.aborted ||
+        error.message === 'Request aborted'
+      ) {
         throw error;
+      }
+
+      if (attempt < attempts - 1) {
+        await new Promise(resolve => {
+          setTimeout(resolve, 500 * (attempt + 1));
+        });
+      }
     }
+  }
+
+  throw lastError;
 }
 
-async function fetchWithRetry(url, options = {}, retries = 3, delay = 1000) {
-    let lastError;
-    
-    for (let i = 0; i < retries; i++) {
-        try {
-            return await fetchWithTimeout(url, options);
-        } catch (error) {
-            lastError = error;
-            console.warn(`⚠️ Retry ${i + 1}/${retries} failed:`, error.message);
-            
-            if (i < retries - 1) {
-                await new Promise(resolve => setTimeout(resolve, delay * (i + 1)));
-            }
+// ============================================================
+// REFRESH TOKEN
+// ============================================================
+
+export async function refreshAuthToken() {
+  if (refreshPromise) {
+    return refreshPromise;
+  }
+
+  const refreshToken = getRefreshToken();
+
+  if (!refreshToken) {
+    return false;
+  }
+
+  refreshPromise = (async () => {
+    try {
+      const response = await fetchWithTimeout(
+        `${API_BASE}/auth/refresh`,
+        {
+          method: 'POST',
+          headers: {
+            Accept: 'application/json',
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({
+            refresh_token: refreshToken
+          })
         }
+      );
+
+      if (!response.ok) {
+        throw new Error(
+          `Token refresh failed: HTTP ${response.status}`
+        );
+      }
+
+      const result = await readJSON(response);
+
+      const payload = result?.data || result;
+
+      if (
+        isSuccessResponse(result) &&
+        payload?.access_token
+      ) {
+        setAuthToken(
+          payload.access_token,
+          payload.expires_in || 7200,
+          payload.refresh_token || refreshToken
+        );
+
+        return true;
+      }
+
+      throw new Error('Invalid refresh response');
+    } catch (error) {
+      console.error('[API] Refresh failed:', error);
+      clearAuthData();
+      return false;
     }
-    
-    throw lastError;
+  })();
+
+  try {
+    return await refreshPromise;
+  } finally {
+    refreshPromise = null;
+  }
 }
 
 // ============================================================
-// 🔐 Fetch with Authentication
+// AUTHENTICATED FETCH
 // ============================================================
 
-async function fetchWithAuth(endpoint, options = {}, requireAuth = true) {
-    const url = `${API_BASE}${endpoint}`;
-    
-    let headers = {
-        'Content-Type': 'application/json',
-        'Accept': 'application/json',
-        'X-Requested-With': 'XMLHttpRequest',
-        ...options.headers
+async function fetchWithAuth(
+  endpoint,
+  options = {},
+  requireAuth = true
+) {
+  const url = `${API_BASE}${endpoint}`;
+
+  const headers = new Headers(options.headers || {});
+
+  headers.set('Accept', 'application/json');
+  headers.set('X-Requested-With', 'XMLHttpRequest');
+
+  if (options.body instanceof FormData) {
+    headers.delete('Content-Type');
+  } else if (
+    options.body != null &&
+    !headers.has('Content-Type')
+  ) {
+    headers.set('Content-Type', 'application/json');
+  }
+
+  if (requireAuth) {
+    let token = getAuthToken();
+
+    if (!token && getRefreshToken()) {
+      const refreshed = await refreshAuthToken();
+
+      if (refreshed) {
+        token = getAuthToken();
+      }
+    }
+
+    if (!token) {
+      throw new Error('Not authenticated');
+    }
+
+    headers.set('Authorization', `Bearer ${token}`);
+  }
+
+  let response = await fetchWithRetry(url, {
+    ...options,
+    headers
+  });
+
+  if (response.status === 401 && requireAuth) {
+    const refreshed = await refreshAuthToken();
+
+    if (!refreshed) {
+      throw new Error('Session expired');
+    }
+
+    const newToken = getAuthToken();
+
+    if (!newToken) {
+      throw new Error('Session expired');
+    }
+
+    headers.set('Authorization', `Bearer ${newToken}`);
+
+    response = await fetchWithRetry(url, {
+      ...options,
+      headers
+    });
+  }
+
+  return response;
+}
+
+// ============================================================
+// LOGIN
+// ============================================================
+
+export async function loginUser(
+  email,
+  password,
+  rememberMe = false
+) {
+  try {
+    const response = await fetchWithTimeout(
+      `${API_BASE}/auth/login`,
+      {
+        method: 'POST',
+        headers: {
+          Accept: 'application/json',
+          'Content-Type': 'application/json',
+          'X-Requested-With': 'XMLHttpRequest'
+        },
+        body: JSON.stringify({ email, password })
+      }
+    );
+
+    const result = await readJSON(response);
+    const payload = result?.data || {};
+
+    if (
+      response.ok &&
+      isSuccessResponse(result) &&
+      payload.access_token
+    ) {
+      // Remove credentials from any previous session.
+      clearAuthData();
+
+      setAuthToken(
+        payload.access_token,
+        payload.expires_in || 7200,
+        payload.refresh_token || null
+      );
+
+      if (payload.user) {
+        setUserData(payload.user);
+      }
+
+      return {
+        success: true,
+        user: payload.user || null,
+        token: payload.access_token
+      };
+    }
+
+    return {
+      success: false,
+      error: getErrorMessage(result),
+      details: result
     };
-    
-    if (requireAuth) {
-        const token = getAuthToken();
-        if (!token) {
-            throw new Error('Not authenticated');
-        }
-        headers['Authorization'] = `Bearer ${token}`;
-    }
-    
-    try {
-        let response = await fetchWithRetry(url, {
-            ...options,
-            headers
-        });
-        
-        // اگر توکن منقضی شده بود، سعی کن refresh کنی
-        if (response.status === 401 && requireAuth) {
-            console.log('🔄 Token expired, attempting refresh...');
-            const refreshed = await refreshAuthToken();
-            
-            if (refreshed) {
-                // دوباره درخواست با توکن جدید
-                const newToken = getAuthToken();
-                headers['Authorization'] = `Bearer ${newToken}`;
-                
-                response = await fetchWithRetry(url, {
-                    ...options,
-                    headers
-                });
-            } else {
-                clearAuthData();
-                throw new Error('Session expired');
-            }
-        }
-        
-        return response;
-    } catch (error) {
-        console.error('❌ Fetch with auth error:', error);
-        throw error;
-    }
+  } catch (error) {
+    console.error('[API] Login failed:', error);
+
+    return {
+      success: false,
+      error: error.message,
+      details: error.message
+    };
+  }
 }
 
 // ============================================================
-// 🚀 لاگین کاربر - نسخه بهبود یافته
+// LOGOUT
 // ============================================================
-
-export async function loginUser(email, password, rememberMe = false) {
-    console.log('=== 🚀 LOGIN FUNCTION STARTED ===');
-    console.log('📧 Email:', email);
-    
-    try {
-        const response = await fetchWithTimeout(`${API_BASE}/auth/login`, {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-                'Accept': 'application/json',
-                'X-Requested-With': 'XMLHttpRequest'
-            },
-            body: JSON.stringify({ email, password })
-        });
-        
-        console.log('📡 Response status:', response.status);
-        
-        const data = await response.json();
-        console.log('📦 Response data received');
-        
-        if (isSuccessResponse(data) && data.data?.access_token) {
-            const { access_token, expires_in = 7200, refresh_token, user } = data.data;
-            
-            setAuthToken(access_token, expires_in, refresh_token);
-            setUserData(user);
-            
-            console.log('✅ Login successful!');
-            return {
-                success: true,
-                user,
-                token: access_token
-            };
-        }
-        
-        console.log('❌ Login failed');
-        return {
-            success: false,
-            error: getErrorMessage(data),
-            details: data
-        };
-        
-    } catch (error) {
-        console.error('=== ❌ LOGIN ERROR ===');
-        console.error('Error:', error.message);
-        
-        let errorMessage = 'خطا در ارتباط با سرور';
-        if (error.message === 'Request timeout') {
-            errorMessage = '❌ زمان درخواست به پایان رسید';
-        } else if (error.message.includes('Failed to fetch')) {
-            errorMessage = '❌ سرور در دسترس نیست';
-        } else {
-            errorMessage = `❌ خطا: ${error.message}`;
-        }
-        
-        return {
-            success: false,
-            error: errorMessage,
-            details: error.message
-        };
-    }
-}
 
 export async function logoutUser() {
-    try {
-        const token = getAuthToken();
-        if (token) {
-            await fetchWithAuth('/auth/logout', {
-                method: 'POST'
-            }, true);
-        }
-    } catch (error) {
-        console.error('Logout error:', error);
-    } finally {
-        clearAuthData();
-        console.log('✅ User logged out');
-        window.location.href = '/';
+  try {
+    if (getAuthToken() || getRefreshToken()) {
+      await fetchWithAuth('/auth/logout', {
+        method: 'POST'
+      });
     }
-    return { success: true };
+  } catch (error) {
+    console.warn('[API] Logout request failed:', error);
+  } finally {
+    clearAuthData();
+    window.location.href = '/';
+  }
+
+  return { success: true };
 }
 
 // ============================================================
-// 👤 پروفایل کاربر
+// USER PROFILE
 // ============================================================
 
 export async function getUserProfile() {
-    try {
-        const response = await fetchWithAuth('/user/profile', {
-            method: 'GET'
-        });
-        
-        if (!response.ok) {
-            throw new Error(`HTTP ${response.status}`);
-        }
-        
-        const data = await response.json();
-        
-        if (isSuccessResponse(data) && data.data) {
-            setUserData(data.data);
-            return data.data;
-        }
-        return null;
-    } catch (error) {
-        console.error('Get user profile error:', error);
-        if (error.message === 'Session expired') {
-            clearAuthData();
-        }
-        return null;
+  try {
+    const response = await fetchWithAuth(
+      '/user/profile',
+      { method: 'GET' }
+    );
+
+    if (!response.ok) {
+      throw new Error(`HTTP ${response.status}`);
     }
+
+    const result = await readJSON(response);
+
+    if (isSuccessResponse(result) && result.data) {
+      setUserData(result.data);
+      return result.data;
+    }
+
+    return null;
+  } catch (error) {
+    console.error('[API] Get profile failed:', error);
+    return null;
+  }
 }
 
 export async function updateUserProfile(profileData) {
-    try {
-        const response = await fetchWithAuth('/user/profile', {
-            method: 'PUT',
-            body: JSON.stringify(profileData)
-        });
-        
-        const data = await response.json();
-        
-        if (response.ok && isSuccessResponse(data)) {
-            if (data.data) {
-                setUserData(data.data);
-            }
-            return { success: true, user: data.data };
-        }
-        
-        return {
-            success: false,
-            error: getErrorMessage(data)
-        };
-    } catch (error) {
-        console.error('Update profile error:', error);
-        return { success: false, error: error.message };
-    }
-}
+  try {
+    const response = await fetchWithAuth(
+      '/user/profile',
+      {
+        method: 'PUT',
+        body: JSON.stringify(profileData)
+      }
+    );
 
-export async function uploadAvatar(file) {
-    const formData = new FormData();
-    formData.append('avatar', file);
-    
-    try {
-        const response = await fetchWithAuth('/user/avatar', {
-            method: 'POST',
-            headers: {
-                'Content-Type': undefined // مهم! برای FormData
-            },
-            body: formData
-        });
-        
-        const data = await response.json();
-        
-        if (response.ok && isSuccessResponse(data)) {
-            const userData = getUserData();
-            if (userData && data.data?.avatar_url) {
-                userData.avatar = data.data.avatar_url;
-                setUserData(userData);
-            }
-            return {
-                success: true,
-                avatarUrl: data.data?.avatar_url
-            };
-        }
-        
-        return {
-            success: false,
-            error: getErrorMessage(data)
-        };
-    } catch (error) {
-        console.error('Upload avatar error:', error);
-        return { success: false, error: error.message };
-    }
-}
+    const result = await readJSON(response);
 
-export async function changePassword(currentPassword, newPassword) {
-    try {
-        const response = await fetchWithAuth('/user/password', {
-            method: 'PUT',
-            body: JSON.stringify({
-                current_password: currentPassword,
-                new_password: newPassword,
-                new_password_confirmation: newPassword
-            })
-        });
-        
-        const data = await response.json();
-        
-        return {
-            success: response.ok && isSuccessResponse(data),
-            error: getErrorMessage(data)
-        };
-    } catch (error) {
-        console.error('Change password error:', error);
-        return { success: false, error: error.message };
+    if (response.ok && isSuccessResponse(result)) {
+      if (result.data) {
+        setUserData(result.data);
+      }
+
+      return {
+        success: true,
+        user: result.data
+      };
     }
+
+    return {
+      success: false,
+      error: getErrorMessage(result)
+    };
+  } catch (error) {
+    return {
+      success: false,
+      error: error.message
+    };
+  }
 }
 
 // ============================================================
-// 📧 فراموشی رمز عبور
+// AVATAR UPLOAD
+// ============================================================
+
+export async function uploadAvatar(file) {
+  if (!file) {
+    return {
+      success: false,
+      error: 'Please select a file.'
+    };
+  }
+
+  const formData = new FormData();
+  formData.append('avatar', file);
+
+  try {
+    const response = await fetchWithAuth(
+      '/user/avatar',
+      {
+        method: 'POST',
+        body: formData
+      }
+    );
+
+    const result = await readJSON(response);
+
+    if (response.ok && isSuccessResponse(result)) {
+      const avatarUrl = result.data?.avatar_url;
+
+      if (avatarUrl) {
+        const user = getUserData();
+
+        if (user) {
+          user.avatar = avatarUrl;
+          setUserData(user);
+        }
+      }
+
+      return {
+        success: true,
+        avatarUrl
+      };
+    }
+
+    return {
+      success: false,
+      error: getErrorMessage(result)
+    };
+  } catch (error) {
+    return {
+      success: false,
+      error: error.message
+    };
+  }
+}
+
+// ============================================================
+// CHANGE PASSWORD
+// ============================================================
+
+export async function changePassword(
+  currentPassword,
+  newPassword
+) {
+  try {
+    const response = await fetchWithAuth(
+      '/user/password',
+      {
+        method: 'PUT',
+        body: JSON.stringify({
+          current_password: currentPassword,
+          new_password: newPassword,
+          new_password_confirmation: newPassword
+        })
+      }
+    );
+
+    const result = await readJSON(response);
+
+    return {
+      success:
+        response.ok && isSuccessResponse(result),
+      error: response.ok &&
+        isSuccessResponse(result)
+          ? null
+          : getErrorMessage(result)
+    };
+  } catch (error) {
+    return {
+      success: false,
+      error: error.message
+    };
+  }
+}
+
+// ============================================================
+// FORGOT PASSWORD
 // ============================================================
 
 export async function forgotPassword(email) {
-    try {
-        const response = await fetchWithRetry(`${API_BASE}/forgot-password`, {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-                'Accept': 'application/json'
-            },
-            body: JSON.stringify({ email })
-        });
-        
-        const data = await response.json();
-        console.log('📥 Forgot password response:', data);
-        
-        return {
-            success: response.ok,
-            message: getErrorMessage(data)
-        };
-    } catch (error) {
-        console.error('Forgot password error:', error);
-        return { success: false, error: error.message };
-    }
-}
+  try {
+    const response = await fetchWithRetry(
+      `${API_BASE}/forgot-password`,
+      {
+        method: 'POST',
+        headers: {
+          Accept: 'application/json',
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ email })
+      }
+    );
 
-export async function resetPassword(email, code, password) {
-    try {
-        const response = await fetchWithRetry(`${API_BASE}/reset-password`, {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-                'Accept': 'application/json'
-            },
-            body: JSON.stringify({
-                email,
-                code,
-                password,
-                password_confirmation: password
-            })
-        });
-        
-        const data = await response.json();
-        console.log('📥 Reset password response:', data);
-        
-        return {
-            success: response.ok,
-            message: getErrorMessage(data)
-        };
-    } catch (error) {
-        console.error('Reset password error:', error);
-        return { success: false, error: error.message };
-    }
+    const result = await readJSON(response);
+
+    return {
+      success: response.ok,
+      message: getErrorMessage(result)
+    };
+  } catch (error) {
+    return {
+      success: false,
+      error: error.message
+    };
+  }
 }
 
 // ============================================================
-// 📁 پروژه‌های کاربر
+// RESET PASSWORD
+// ============================================================
+
+export async function resetPassword(
+  email,
+  code,
+  password
+) {
+  try {
+    const response = await fetchWithRetry(
+      `${API_BASE}/reset-password`,
+      {
+        method: 'POST',
+        headers: {
+          Accept: 'application/json',
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          email,
+          code,
+          password,
+          password_confirmation: password
+        })
+      }
+    );
+
+    const result = await readJSON(response);
+
+    return {
+      success: response.ok,
+      message: getErrorMessage(result)
+    };
+  } catch (error) {
+    return {
+      success: false,
+      error: error.message
+    };
+  }
+}
+
+// ============================================================
+// USER PROJECTS
 // ============================================================
 
 export async function getUserProjects() {
-    try {
-        const response = await fetchWithAuth('/user/projects', {
-            method: 'GET'
-        });
-        
-        if (!response.ok) {
-            console.log('❌ getUserProjects failed:', response.status);
-            return [];
-        }
-        
-        const data = await response.json();
-        console.log('📥 User projects:', data?.data?.length || 0);
-        return data?.data || [];
-    } catch (error) {
-        console.error('Get user projects error:', error);
-        return [];
-    }
+  try {
+    const response = await fetchWithAuth(
+      '/user/projects',
+      { method: 'GET' }
+    );
+
+    if (!response.ok) return [];
+
+    const result = await readJSON(response);
+
+    return Array.isArray(result.data)
+      ? result.data
+      : [];
+  } catch (error) {
+    console.error('[API] User projects error:', error);
+    return [];
+  }
 }
 
-export async function updateProjectProgress(projectId, progress) {
-    try {
-        const response = await fetchWithAuth(`/user/projects/${projectId}/progress`, {
-            method: 'PUT',
-            body: JSON.stringify({ progress })
-        });
-        
-        const data = await response.json();
-        console.log('📥 Update progress response:', data);
-        
-        return {
-            success: response.ok && isSuccessResponse(data),
-            error: getErrorMessage(data)
-        };
-    } catch (error) {
-        console.error('Update project progress error:', error);
-        return { success: false, error: error.message };
-    }
+export async function updateProjectProgress(
+  projectId,
+  progress
+) {
+  try {
+    const id = encodeURIComponent(projectId);
+
+    const response = await fetchWithAuth(
+      `/user/projects/${id}/progress`,
+      {
+        method: 'PUT',
+        body: JSON.stringify({ progress })
+      }
+    );
+
+    const result = await readJSON(response);
+
+    return {
+      success:
+        response.ok && isSuccessResponse(result),
+      error: response.ok &&
+        isSuccessResponse(result)
+          ? null
+          : getErrorMessage(result)
+    };
+  } catch (error) {
+    return {
+      success: false,
+      error: error.message
+    };
+  }
 }
 
 // ============================================================
-// 📄 فاکتورها
+// USER INVOICES
 // ============================================================
 
 export async function getInvoices() {
-    try {
-        const response = await fetchWithAuth('/user/invoices', {
-            method: 'GET'
-        });
-        
-        if (!response.ok) return [];
-        
-        const data = await response.json();
-        console.log('📥 Invoices:', data?.data?.length || 0);
-        return data?.data || [];
-    } catch (error) {
-        console.error('Get invoices error:', error);
-        return [];
-    }
-}
+  try {
+    const response = await fetchWithAuth(
+      '/user/invoices',
+      { method: 'GET' }
+    );
 
-export async function uploadInvoice(projectId, invoiceNumber, file) {
-    const formData = new FormData();
-    formData.append('client_project_id', projectId);
-    formData.append('invoice_number', invoiceNumber);
-    formData.append('file', file);
-    
-    try {
-        const response = await fetchWithAuth('/user/invoices/upload', {
-            method: 'POST',
-            headers: {
-                'Content-Type': undefined // برای FormData
-            },
-            body: formData
-        });
-        
-        const data = await response.json();
-        console.log('📥 Upload invoice response:', data);
-        
-        if (response.ok && isSuccessResponse(data)) {
-            return {
-                success: true,
-                invoice: data.data,
-                message: getErrorMessage(data)
-            };
-        }
-        
-        return {
-            success: false,
-            error: getErrorMessage(data)
-        };
-    } catch (error) {
-        console.error('Upload invoice error:', error);
-        return { success: false, error: error.message };
-    }
+    if (!response.ok) return [];
+
+    const result = await readJSON(response);
+
+    return Array.isArray(result.data)
+      ? result.data
+      : [];
+  } catch (error) {
+    console.error('[API] Invoices error:', error);
+    return [];
+  }
 }
 
 // ============================================================
-// 🌐 توابع عمومی (بدون احراز هویت) - با کش بهبود یافته
+// INVOICE UPLOAD
 // ============================================================
 
-const cache = new Map();
+export async function uploadInvoice(
+  projectId,
+  invoiceNumber,
+  file
+) {
+  if (!file) {
+    return {
+      success: false,
+      error: 'Please select a file.'
+    };
+  }
 
-async function fetchPublicAPI(endpoint, params = {}, cacheTime = 5 * 60 * 1000) {
-    const lang = i18n.getCurrentLanguage();
-    const queryParams = new URLSearchParams({ lang, ...params });
-    const url = `${API_BASE}${endpoint}?${queryParams}`;
-    
-    const cacheKey = `${endpoint}_${lang}_${JSON.stringify(params)}`;
-    
-    // چک کش
-    if (cache.has(cacheKey)) {
-        const cached = cache.get(cacheKey);
-        if (Date.now() - cached.timestamp < cacheTime) {
-            console.log(`🔄 Using cached data for: ${endpoint}`);
-            return cached.data;
-        }
-        cache.delete(cacheKey);
+  const formData = new FormData();
+
+  formData.append('client_project_id', projectId);
+  formData.append('invoice_number', invoiceNumber);
+  formData.append('file', file);
+
+  try {
+    const response = await fetchWithAuth(
+      '/user/invoices/upload',
+      {
+        method: 'POST',
+        body: formData
+      }
+    );
+
+    const result = await readJSON(response);
+
+    if (response.ok && isSuccessResponse(result)) {
+      return {
+        success: true,
+        invoice: result.data,
+        message: getErrorMessage(result)
+      };
     }
-    
-    try {
-        const response = await fetchWithRetry(url, {
-            headers: { 'Accept': 'application/json' }
-        });
-        
-        if (!response.ok) {
-            throw new Error(`API Error: ${response.status}`);
-        }
-        
-        const data = await response.json();
-        
-        // ذخیره در کش
-        cache.set(cacheKey, {
-            data,
-            timestamp: Date.now()
-        });
-        
-        return data;
-    } catch (error) {
-        console.error('API Fetch Error:', error);
-        return null;
-    }
+
+    return {
+      success: false,
+      error: getErrorMessage(result)
+    };
+  } catch (error) {
+    return {
+      success: false,
+      error: error.message
+    };
+  }
 }
 
 // ============================================================
-// 📊 Load Initial Data - بهبود یافته
+// PUBLIC API CACHE
 // ============================================================
+
+const publicCache = new Map();
+
+async function fetchPublicAPI(
+  endpoint,
+  params = {},
+  cacheTime = PUBLIC_CACHE_TIME
+) {
+  const lang = i18n.getCurrentLanguage();
+
+  const queryParams = new URLSearchParams({
+    ...params,
+    lang
+  });
+
+  const query = queryParams.toString();
+  const url = `${API_BASE}${endpoint}?${query}`;
+
+  // URL includes language and query parameters.
+  const cacheKey = url;
+
+  const cached = publicCache.get(cacheKey);
+
+  if (cached) {
+    if (Date.now() - cached.timestamp < cacheTime) {
+      return cached.data;
+    }
+
+    publicCache.delete(cacheKey);
+  }
+
+  try {
+    const response = await fetchWithRetry(url, {
+      method: 'GET',
+      headers: {
+        Accept: 'application/json'
+      }
+    });
+
+    if (!response.ok) {
+      throw new Error(
+        `API request failed: HTTP ${response.status}`
+      );
+    }
+
+    const result = await readJSON(response);
+
+    publicCache.set(cacheKey, {
+      data: result,
+      timestamp: Date.now()
+    });
+
+    return result;
+  } catch (error) {
+    console.error(
+      `[API] Public request failed: ${endpoint}`,
+      error
+    );
+
+    return null;
+  }
+}
+
+// ============================================================
+// PUBLIC DATA HELPERS
+// ============================================================
+
+function extractArray(response) {
+  return Array.isArray(response?.data)
+    ? response.data
+    : [];
+}
+
+function onlyActive(items) {
+  return items.filter(item => {
+    return item?.is_active !== false &&
+      item?.is_active !== 0;
+  });
+}
+
+// ============================================================
+// INITIAL DATA
+// ============================================================
+
+let initialDataPromise = null;
+let initialDataLanguage = null;
 
 export async function loadInitialData() {
-    if (appStore.isInitialized()) {
-        console.log('✅ Data already loaded');
-        return;
+  const lang = i18n.getCurrentLanguage();
+
+  if (appStore.isInitialized(lang)) {
+    return appStore.data;
+  }
+
+  if (
+    initialDataPromise &&
+    initialDataLanguage === lang
+  ) {
+    return initialDataPromise;
+  }
+
+  initialDataLanguage = lang;
+
+  const promise = (async () => {
+    const [
+      projectsResult,
+      blogsResult,
+      servicesResult
+    ] = await Promise.all([
+      fetchPublicAPI('/projects', { limit: 6 }),
+      fetchPublicAPI('/blogs', { limit: 4 }),
+      fetchPublicAPI('/Services')
+    ]);
+
+    // Ignore outdated language requests.
+    if (lang !== i18n.getCurrentLanguage()) {
+      return null;
     }
-    
-    try {
-        console.log('🔄 Loading initial data...');
-        
-        const [projectsData, blogsData, servicesData] = await Promise.all([
-            fetchPublicAPI('/projects', { limit: 6 }),
-            fetchPublicAPI('/blogs', { limit: 4 }),
-            fetchPublicAPI('/Services')
-        ]);
-        
-        if (projectsData?.data) {
-            appStore.setData('projects', projectsData.data.filter(p => p.is_active));
-        }
-        
-        if (blogsData?.data) {
-            appStore.setData('blogs', blogsData.data.filter(b => b.is_active));
-        }
-        
-        if (servicesData?.data) {
-            appStore.setData('services', servicesData.data);
-        }
-        
-        appStore.setInitialized();
-        console.log('✅ Initial data loaded successfully');
-    } catch (error) {
-        console.error('Failed to load initial data:', error);
+
+    const projects = onlyActive(
+      extractArray(projectsResult)
+    );
+
+    const blogs = onlyActive(
+      extractArray(blogsResult)
+    );
+
+    const services = extractArray(servicesResult);
+
+    appStore.setData('projects', projects);
+    appStore.setData('blogs', blogs);
+    appStore.setData('services', services);
+
+    const successful =
+      projectsResult !== null &&
+      blogsResult !== null &&
+      servicesResult !== null &&
+      Array.isArray(projectsResult?.data) &&
+      Array.isArray(blogsResult?.data) &&
+      Array.isArray(servicesResult?.data);
+
+    if (successful) {
+      appStore.setInitialized(lang);
     }
+
+    return appStore.data;
+  })();
+
+  initialDataPromise = promise;
+
+  try {
+    return await promise;
+  } finally {
+    if (initialDataPromise === promise) {
+      initialDataPromise = null;
+      initialDataLanguage = null;
+    }
+  }
 }
 
 // ============================================================
-// 📚 Public API Functions
+// PROJECTS
 // ============================================================
 
 export async function getProjects(limit = null) {
-    const params = limit ? { limit } : {};
-    const data = await fetchPublicAPI('/projects', params);
-    return data?.data?.filter(p => p.is_active) || [];
+  const params = limit != null ? { limit } : {};
+
+  const result = await fetchPublicAPI(
+    '/projects',
+    params
+  );
+
+  return onlyActive(extractArray(result));
 }
 
 export async function getProjectBySlug(slug) {
-    const lang = i18n.getCurrentLanguage();
-    const url = `${API_BASE}/projects/${lang}/${slug}`;
-    
-    try {
-        const response = await fetchWithRetry(url);
-        if (!response.ok) return null;
-        const data = await response.json();
-        return data?.data || null;
-    } catch (error) {
-        console.error('Failed to get project:', error);
-        return null;
-    }
+  const lang = i18n.getCurrentLanguage();
+
+  const endpoint =
+    `/projects/${encodeURIComponent(lang)}/` +
+    encodeURIComponent(slug);
+
+  try {
+    const response = await fetchWithRetry(
+      `${API_BASE}${endpoint}`,
+      {
+        headers: {
+          Accept: 'application/json'
+        }
+      }
+    );
+
+    if (!response.ok) return null;
+
+    const result = await readJSON(response);
+
+    return result?.data || null;
+  } catch (error) {
+    console.error('[API] Project details error:', error);
+    return null;
+  }
 }
 
+// ============================================================
+// BLOGS
+// ============================================================
+
 export async function getBlogs(limit = null) {
-    const params = limit ? { limit } : {};
-    const data = await fetchPublicAPI('/blogs', params);
-    return data?.data?.filter(b => b.is_active) || [];
+  const params = limit != null ? { limit } : {};
+
+  const result = await fetchPublicAPI(
+    '/blogs',
+    params
+  );
+
+  return onlyActive(extractArray(result));
 }
 
 export async function getBlogById(id) {
-    const url = `${API_BASE}/blogs/${id}`;
-    try {
-        const response = await fetchWithRetry(url);
-        if (!response.ok) return null;
-        const data = await response.json();
-        return data?.data || null;
-    } catch (error) {
-        console.error('Failed to get blog:', error);
-        return null;
-    }
+  const endpoint = `/blogs/${encodeURIComponent(id)}`;
+
+  try {
+    const response = await fetchWithRetry(
+      `${API_BASE}${endpoint}`,
+      {
+        headers: {
+          Accept: 'application/json'
+        }
+      }
+    );
+
+    if (!response.ok) return null;
+
+    const result = await readJSON(response);
+
+    return result?.data || null;
+  } catch (error) {
+    console.error('[API] Blog details error:', error);
+    return null;
+  }
 }
 
+// ============================================================
+// SERVICES
+// ============================================================
+
 export async function getServices() {
-    const data = await fetchPublicAPI('/Services');
-    return data?.data || [];
+  const result = await fetchPublicAPI('/Services');
+
+  return extractArray(result);
 }
 
 export async function getServiceBySlug(slug) {
-    const lang = i18n.getCurrentLanguage();
-    const url = `${API_BASE}/Services/${lang}/${slug}`;
-    
-    try {
-        const response = await fetchWithRetry(url);
-        if (!response.ok) return null;
-        const data = await response.json();
-        return data?.data || null;
-    } catch (error) {
-        console.error('Failed to get service:', error);
-        return null;
-    }
-}
+  const lang = i18n.getCurrentLanguage();
 
-export async function submitContactForm(formData) {
-    try {
-        const response = await fetchWithRetry(`${API_BASE}/messages`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(formData)
-        });
-        
-        const data = await response.json();
-        
-        if (!response.ok) {
-            throw new Error(getErrorMessage(data));
+  const endpoint =
+    `/Services/${encodeURIComponent(lang)}/` +
+    encodeURIComponent(slug);
+
+  try {
+    const response = await fetchWithRetry(
+      `${API_BASE}${endpoint}`,
+      {
+        headers: {
+          Accept: 'application/json'
         }
-        
-        return {
-            success: true,
-            message: getErrorMessage(data)
-        };
-    } catch (error) {
-        console.error('Failed to submit form:', error);
-        return { success: false, error: error.message };
-    }
-}
+      }
+    );
 
-export async function subscribeNewsletter(email) {
-    const lang = i18n.getCurrentLanguage();
-    try {
-        const response = await fetchWithRetry(`${API_BASE}/waiting-list`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ email, lang })
-        });
-        
-        const data = await response.json();
-        
-        return {
-            success: data.success === true,
-            message: getErrorMessage(data)
-        };
-    } catch (error) {
-        console.error('Failed to subscribe:', error);
-        return { success: false, message: error.message };
-    }
+    if (!response.ok) return null;
+
+    const result = await readJSON(response);
+
+    return result?.data || null;
+  } catch (error) {
+    console.error('[API] Service details error:', error);
+    return null;
+  }
 }
 
 // ============================================================
-// 🧹 Clear Cache
+// CONTACT FORM
+// ============================================================
+
+export async function submitContactForm(formData) {
+  try {
+    const response = await fetchWithRetry(
+      `${API_BASE}/messages`,
+      {
+        method: 'POST',
+        headers: {
+          Accept: 'application/json',
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(formData)
+      }
+    );
+
+    const result = await readJSON(response);
+
+    if (!response.ok) {
+      return {
+        success: false,
+        error: getErrorMessage(result)
+      };
+    }
+
+    return {
+      success: true,
+      message: getErrorMessage(result)
+    };
+  } catch (error) {
+    console.error('[API] Contact form error:', error);
+
+    return {
+      success: false,
+      error: error.message
+    };
+  }
+}
+
+// ============================================================
+// NEWSLETTER
+// ============================================================
+
+export async function subscribeNewsletter(email) {
+  const lang = i18n.getCurrentLanguage();
+
+  try {
+    const response = await fetchWithRetry(
+      `${API_BASE}/waiting-list`,
+      {
+        method: 'POST',
+        headers: {
+          Accept: 'application/json',
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ email, lang })
+      }
+    );
+
+    const result = await readJSON(response);
+
+    return {
+      success:
+        response.ok &&
+        (
+          result?.success === true ||
+          isSuccessResponse(result)
+        ),
+      message: getErrorMessage(result)
+    };
+  } catch (error) {
+    return {
+      success: false,
+      message: error.message
+    };
+  }
+}
+
+// ============================================================
+// CACHE MANAGEMENT
 // ============================================================
 
 export function clearCache() {
-    cache.clear();
-    console.log('🧹 Cache cleared');
+  publicCache.clear();
+  appStore.reset();
 }
 
 // ============================================================
-// 📦 Export All
+// DEFAULT EXPORT
 // ============================================================
 
 export default {
-    // Auth
-    loginUser,
-    logoutUser,
-    isAuthenticated,
-    getAuthToken,
-    getUserData,
-    refreshAuthToken,
-    
-    // User Profile
-    getUserProfile,
-    updateUserProfile,
-    uploadAvatar,
-    changePassword,
-    
-    // Projects
-    getUserProjects,
-    updateProjectProgress,
-    
-    // Invoices
-    getInvoices,
-    uploadInvoice,
-    
-    // Public
-    loadInitialData,
-    getProjects,
-    getProjectBySlug,
-    getBlogs,
-    getBlogById,
-    getServices,
-    getServiceBySlug,
-    submitContactForm,
-    subscribeNewsletter,
-    
-    // Utils
-    clearCache,
-    appStore
+  // Authentication
+  loginUser,
+  logoutUser,
+  isAuthenticated,
+  setAuthToken,
+  getAuthToken,
+  getRefreshToken,
+  clearAuthData,
+  getUserData,
+  setUserData,
+  refreshAuthToken,
+
+  // User profile
+  getUserProfile,
+  updateUserProfile,
+  uploadAvatar,
+  changePassword,
+
+  // User projects
+  getUserProjects,
+  updateProjectProgress,
+
+  // Invoices
+  getInvoices,
+  uploadInvoice,
+
+  // Password recovery
+  forgotPassword,
+  resetPassword,
+
+  // Public API
+  loadInitialData,
+  getProjects,
+  getProjectBySlug,
+  getBlogs,
+  getBlogById,
+  getServices,
+  getServiceBySlug,
+  submitContactForm,
+  subscribeNewsletter,
+
+  // Utilities
+  clearCache,
+  appStore
 };

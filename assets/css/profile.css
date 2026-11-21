@@ -1,0 +1,1529 @@
+
+/* ==========================================================
+   MAZORYA GROUP — CLIENT PROFILE
+   File: public/assets/css/profile.css
+   Scope: .mz-profile
+   Depends on: main.css
+   ========================================================== */
+
+/* 01 — BASE */
+
+.mz-profile {
+  --p-primary: var(--color-primary, #ff6b6b);
+  --p-dark: var(--color-dark, #1f1f2e);
+  --p-text: var(--text-primary, #1f1f2e);
+  --p-muted: var(--text-secondary, #686875);
+  --p-border: var(--border-light, #e8e8ed);
+  --p-surface: #fff;
+  --p-bg: #f7f8fa;
+  --p-radius: 12px;
+  --p-shadow: 0 5px 24px rgba(31,31,46,.035);
+
+  width: 100%;
+  min-width: 0;
+  background: var(--p-bg);
+  color: var(--p-text);
+  font-family: var(--font-body);
+  font-size: 14px;
+  line-height: 1.7;
+}
+
+.mz-profile *,
+.mz-profile *::before,
+.mz-profile *::after {
+  box-sizing: border-box;
+}
+
+.mz-profile button,
+.mz-profile input,
+.mz-profile textarea {
+  font: inherit;
+}
+
+.mz-profile button {
+  cursor: pointer;
+}
+
+.mz-profile button:disabled {
+  opacity: .55;
+  cursor: not-allowed;
+}
+
+.mz-profile img {
+  max-width: 100%;
+}
+
+.mz-profile .profile-section {
+  min-height: 80vh;
+  padding: 112px 0 85px;
+}
+
+.mz-profile .profile-container {
+  display: grid;
+  grid-template-columns: 258px minmax(0,1fr);
+  align-items: start;
+  gap: 25px;
+  width: min(100% - 40px, 1320px);
+  max-width: 1320px;
+  margin-inline: auto;
+}
+
+/* 02 — SIDEBAR */
+
+.mz-profile .profile-sidebar {
+  position: sticky;
+  top: 95px;
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  max-height: calc(100dvh - 115px);
+  overflow-y: auto;
+  padding: 25px 17px 17px;
+  border: 1px solid var(--p-border);
+  border-radius: var(--p-radius);
+  background: var(--p-surface);
+  box-shadow: var(--p-shadow);
+  scrollbar-width: thin;
+}
+
+.mz-profile .sidebar-close {
+  display: none;
+}
+
+.mz-profile .profile-avatar {
+  text-align: center;
+  padding: 5px 8px 24px;
+  border-bottom: 1px solid var(--p-border);
+}
+
+.mz-profile .avatar-wrapper {
+  position: relative;
+  width: 88px;
+  height: 88px;
+  margin: 0 auto 15px;
+}
+
+.mz-profile .avatar-wrapper > img {
+  display: block;
+  width: 88px;
+  height: 88px;
+  border-radius: 50%;
+  border: 3px solid #fff;
+  box-shadow: 0 0 0 1px var(--p-border);
+  object-fit: cover;
+}
+
+.mz-profile .avatar-upload-btn {
+  position: absolute;
+  right: -3px;
+  bottom: -2px;
+  display: grid;
+  place-items: center;
+  width: 29px;
+  height: 29px;
+  border: 2px solid #fff;
+  border-radius: 50%;
+  background: var(--p-primary);
+  color: var(--p-dark);
+  cursor: pointer;
+}
+
+.mz-profile .avatar-upload-btn svg {
+  width: 15px;
+  height: 15px;
+}
+
+.mz-profile .profile-avatar h3 {
+  margin: 0 0 4px;
+  font-size: 17px;
+  font-weight: 700;
+  overflow-wrap: anywhere;
+}
+
+.mz-profile .profile-avatar p {
+  margin: 3px 0;
+  font-size: 12px;
+  color: var(--p-muted);
+  overflow-wrap: anywhere;
+}
+
+.mz-profile .profile-badge {
+  display: inline-flex;
+  margin-top: 12px;
+  padding: 4px 12px;
+  border-radius: 99px;
+  font-size: 11px;
+  font-weight: 700;
+}
+
+.mz-profile .profile-badge.active {
+  background: #e9f8ef;
+  color: #238246;
+}
+
+.mz-profile .profile-badge.inactive {
+  background: #fff0f0;
+  color: #b64d4d;
+}
+
+/* Sidebar navigation */
+
+.mz-profile .profile-nav {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  padding: 22px 0;
+}
+
+.mz-profile .profile-nav .nav-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-height: 43px;
+  padding: 10px 13px;
+  border-radius: 9px;
+  background: transparent;
+  color: var(--p-muted);
+  font-size: 13px;
+  font-weight: 500;
+  text-decoration: none;
+  transition: background .2s, color .2s;
+}
+
+.mz-profile .profile-nav .nav-item svg {
+  flex: 0 0 19px;
+  width: 19px;
+  height: 19px;
+}
+
+.mz-profile .profile-nav .nav-item:hover {
+  background: #f5f5f7;
+  color: var(--p-dark);
+}
+
+.mz-profile .profile-nav .nav-item.active,
+.mz-profile .profile-nav .nav-item[aria-current="page"] {
+  background: rgba(255,107,107,.11);
+  color: var(--p-dark);
+  font-weight: 700;
+}
+
+.mz-profile .profile-nav .nav-item.active svg {
+  color: var(--p-primary);
+}
+
+.mz-profile .nav-badge {
+  margin-inline-start: auto;
+  padding: 1px 7px;
+  background: var(--p-primary);
+  border-radius: 20px;
+  color: var(--p-dark);
+  font-size: 11px;
+}
+
+.mz-profile .logout-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 9px;
+  width: 100%;
+  min-height: 42px;
+  margin-top: auto;
+  border: 1px solid #f0cece;
+  border-radius: 9px;
+  background: #fff6f6;
+  color: #b94444;
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.mz-profile .logout-btn:hover {
+  background: #ffeaea;
+}
+
+.mz-profile .logout-btn svg {
+  width: 17px;
+  height: 17px;
+}
+
+/* 03 — MAIN & TABS */
+
+.mz-profile .profile-main {
+  min-width: 0;
+  min-height: 550px;
+}
+
+.mz-profile .profile-tab {
+  display: none;
+}
+
+.mz-profile .profile-tab.active {
+  display: block;
+}
+
+.mz-profile .mobile-menu-toggle {
+  display: none;
+}
+
+.mz-profile .dashboard-header,
+.mz-profile .projects-header,
+.mz-profile .timeline-header,
+.mz-profile .messages-header,
+.mz-profile .invoices-header,
+.mz-profile .settings-header {
+  margin-bottom: 25px;
+}
+
+.mz-profile .dashboard-header h1,
+.mz-profile .projects-header h1,
+.mz-profile .timeline-header h1,
+.mz-profile .messages-header h1,
+.mz-profile .invoices-header h1,
+.mz-profile .settings-header h1 {
+  margin: 0 0 7px;
+  color: var(--p-dark);
+  font-family: var(--font-heading);
+  font-size: clamp(24px, 2.8vw, 32px);
+  font-weight: 700;
+  line-height: 1.35;
+}
+
+.mz-profile .dashboard-header p,
+.mz-profile .timeline-header p,
+.mz-profile .settings-header p {
+  margin: 0;
+  color: var(--p-muted);
+  font-size: 13px;
+}
+
+.mz-profile .messages-header,
+.mz-profile .invoices-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 14px;
+}
+
+.mz-profile .messages-header h1,
+.mz-profile .invoices-header h1 {
+  margin: 0;
+}
+
+/* 04 — DASHBOARD */
+
+.mz-profile .stats-grid {
+  display: grid;
+  grid-template-columns: repeat(4,minmax(0,1fr));
+  gap: 14px;
+}
+
+.mz-profile .stat-card {
+  display: flex;
+  align-items: center;
+  gap: 13px;
+  min-width: 0;
+  min-height: 107px;
+  padding: 19px 15px;
+  background: #fff;
+  border: 1px solid var(--p-border);
+  border-radius: var(--p-radius);
+  box-shadow: var(--p-shadow);
+}
+
+.mz-profile .stat-icon {
+  display: grid;
+  place-items: center;
+  flex: 0 0 41px;
+  width: 41px;
+  height: 41px;
+  border-radius: 10px;
+  background: rgba(255,107,107,.10);
+  font-size: 21px;
+}
+
+.mz-profile .stat-info {
+  min-width: 0;
+}
+
+.mz-profile .stat-info h3 {
+  margin: 0 0 5px;
+  color: var(--p-muted);
+  font-size: 11px;
+  font-weight: 500;
+  line-height: 1.45;
+}
+
+.mz-profile .stat-number {
+  margin: 0;
+  color: var(--p-dark);
+  font-size: clamp(19px, 2vw, 26px);
+  font-weight: 700;
+  line-height: 1.3;
+  overflow-wrap: anywhere;
+}
+
+/* Recent activity */
+
+.mz-profile .recent-activity {
+  margin-top: 24px;
+  padding: 25px;
+  background: #fff;
+  border: 1px solid var(--p-border);
+  border-radius: var(--p-radius);
+}
+
+.mz-profile .recent-activity > h3 {
+  margin: 0 0 20px;
+  font-size: 17px;
+}
+
+.mz-profile .activity-list {
+  display: flex;
+  flex-direction: column;
+  gap: 13px;
+}
+
+.mz-profile .activity-item {
+  display: flex;
+  align-items: center;
+  gap: 13px;
+  padding: 14px;
+  border-radius: 9px;
+  background: var(--p-bg);
+}
+
+.mz-profile .activity-icon {
+  display: grid;
+  place-items: center;
+  flex: 0 0 39px;
+  height: 39px;
+  border-radius: 10px;
+  background: #fff;
+  font-size: 19px;
+}
+
+.mz-profile .activity-content p {
+  margin: 0;
+  font-size: 13px;
+}
+
+.mz-profile .activity-time {
+  color: var(--p-muted);
+  font-size: 11px;
+}
+
+/* 05 — PROJECTS ACCORDION */
+
+.mz-profile .projects-list-accordion {
+  display: flex;
+  flex-direction: column;
+  gap: 13px;
+}
+
+.mz-profile .project-accordion-item {
+  overflow: hidden;
+  border: 1px solid var(--p-border);
+  border-radius: var(--p-radius);
+  background: #fff;
+}
+
+.mz-profile .project-accordion-item.open {
+  border-color: rgba(255,107,107,.40);
+}
+
+.mz-profile .project-accordion-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 18px;
+  width: 100%;
+  padding: 22px;
+  border: 0;
+  background: transparent;
+  color: inherit;
+  text-align: start;
+}
+
+.mz-profile .project-accordion-header:hover {
+  background: #fcfcfd;
+}
+
+.mz-profile .project-info {
+  flex: 1;
+  min-width: 0;
+}
+
+.mz-profile .project-name {
+  margin: 0 0 12px;
+  font-size: 17px;
+  font-weight: 700;
+}
+
+.mz-profile .project-meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 9px 17px;
+  color: var(--p-muted);
+  font-size: 12px;
+}
+
+.mz-profile .project-progress-badge {
+  display: inline-flex;
+  padding: 4px 10px;
+  border-radius: 99px;
+  background: rgba(255,107,107,.12);
+  color: #ba5252;
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.mz-profile .project-toggle-icon {
+  display: grid;
+  place-items: center;
+  flex: 0 0 32px;
+  width: 32px;
+  height: 32px;
+  border-radius: 8px;
+  background: var(--p-bg);
+  transition: transform .2s;
+}
+
+.mz-profile .project-accordion-item.open
+.project-toggle-icon {
+  transform: rotate(180deg);
+}
+
+/* JS controls display through inline styles */
+
+.mz-profile .project-accordion-content {
+  padding: 0 22px 22px;
+  border-top: 1px solid var(--p-border);
+}
+
+.mz-profile .payments-list {
+  padding-top: 21px;
+}
+
+.mz-profile .payments-list h4 {
+  margin: 0 0 14px;
+  font-size: 15px;
+}
+
+.mz-profile .payment-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 12px;
+  padding: 13px 0;
+  border-bottom: 1px solid var(--p-border);
+}
+
+.mz-profile .payment-item:last-child {
+  border-bottom: 0;
+}
+
+.mz-profile .payment-info {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 9px 18px;
+  font-size: 13px;
+}
+
+.mz-profile .payment-title {
+  font-weight: 600;
+}
+
+.mz-profile .payment-amount {
+  color: var(--p-muted);
+}
+
+.mz-profile .payment-status {
+  padding: 4px 10px;
+  border-radius: 99px;
+  font-size: 11px;
+  font-weight: 700;
+}
+
+.mz-profile .payment-status.paid {
+  background: #e8f8ed;
+  color: #287b44;
+}
+
+.mz-profile .payment-status.pending {
+  background: #fff5df;
+  color: #a87817;
+}
+
+/* 06 — TIMELINE */
+
+.mz-profile .projects-timeline-list {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.mz-profile .project-timeline-card {
+  padding: 26px;
+  border: 1px solid var(--p-border);
+  border-radius: var(--p-radius);
+  background: #fff;
+}
+
+.mz-profile .project-timeline-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  flex-wrap: wrap;
+  gap: 20px;
+}
+
+.mz-profile .project-title-section {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.mz-profile .project-timeline-name {
+  margin: 0;
+  font-size: 18px;
+  font-weight: 700;
+}
+
+.mz-profile .project-timeline-dates {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px 21px;
+}
+
+.mz-profile .date-item {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  font-size: 12px;
+}
+
+.mz-profile .date-label {
+  color: var(--p-muted);
+}
+
+.mz-profile .date-value {
+  color: var(--p-dark);
+  font-weight: 600;
+}
+
+.mz-profile .date-value.overdue {
+  color: #be4444;
+}
+
+.mz-profile .timeline-progress-container {
+  padding: 25px 0 29px;
+}
+
+.mz-profile .timeline-progress-bar {
+  height: 9px;
+  overflow: visible;
+  border-radius: 99px;
+  background: #ededf1;
+}
+
+.mz-profile .timeline-progress-fill {
+  position: relative;
+  height: 100%;
+  max-width: 100%;
+  border-radius: 99px;
+  background: var(--p-primary);
+}
+
+.mz-profile .progress-tooltip {
+  position: absolute;
+  top: -27px;
+  inset-inline-end: 0;
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--p-dark);
+}
+
+.mz-profile .milestones-timeline {
+  display: grid;
+  grid-template-columns: repeat(5,minmax(0,1fr));
+  gap: 9px;
+}
+
+.mz-profile .timeline-milestone-item {
+  position: relative;
+  min-width: 0;
+  text-align: center;
+}
+
+.mz-profile .milestone-connector {
+  position: absolute;
+  top: 16px;
+  inset-inline-start: 50%;
+  width: 100%;
+  height: 2px;
+  background: var(--p-border);
+}
+
+.mz-profile .timeline-milestone-item:last-child
+.milestone-connector {
+  display: none;
+}
+
+.mz-profile .milestone-node {
+  position: relative;
+  z-index: 1;
+  display: grid;
+  place-items: center;
+  width: 33px;
+  height: 33px;
+  margin-inline: auto;
+  border: 2px solid #e3e3e9;
+  border-radius: 50%;
+  background: #fff;
+  color: #9999a5;
+}
+
+.mz-profile .timeline-milestone-item.completed
+.milestone-node {
+  background: var(--p-primary);
+  border-color: var(--p-primary);
+  color: var(--p-dark);
+}
+
+.mz-profile .timeline-milestone-item.active
+.milestone-node {
+  border-color: var(--p-primary);
+  color: var(--p-primary);
+}
+
+.mz-profile .milestone-info {
+  padding-top: 10px;
+}
+
+.mz-profile .milestone-title {
+  margin: 0 0 3px;
+  font-size: 11px;
+  font-weight: 600;
+  line-height: 1.5;
+}
+
+.mz-profile .milestone-status {
+  margin: 0;
+  font-size: 10px;
+  color: var(--p-muted);
+}
+
+/* 07 — MESSAGES */
+
+.mz-profile .messages-container,
+.mz-profile .messages-list {
+  min-height: 260px;
+}
+
+.mz-profile .messages-list,
+.mz-profile .message-panel {
+  padding: 22px;
+  border: 1px solid var(--p-border);
+  border-radius: var(--p-radius);
+  background: #fff;
+}
+
+.mz-profile .message-panel-header {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding-bottom: 15px;
+  border-bottom: 1px solid var(--p-border);
+}
+
+.mz-profile .message-panel-header h3 {
+  margin: 0;
+  font-size: 16px;
+}
+
+.mz-profile .message-conversation {
+  min-height: 170px;
+  padding: 20px 0;
+}
+
+.mz-profile .message-input-area {
+  display: flex;
+  align-items: end;
+  gap: 10px;
+}
+
+.mz-profile .message-input-area textarea {
+  flex: 1;
+  min-width: 0;
+  min-height: 75px;
+}
+
+.mz-profile .message-input-area button {
+  flex: 0 0 44px;
+  height: 44px;
+  border: 0;
+  border-radius: 9px;
+  background: var(--p-primary);
+}
+
+.mz-profile .no-messages,
+.mz-profile .no-projects,
+.mz-profile .no-invoices,
+.mz-profile .no-projects-timeline {
+  padding: 35px 20px;
+  border: 1px dashed var(--p-border);
+  border-radius: var(--p-radius);
+  background: #fff;
+  color: var(--p-muted);
+  font-size: 13px;
+  text-align: center;
+}
+
+.mz-profile .no-messages p,
+.mz-profile .no-projects p,
+.mz-profile .no-invoices p,
+.mz-profile .no-projects-timeline p {
+  margin: 0;
+}
+
+/* 08 — INVOICES */
+
+.mz-profile .invoices-list {
+  display: flex;
+  flex-direction: column;
+  gap: 13px;
+}
+
+.mz-profile .invoice-card {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  min-width: 0;
+  padding: 21px;
+  border: 1px solid var(--p-border);
+  border-radius: var(--p-radius);
+  background: #fff;
+}
+
+.mz-profile .invoice-status {
+  flex: 0 0 9px;
+  width: 9px;
+  height: 9px;
+  border-radius: 50%;
+  background: #e7ae4b;
+}
+
+.mz-profile .invoice-status.paid {
+  background: #3aaa69;
+}
+
+.mz-profile .invoice-info {
+  flex: 1;
+  min-width: 0;
+}
+
+.mz-profile .invoice-info h4 {
+  margin: 0 0 5px;
+  font-size: 14px;
+  font-weight: 700;
+}
+
+.mz-profile .invoice-info p {
+  margin: 0 0 5px;
+  color: var(--p-muted);
+  font-size: 12px;
+}
+
+.mz-profile .invoice-date {
+  color: var(--p-muted);
+  font-size: 11px;
+}
+
+.mz-profile .invoice-amount {
+  color: var(--p-dark);
+  font-size: 17px;
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+.mz-profile .invoice-actions {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+
+.mz-profile .btn-download {
+  display: grid;
+  place-items: center;
+  width: 37px;
+  height: 37px;
+  border: 1px solid var(--p-border);
+  border-radius: 8px;
+  background: #fff;
+  color: var(--p-dark);
+}
+
+/* 09 — SHARED BUTTONS */
+
+.mz-profile .btn-new-message,
+.mz-profile .btn-upload-invoice,
+.mz-profile .btn-save-settings,
+.mz-profile .btn-change-password,
+.mz-profile .btn-upload,
+.mz-profile .btn-send,
+.mz-profile .btn-browse,
+.mz-profile .btn-pay {
+  display: inline-flex;
+  justify-content: center;
+  align-items: center;
+  gap: 8px;
+  min-height: 41px;
+  padding: 10px 17px;
+  border: 1px solid var(--p-primary);
+  border-radius: 8px;
+  background: var(--p-primary);
+  color: var(--p-dark);
+  font-size: 12px;
+  font-weight: 700;
+  text-align: center;
+}
+
+.mz-profile .btn-new-message svg,
+.mz-profile .btn-upload-invoice svg {
+  width: 17px;
+  height: 17px;
+}
+
+.mz-profile .btn-new-message:hover,
+.mz-profile .btn-upload-invoice:hover,
+.mz-profile .btn-save-settings:hover,
+.mz-profile .btn-change-password:hover,
+.mz-profile .btn-upload:hover,
+.mz-profile .btn-send:hover,
+.mz-profile .btn-browse:hover,
+.mz-profile .btn-pay:hover {
+  background: #ff8787;
+}
+
+.mz-profile .btn-delete-account {
+  min-height: 41px;
+  padding: 10px 17px;
+  border: 1px solid #f1c8c8;
+  border-radius: 8px;
+  background: #fff4f4;
+  color: #b54242;
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.mz-profile .btn-cancel {
+  min-height: 41px;
+  padding: 10px 17px;
+  border: 1px solid var(--p-border);
+  border-radius: 8px;
+  background: #fff;
+  color: var(--p-dark);
+  font-size: 12px;
+}
+
+/* 10 — SETTINGS */
+
+.mz-profile .settings-form {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.mz-profile .settings-section {
+  padding: 26px;
+  border: 1px solid var(--p-border);
+  border-radius: var(--p-radius);
+  background: #fff;
+}
+
+.mz-profile .settings-section > h3 {
+  margin: 0 0 22px;
+  font-size: 17px;
+  font-weight: 700;
+}
+
+.mz-profile .form-row {
+  display: grid;
+  grid-template-columns: repeat(2,minmax(0,1fr));
+  gap: 16px;
+}
+
+.mz-profile .form-group,
+.mz-profile .auth-input-group {
+  display: flex;
+  flex-direction: column;
+  gap: 7px;
+  min-width: 0;
+  margin-bottom: 18px;
+}
+
+.mz-profile .form-group label,
+.mz-profile .auth-input-group label {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--p-dark);
+}
+
+.mz-profile .settings-input,
+.mz-profile .auth-input,
+.mz-profile .modal-input,
+.mz-profile .modal-textarea,
+.mz-profile .message-input-area textarea {
+  display: block;
+  width: 100%;
+  min-width: 0;
+  min-height: 44px;
+  padding: 11px 13px;
+  border: 1px solid #e3e3e9;
+  border-radius: 8px;
+  outline: none;
+  background: #fafafa;
+  color: var(--p-dark);
+  font-size: 13px;
+}
+
+.mz-profile textarea {
+  resize: vertical;
+}
+
+.mz-profile .settings-input:focus,
+.mz-profile .auth-input:focus,
+.mz-profile .modal-input:focus,
+.mz-profile .modal-textarea:focus,
+.mz-profile textarea:focus {
+  border-color: var(--p-primary);
+  box-shadow: 0 0 0 3px rgba(255,107,107,.09);
+  background: #fff;
+}
+
+.mz-profile .settings-input:disabled {
+  background: #f0f0f2;
+  color: #8c8c98;
+}
+
+.mz-profile .settings-actions {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+
+/* 11 — MODALS */
+
+.mz-profile .modal {
+  position: fixed;
+  inset: 0;
+  z-index: 1500;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  padding: 18px;
+  overflow-y: auto;
+
+  background: rgba(19,19,30,.67);
+  -webkit-backdrop-filter: blur(4px);
+  backdrop-filter: blur(4px);
+}
+
+/* JS controls .modal display inline */
+
+.mz-profile .modal-content {
+  width: 100%;
+  max-width: 510px;
+  max-height: calc(100dvh - 36px);
+  margin: auto;
+  overflow-y: auto;
+  border-radius: 14px;
+  background: #fff;
+  box-shadow: 0 25px 65px rgba(0,0,0,.15);
+}
+
+.mz-profile .modal-header,
+.mz-profile .modal-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 15px;
+  padding: 19px 23px;
+}
+
+.mz-profile .modal-header {
+  border-bottom: 1px solid var(--p-border);
+}
+
+.mz-profile .modal-header h3 {
+  margin: 0;
+  font-size: 18px;
+}
+
+.mz-profile .modal-close {
+  display: grid;
+  place-items: center;
+  width: 30px;
+  height: 30px;
+  border: 0;
+  border-radius: 7px;
+  background: #f3f3f5;
+  color: var(--p-dark);
+  font-size: 23px;
+}
+
+.mz-profile .modal-body {
+  padding: 24px 23px;
+}
+
+.mz-profile .modal-footer {
+  justify-content: flex-end;
+  border-top: 1px solid var(--p-border);
+}
+
+.mz-profile .modal-body > .modal-input,
+.mz-profile .modal-body > .modal-textarea {
+  margin-bottom: 13px;
+}
+
+/* File upload area */
+
+.mz-profile .upload-area {
+  padding: 27px 18px;
+  border: 2px dashed #dedee5;
+  border-radius: 11px;
+  background: #fafafa;
+  text-align: center;
+  transition: border-color .2s, background .2s;
+}
+
+.mz-profile .upload-area.dragover {
+  border-color: var(--p-primary);
+  background: #fff2f2;
+}
+
+.mz-profile .upload-area > svg {
+  color: var(--p-primary);
+  width: 38px;
+  height: 38px;
+}
+
+.mz-profile .upload-area p {
+  margin: 10px 0;
+  font-size: 13px;
+}
+
+.mz-profile .upload-hint {
+  color: var(--p-muted);
+  font-size: 11px !important;
+}
+
+.mz-profile .btn-browse {
+  margin-top: 8px;
+}
+
+.mz-profile #selectedInvoiceName {
+  overflow-wrap: anywhere;
+}
+
+/* Upload progress */
+
+.mz-profile #uploadProgress {
+  margin-top: 17px;
+}
+
+.mz-profile .progress-bar {
+  height: 8px;
+  overflow: hidden;
+  border-radius: 99px;
+  background: #ededf1;
+}
+
+.mz-profile .progress-fill {
+  height: 100%;
+  border-radius: 99px;
+  background: var(--p-primary);
+}
+
+.mz-profile .upload-status {
+  margin: 8px 0 0;
+  font-size: 12px;
+  color: var(--p-muted);
+}
+
+/* 12 — GLOBAL PROFILE TOAST
+   Toast is appended to document.body by profile.js,
+   so its selector must not be nested under .mz-profile.
+*/
+
+body > .toast-message {
+  position: fixed;
+  inset-inline-end: 24px;
+  bottom: 24px;
+  z-index: 99999;
+
+  max-width: min(400px, calc(100vw - 32px));
+  padding: 14px 19px;
+
+  border: 1px solid #ddd;
+  border-radius: 10px;
+
+  background: #fff;
+  color: #1f1f2e;
+
+  box-shadow: 0 12px 38px rgba(0,0,0,.12);
+
+  font-size: 13px;
+  line-height: 1.7;
+
+  opacity: 0;
+  transform: translateY(18px);
+  transition: opacity .3s, transform .3s;
+}
+
+body > .toast-message.show {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+body > .toast-message.success {
+  border-color: #bfe5c8;
+  background: #f1faf3;
+}
+
+body > .toast-message.error {
+  border-color: #f0c7c7;
+  background: #fff2f2;
+}
+
+body > .toast-message.warning {
+  border-color: #f2d7a0;
+  background: #fff9e8;
+}
+
+body > .toast-message.info {
+  border-color: #d7d7e5;
+}
+
+/* 13 — ERROR STATE */
+
+.mz-profile .profile-error-container {
+  display: block;
+  min-height: 55vh;
+  padding: 35px 0;
+}
+
+.mz-profile .profile-error-container .no-projects {
+  max-width: 650px;
+  margin: 0 auto;
+  padding: 45px 25px;
+}
+
+.mz-profile .profile-error-container h1 {
+  margin: 0 0 12px;
+  font-size: 26px;
+}
+
+.mz-profile .profile-error-container .primary-button {
+  margin-top: 22px;
+}
+
+/* 14 — RTL */
+
+.mz-profile[dir="rtl"] {
+  direction: rtl;
+  text-align: right;
+}
+
+.mz-profile[dir="rtl"] .profile-avatar,
+.mz-profile[dir="rtl"] .timeline-milestone-item,
+.mz-profile[dir="rtl"] .upload-area,
+.mz-profile[dir="rtl"] .no-projects,
+.mz-profile[dir="rtl"] .no-messages {
+  text-align: center;
+}
+
+.mz-profile[dir="rtl"] .avatar-upload-btn {
+  right: auto;
+  left: -3px;
+}
+
+.mz-profile[dir="rtl"] .profile-nav .nav-item {
+  text-align: right;
+}
+
+.mz-profile[dir="rtl"] .settings-input[type="email"],
+.mz-profile[dir="rtl"] .settings-input[type="url"],
+.mz-profile[dir="rtl"] .settings-input[type="tel"] {
+  direction: ltr;
+  text-align: left;
+}
+
+/* 15 — TABLET */
+
+@media (max-width: 1100px) {
+  .mz-profile .profile-container {
+    grid-template-columns: 230px minmax(0,1fr);
+    gap: 18px;
+  }
+
+  .mz-profile .stats-grid {
+    grid-template-columns: repeat(2,minmax(0,1fr));
+  }
+
+  .mz-profile .stat-card {
+    min-height: 95px;
+  }
+}
+
+/* 16 — MOBILE */
+
+@media (max-width: 767px) {
+  .mz-profile .profile-section {
+    padding: 95px 0 55px;
+  }
+
+  .mz-profile .profile-container {
+    display: block;
+    width: min(100% - 30px, 620px);
+  }
+
+  .mz-profile .profile-sidebar {
+    position: fixed;
+    top: 0;
+    bottom: 0;
+    left: 0;
+    z-index: 1600;
+
+    width: min(295px, 88vw);
+    max-height: 100dvh;
+    overflow-y: auto;
+
+    border-radius: 0 14px 14px 0;
+    box-shadow: 15px 0 45px rgba(0,0,0,.18);
+
+    transform: translateX(-110%);
+    visibility: hidden;
+    transition: transform .3s, visibility .3s;
+  }
+
+  .mz-profile .profile-sidebar.open {
+    transform: translateX(0);
+    visibility: visible;
+  }
+
+  .mz-profile[dir="rtl"] .profile-sidebar {
+    left: auto;
+    right: 0;
+    border-radius: 14px 0 0 14px;
+    transform: translateX(110%);
+  }
+
+  .mz-profile[dir="rtl"] .profile-sidebar.open {
+    transform: translateX(0);
+  }
+
+  .mz-profile .sidebar-close {
+    display: grid;
+    place-items: center;
+    align-self: flex-end;
+    width: 32px;
+    height: 32px;
+    margin: 0 0 10px;
+    border: 0;
+    border-radius: 7px;
+    background: #f1f1f4;
+    font-size: 15px;
+  }
+
+  .mz-profile .mobile-menu-toggle {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 44px;
+    height: 44px;
+    margin-bottom: 20px;
+    border: 1px solid var(--p-border);
+    border-radius: 9px;
+    background: #fff;
+    color: var(--p-dark);
+  }
+
+  .mz-profile .dashboard-header h1,
+  .mz-profile .projects-header h1,
+  .mz-profile .timeline-header h1,
+  .mz-profile .messages-header h1,
+  .mz-profile .invoices-header h1,
+  .mz-profile .settings-header h1 {
+    font-size: 25px;
+  }
+
+  .mz-profile .project-timeline-card {
+    padding: 20px;
+  }
+
+  .mz-profile .milestones-timeline {
+    gap: 3px;
+  }
+
+  .mz-profile .milestone-title {
+    font-size: 10px;
+  }
+
+  .mz-profile .milestone-status {
+    font-size: 9px;
+  }
+
+  .mz-profile .invoice-card {
+    flex-wrap: wrap;
+  }
+
+  .mz-profile .invoice-info {
+    flex-basis: calc(100% - 30px);
+  }
+
+  .mz-profile .invoice-amount {
+    margin-inline-start: 25px;
+  }
+
+  .mz-profile .invoice-actions {
+    margin-inline-start: auto;
+  }
+
+  .mz-profile .form-row {
+    grid-template-columns: 1fr;
+    gap: 0;
+  }
+
+  .mz-profile .settings-section {
+    padding: 21px;
+  }
+
+  body > .toast-message {
+    bottom: 15px;
+    inset-inline: 15px;
+    max-width: none;
+  }
+}
+
+/* 17 — SMALL MOBILE */
+
+@media (max-width: 480px) {
+  .mz-profile .stats-grid {
+    gap: 10px;
+  }
+
+  .mz-profile .stat-card {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 9px;
+    min-height: 125px;
+    padding: 15px 13px;
+  }
+
+  .mz-profile .stat-number {
+    font-size: 20px;
+  }
+
+  .mz-profile .recent-activity {
+    padding: 19px;
+  }
+
+  .mz-profile .project-accordion-header {
+    padding: 18px 15px;
+  }
+
+  .mz-profile .project-accordion-content {
+    padding: 0 15px 18px;
+  }
+
+  .mz-profile .project-meta {
+    gap: 7px;
+  }
+
+  .mz-profile .project-timeline-header {
+    flex-direction: column;
+  }
+
+  .mz-profile .project-timeline-dates {
+    display: grid;
+    grid-template-columns: repeat(2,minmax(0,1fr));
+    width: 100%;
+  }
+
+  .mz-profile .milestones-timeline {
+    grid-template-columns: 1fr;
+    gap: 12px;
+  }
+
+  .mz-profile .timeline-milestone-item {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    text-align: start;
+  }
+
+  .mz-profile .milestone-node {
+    flex: 0 0 33px;
+    margin: 0;
+  }
+
+  .mz-profile .milestone-info {
+    padding: 0;
+  }
+
+  .mz-profile .milestone-connector {
+    display: none;
+  }
+
+  .mz-profile .milestone-title {
+    font-size: 12px;
+  }
+
+  .mz-profile .milestone-status {
+    font-size: 10px;
+  }
+
+  .mz-profile .modal-content {
+    border-radius: 11px;
+  }
+
+  .mz-profile .modal-header,
+  .mz-profile .modal-footer {
+    padding: 16px;
+  }
+
+  .mz-profile .modal-body {
+    padding: 19px 16px;
+  }
+
+  .mz-profile .settings-actions {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .mz-profile .settings-actions button {
+    width: 100%;
+  }
+}
+
+/* 18 — ACCESSIBILITY */
+
+@media (prefers-reduced-motion: reduce) {
+  .mz-profile *,
+  .mz-profile *::before,
+  .mz-profile *::after,
+  body > .toast-message {
+    transition: none !important;
+    animation: none !important;
+    scroll-behavior: auto !important;
+  }
+}

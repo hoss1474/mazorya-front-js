@@ -1,0 +1,1175 @@
+
+/* ============================================================
+   MAZORYA GROUP — ABOUT US
+   Version: 2.0 / Clean Corporate
+
+   Dependencies:
+   - main.css
+   - header.css
+   - footer.css
+
+   Scoped to: .mz-about
+
+   Brand:
+   Primary  #ff6b6b
+   Dark     #1f1f2e
+   Black    #000000
+   White    #ffffff
+   ============================================================ */
+
+
+/* ============================================================
+   01 — PAGE BASE
+   ============================================================ */
+
+.mz-about {
+  --about-primary: var(--color-primary, #ff6b6b);
+  --about-dark: var(--color-dark, #1f1f2e);
+  --about-white: var(--color-white, #ffffff);
+  --about-bg: var(--bg-main, #ffffff);
+  --about-soft: var(--bg-secondary, #f7f7f7);
+  --about-text: var(--text-primary, #1f1f2e);
+  --about-muted: var(--text-secondary, #555562);
+  --about-border: var(--border-light, #e5e5e9);
+
+  width: 100%;
+  min-width: 0;
+  overflow: clip;
+
+  background: var(--about-bg);
+  color: var(--about-text);
+
+  font-family: var(--font-body);
+  font-size: 15px;
+  line-height: 1.75;
+}
+
+.mz-about *,
+.mz-about *::before,
+.mz-about *::after {
+  box-sizing: border-box;
+}
+
+.mz-about section {
+  position: relative;
+  scroll-margin-top: 90px;
+}
+
+.mz-about p {
+  margin: 0;
+  line-height: 1.8;
+}
+
+.mz-about img {
+  max-width: 100%;
+}
+
+.mz-about .section-title {
+  margin: 0;
+
+  color: var(--about-dark);
+
+  font-family: var(--font-heading);
+  font-size: clamp(25px, 2.6vw, 34px);
+  font-weight: 700;
+  line-height: 1.3;
+  letter-spacing: -0.025em;
+}
+
+.mz-about .align-center {
+  text-align: center;
+}
+
+
+/* ============================================================
+   02 — BANNER SECTION
+   ============================================================ */
+
+.mz-about .banner-section {
+  padding: 115px 0 65px;
+  background: var(--about-white);
+}
+
+.mz-about .banner-title-wrap {
+  max-width: 670px;
+  margin-inline: auto;
+
+  text-align: center;
+}
+
+/* Main heading */
+
+.mz-about .banner-title {
+  margin: 0 0 15px;
+
+  color: var(--about-dark);
+
+  font-family: var(--font-heading);
+  font-size: clamp(36px, 4.6vw, 56px);
+  font-weight: 700;
+  line-height: 1.16;
+  letter-spacing: -0.04em;
+}
+
+.mz-about .banner-title-wrap p {
+  max-width: 560px;
+  margin-inline: auto;
+
+  color: var(--about-muted);
+
+  font-size: 15px;
+  font-weight: 400;
+  line-height: 1.8;
+}
+
+/* Banner image */
+
+.mz-about .banner-image-wrap {
+  position: relative;
+
+  width: 100%;
+  margin-top: 36px;
+
+  overflow: hidden;
+  border-radius: 14px;
+
+  background: var(--about-soft);
+}
+
+.mz-about .banner-image {
+  display: block;
+
+  width: 100%;
+  height: clamp(280px, 34vw, 440px);
+
+  object-fit: cover;
+  object-position: center;
+  border-radius: 0;
+
+  transition: transform 0.6s ease;
+}
+
+.mz-about .banner-image-wrap:hover .banner-image {
+  transform: scale(1.025);
+}
+
+
+/* ============================================================
+   03 — STATISTICS
+   ============================================================ */
+
+.mz-about .count-card-area {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+
+  gap: 16px;
+  margin-top: 28px;
+}
+
+.mz-about .count-card-wrap {
+  display: flex;
+  align-items: center;
+
+  min-width: 0;
+  min-height: 112px;
+  gap: 14px;
+
+  padding: 20px 17px;
+
+  background: var(--about-soft);
+  border: 1px solid transparent;
+  border-radius: 12px;
+
+  transition:
+    background 0.25s ease,
+    border-color 0.25s ease;
+}
+
+.mz-about .count-card-wrap:hover {
+  background: #fff5f5;
+  border-color: rgba(255, 107, 107, 0.25);
+}
+
+/* Icon */
+
+.mz-about .count-icon-wrap {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+
+  flex: 0 0 44px;
+
+  width: 44px;
+  height: 44px;
+
+  border-radius: 10px;
+  background: var(--about-white);
+}
+
+.mz-about .count-icon-wrap img {
+  display: block;
+
+  width: 25px;
+  height: 25px;
+
+  object-fit: contain;
+  border-radius: 0;
+}
+
+/* Number */
+
+.mz-about .count-title {
+  margin: 0;
+
+  color: var(--about-dark);
+
+  font-family: var(--font-heading);
+  font-size: clamp(24px, 2.5vw, 32px);
+  font-weight: 700;
+  line-height: 1.15;
+  letter-spacing: -0.025em;
+}
+
+/* Label */
+
+.mz-about .count-text {
+  margin-top: 5px;
+
+  color: var(--about-muted);
+
+  font-size: 12px;
+  line-height: 1.5;
+}
+
+
+/* ============================================================
+   04 — MISSION & VISION
+   ============================================================ */
+
+.mz-about .about-intro-section {
+  padding: 75px 0 85px;
+  background: var(--about-white);
+}
+
+.mz-about .about-intro-grid-wrap {
+  display: flex;
+  flex-direction: column;
+
+  gap: 80px;
+}
+
+/* Grid */
+
+.mz-about .about-intro-top-grid,
+.mz-about .about-intro-bottom-grid {
+  display: grid;
+
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  align-items: center;
+
+  gap: clamp(30px, 5vw, 65px);
+}
+
+/* Image */
+
+.mz-about .about-intro-image-wrap {
+  position: relative;
+
+  width: 100%;
+  min-width: 0;
+
+  overflow: hidden;
+  border-radius: 14px;
+
+  background: var(--about-soft);
+}
+
+.mz-about .about-intro-image {
+  display: block;
+
+  width: 100%;
+  height: clamp(320px, 34vw, 435px);
+
+  object-fit: cover;
+  border-radius: 0;
+
+  transition: transform 0.6s ease;
+}
+
+.mz-about .about-intro-image-wrap:hover
+.about-intro-image {
+  transform: scale(1.025);
+}
+
+/* Content */
+
+.mz-about .about-intro-content-wrap {
+  min-width: 0;
+  max-width: 520px;
+}
+
+/* Small label */
+
+.mz-about .about-intro-subtitle {
+  display: inline-block;
+
+  margin-bottom: 14px;
+
+  color: var(--about-primary);
+
+  font-size: 12px;
+  font-weight: 700;
+  line-height: 1.4;
+  letter-spacing: 0.04em;
+}
+
+/* Heading */
+
+.mz-about .about-intro-title {
+  margin: 0 0 17px;
+
+  color: var(--about-dark);
+
+  font-family: var(--font-heading);
+  font-size: clamp(24px, 2.45vw, 31px);
+  font-weight: 700;
+  line-height: 1.35;
+  letter-spacing: -0.025em;
+}
+
+/* Description */
+
+.mz-about .about-intro-content-wrap > p {
+  margin: 0;
+
+  color: var(--about-muted);
+
+  font-size: 14px;
+  line-height: 1.9;
+}
+
+/* Mission / Vision bullets */
+
+.mz-about .about-intro-point-area {
+  display: flex;
+  flex-direction: column;
+
+  gap: 14px;
+  margin-top: 23px;
+}
+
+.mz-about .about-intro-point-wrap {
+  display: flex;
+  align-items: flex-start;
+
+  gap: 11px;
+  min-width: 0;
+}
+
+.mz-about .about-intro-icon-wrap {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  flex: 0 0 24px;
+
+  width: 24px;
+  height: 24px;
+
+  margin-top: 1px;
+
+  border-radius: 50%;
+  background: rgba(255, 107, 107, 0.14);
+}
+
+.mz-about .about-intro-icon-wrap img {
+  display: block;
+
+  width: 12px;
+  height: 12px;
+
+  object-fit: contain;
+  border-radius: 0;
+}
+
+.mz-about .about-intro-point-wrap p {
+  flex: 1;
+  min-width: 0;
+
+  color: var(--about-text);
+
+  font-size: 13px;
+  font-weight: 500;
+  line-height: 1.75;
+}
+
+
+/* ============================================================
+   05 — VALUES SECTION
+   ============================================================ */
+
+.mz-about .value-section {
+  padding: 76px 0 82px;
+
+  background: var(--about-dark);
+  color: var(--about-white);
+}
+
+.mz-about .value-section .section-title {
+  color: var(--about-white);
+}
+
+/* Intro */
+
+.mz-about .section-title-wrap {
+  max-width: 670px;
+  margin-inline: auto;
+}
+
+.mz-about .value-content-wrap {
+  max-width: 560px;
+  margin: 14px auto 0;
+}
+
+.mz-about .value-content-wrap p {
+  color: rgba(255, 255, 255, 0.65);
+
+  font-size: 14px;
+  line-height: 1.8;
+}
+
+/* Grid */
+
+.mz-about .value-grid-wrap {
+  margin-top: 38px;
+}
+
+.mz-about .value-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+
+  gap: 16px;
+}
+
+/* Card */
+
+.mz-about .value-card-wrap {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+
+  min-width: 0;
+  height: 100%;
+
+  padding: 28px 25px;
+
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 12px;
+
+  background: rgba(255, 255, 255, 0.035);
+  text-align: start;
+
+  transition:
+    background 0.3s ease,
+    border-color 0.3s ease;
+}
+
+.mz-about .value-card-wrap:hover {
+  background: rgba(255, 255, 255, 0.075);
+  border-color: rgba(255, 107, 107, 0.5);
+}
+
+/* Icon */
+
+.mz-about .value-icon {
+  display: block;
+
+  width: 36px;
+  height: 36px;
+
+  margin-bottom: 20px;
+
+  object-fit: contain;
+  border-radius: 0;
+
+  filter: brightness(0) invert(1);
+}
+
+/* Title */
+
+.mz-about .value-card-title {
+  margin: 0 0 10px;
+
+  color: var(--about-white);
+
+  font-family: var(--font-heading);
+  font-size: 18px;
+  font-weight: 600;
+  line-height: 1.4;
+}
+
+/* Text */
+
+.mz-about .value-card-content {
+  margin: 0;
+
+  color: rgba(255, 255, 255, 0.62);
+
+  font-size: 13px;
+  font-weight: 400;
+  line-height: 1.85;
+}
+
+
+/* ============================================================
+   06 — HISTORY
+   ============================================================ */
+
+.mz-about .history-section {
+  padding: 80px 0 85px;
+  background: var(--about-white);
+}
+
+/* Timeline container */
+
+.mz-about .history-card-area {
+  position: relative;
+
+  display: flex;
+  flex-direction: column;
+
+  gap: 20px;
+  margin-top: 42px;
+}
+
+/* Timeline item */
+
+.mz-about .history-card-wrap {
+  position: relative;
+  z-index: 1;
+
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+
+  width: 100%;
+  min-height: 136px;
+
+  gap: 12%;
+}
+
+/* Left and right halves */
+
+.mz-about .history-left-wrap,
+.mz-about .history-right-wrap {
+  position: relative;
+  z-index: 2;
+
+  flex: 0 0 44%;
+
+  width: 44%;
+  max-width: 44%;
+  min-width: 0;
+}
+
+/* Content box */
+
+.mz-about .history-left-wrap {
+  padding: 24px 27px;
+
+  border: 1px solid var(--about-border);
+  border-radius: 12px;
+
+  background: var(--about-white);
+
+  transition:
+    background 0.3s ease,
+    border-color 0.3s ease;
+}
+
+.mz-about .history-left-wrap:hover {
+  background: var(--about-soft);
+  border-color: rgba(255, 107, 107, 0.35);
+}
+
+.mz-about .history-title {
+  margin: 0 0 9px;
+
+  color: var(--about-dark);
+
+  font-family: var(--font-heading);
+  font-size: 18px;
+  font-weight: 700;
+  line-height: 1.4;
+}
+
+.mz-about .history-left-wrap p {
+  margin: 0;
+
+  color: var(--about-muted);
+
+  font-size: 13px;
+  line-height: 1.8;
+}
+
+/* Year */
+
+.mz-about .history-right-wrap {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  background: transparent;
+  text-align: center;
+}
+
+.mz-about .history-title-wrap {
+  width: 100%;
+  text-align: center;
+}
+
+.mz-about .history-right-wrap .section-title {
+  margin: 0;
+
+  color: var(--about-primary);
+
+  font-family: var(--font-heading);
+  font-size: clamp(32px, 3.6vw, 45px);
+  font-weight: 700;
+  line-height: 1.15;
+  letter-spacing: -0.03em;
+}
+
+/* Center line */
+
+.mz-about .history-line-wrap {
+  position: absolute;
+  top: 40px;
+  bottom: 40px;
+  left: 50%;
+  z-index: 3;
+
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: space-between;
+
+  width: 1px;
+
+  background: rgba(31, 31, 46, 0.18);
+
+  transform: translateX(-50%);
+  pointer-events: none;
+}
+
+/* Steps */
+
+.mz-about .history-step-wrap {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  flex: 0 0 30px;
+
+  width: 30px;
+  height: 30px;
+
+  border: 1px solid var(--about-primary);
+  border-radius: 50%;
+
+  background: var(--about-white);
+  color: var(--about-dark);
+
+  font-family: var(--font-heading);
+  font-size: 10px;
+  font-weight: 700;
+
+  box-shadow: 0 0 0 6px #fff;
+}
+
+
+/* ============================================================
+   07 — CTA SECTION
+   ============================================================ */
+
+.mz-about .cta-section {
+  padding: 0 0 80px;
+  background: var(--about-white);
+}
+
+.mz-about .cta-image-wrap {
+  position: relative;
+  isolation: isolate;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  width: 100%;
+  min-height: 290px;
+
+  overflow: hidden;
+  border-radius: 14px;
+
+  background: var(--about-dark);
+}
+
+/* Image */
+
+.mz-about .cta-image {
+  position: absolute;
+  inset: 0;
+  z-index: -2;
+
+  display: block;
+
+  width: 100%;
+  height: 100%;
+
+  object-fit: cover;
+  border-radius: 0;
+}
+
+/* Overlay */
+
+.mz-about .cta-bg-wrap {
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+
+  background: linear-gradient(
+    110deg,
+    rgba(31, 31, 46, 0.88),
+    rgba(31, 31, 46, 0.5)
+  );
+
+  pointer-events: none;
+}
+
+/* Content */
+
+.mz-about .cta-title-area {
+  position: relative;
+  z-index: 2;
+
+  width: 100%;
+  padding: 45px 25px;
+
+  text-align: center;
+}
+
+.mz-about .cta-title-wrap {
+  max-width: 590px;
+  margin-inline: auto;
+}
+
+.mz-about .cta-title-wrap .section-title {
+  color: #ffffff;
+  font-size: clamp(24px, 2.8vw, 34px);
+  line-height: 1.35;
+}
+
+.mz-about .cta-button-wrap {
+  margin-top: 24px;
+}
+
+.mz-about .cta-button {
+  min-height: 44px;
+  padding: 11px 25px;
+
+  font-size: 13px;
+}
+
+.mz-about .cta-button:hover {
+  background: var(--about-primary);
+  border-color: var(--about-primary);
+  color: var(--about-dark);
+}
+
+
+/* ============================================================
+   08 — RTL / PERSIAN / ARABIC
+   ============================================================ */
+
+.mz-about:dir(rtl) {
+  direction: rtl;
+  text-align: right;
+}
+
+/* Centered content remains centered */
+
+.mz-about:dir(rtl) .banner-title-wrap,
+.mz-about:dir(rtl) .value-section .align-center,
+.mz-about:dir(rtl) .history-section .align-center,
+.mz-about:dir(rtl) .cta-title-area {
+  text-align: center;
+}
+
+/* Keep card content aligned with writing direction */
+
+.mz-about:dir(rtl) .value-card-wrap,
+.mz-about:dir(rtl) .about-intro-content-wrap {
+  text-align: start;
+}
+
+.mz-about:dir(rtl) .about-intro-point-wrap {
+  flex-direction: row;
+}
+
+/* Avoid negative tracking in Persian / Arabic */
+
+html[lang="fa"] .mz-about .banner-title,
+html[lang="ar"] .mz-about .banner-title,
+html[lang="fa"] .mz-about .about-intro-title,
+html[lang="ar"] .mz-about .about-intro-title,
+html[lang="fa"] .mz-about .section-title,
+html[lang="ar"] .mz-about .section-title {
+  letter-spacing: normal;
+}
+
+
+/* ============================================================
+   09 — TABLET
+   ============================================================ */
+
+@media (max-width: 1024px) {
+
+  .mz-about .banner-section {
+    padding-top: 105px;
+  }
+
+  /* Statistics: 2 columns */
+
+  .mz-about .count-card-area {
+    grid-template-columns:
+      repeat(2, minmax(0, 1fr));
+  }
+
+  .mz-about .count-card-wrap {
+    min-height: 95px;
+  }
+
+  /* Mission and Vision */
+
+  .mz-about .about-intro-top-grid,
+  .mz-about .about-intro-bottom-grid {
+    gap: 30px;
+  }
+
+  .mz-about .about-intro-image {
+    height: 350px;
+  }
+
+  .mz-about .about-intro-title {
+    font-size: 26px;
+  }
+
+  .mz-about .about-intro-content-wrap > p {
+    font-size: 13px;
+  }
+
+  /* Values */
+
+  .mz-about .value-grid {
+    grid-template-columns:
+      repeat(2, minmax(0, 1fr));
+  }
+
+  /* Timeline */
+
+  .mz-about .history-card-wrap {
+    gap: 10%;
+  }
+
+  .mz-about .history-left-wrap,
+  .mz-about .history-right-wrap {
+    flex-basis: 45%;
+    width: 45%;
+    max-width: 45%;
+  }
+
+}
+
+
+/* ============================================================
+   10 — MOBILE
+   ============================================================ */
+
+@media (max-width: 767px) {
+
+  .mz-about {
+    font-size: 14px;
+  }
+
+  /* Banner */
+
+  .mz-about .banner-section {
+    padding: 95px 0 50px;
+  }
+
+  .mz-about .banner-title {
+    font-size: clamp(33px, 8vw, 42px);
+  }
+
+  .mz-about .banner-title-wrap p {
+    font-size: 13px;
+  }
+
+  .mz-about .banner-image-wrap {
+    margin-top: 26px;
+    border-radius: 10px;
+  }
+
+  .mz-about .banner-image {
+    height: 260px;
+  }
+
+  /* Statistics */
+
+  .mz-about .count-card-area {
+    gap: 12px;
+    margin-top: 18px;
+  }
+
+  .mz-about .count-card-wrap {
+    padding: 16px 13px;
+    gap: 10px;
+    min-height: 95px;
+  }
+
+  .mz-about .count-icon-wrap {
+    flex-basis: 36px;
+    width: 36px;
+    height: 36px;
+  }
+
+  .mz-about .count-icon-wrap img {
+    width: 20px;
+    height: 20px;
+  }
+
+  .mz-about .count-title {
+    font-size: 25px;
+  }
+
+  .mz-about .count-text {
+    font-size: 11px;
+  }
+
+  /* Mission / Vision */
+
+  .mz-about .about-intro-section {
+    padding: 55px 0 65px;
+  }
+
+  .mz-about .about-intro-grid-wrap {
+    gap: 60px;
+  }
+
+  .mz-about .about-intro-top-grid,
+  .mz-about .about-intro-bottom-grid {
+    grid-template-columns: 1fr;
+    gap: 26px;
+  }
+
+  .mz-about .about-intro-image {
+    height: 295px;
+  }
+
+  .mz-about .about-intro-title {
+    font-size: 24px;
+  }
+
+  .mz-about .about-intro-content-wrap {
+    max-width: 100%;
+  }
+
+  /* Vision image first on mobile */
+
+  .mz-about .about-intro-bottom-grid
+  .about-intro-image-wrap {
+    grid-row: 1;
+  }
+
+  .mz-about .about-intro-bottom-grid
+  .about-intro-content-wrap {
+    grid-row: 2;
+  }
+
+  /* Values */
+
+  .mz-about .value-section {
+    padding: 60px 0 65px;
+  }
+
+  .mz-about .section-title {
+    font-size: 27px;
+  }
+
+  .mz-about .value-grid-wrap {
+    margin-top: 30px;
+  }
+
+  .mz-about .value-grid {
+    gap: 12px;
+  }
+
+  .mz-about .value-card-wrap {
+    padding: 23px 20px;
+  }
+
+  .mz-about .value-card-title {
+    font-size: 16px;
+  }
+
+  /* History */
+
+  .mz-about .history-section {
+    padding: 60px 0 65px;
+  }
+
+  .mz-about .history-card-area {
+    margin-top: 30px;
+    gap: 20px;
+  }
+
+  .mz-about .history-line-wrap {
+    display: none;
+  }
+
+  .mz-about .history-card-wrap {
+    display: flex;
+    flex-direction: column;
+
+    align-items: stretch;
+    gap: 8px;
+
+    min-height: 0;
+  }
+
+  .mz-about .history-left-wrap,
+  .mz-about .history-right-wrap {
+    flex: 0 0 auto;
+
+    width: 100%;
+    max-width: 100%;
+  }
+
+  .mz-about .history-right-wrap {
+    order: 0;
+
+    justify-content: flex-start;
+    padding: 0;
+    text-align: start;
+  }
+
+  .mz-about .history-title-wrap {
+    text-align: start;
+  }
+
+  .mz-about .history-left-wrap {
+    order: 1;
+    padding: 20px;
+  }
+
+  .mz-about .history-right-wrap .section-title {
+    font-size: 33px;
+  }
+
+  .mz-about .history-title {
+    font-size: 17px;
+  }
+
+  /* CTA */
+
+  .mz-about .cta-section {
+    padding-bottom: 60px;
+  }
+
+  .mz-about .cta-image-wrap {
+    min-height: 255px;
+  }
+
+  .mz-about .cta-title-area {
+    padding: 35px 20px;
+  }
+
+  .mz-about .cta-title-wrap .section-title {
+    font-size: 25px;
+  }
+
+}
+
+
+/* ============================================================
+   11 — SMALL PHONES
+   ============================================================ */
+
+@media (max-width: 480px) {
+
+  .mz-about .banner-title {
+    font-size: 34px;
+  }
+
+  .mz-about .banner-image {
+    height: 215px;
+  }
+
+  .mz-about .count-card-area {
+    gap: 9px;
+  }
+
+  .mz-about .count-card-wrap {
+    flex-direction: column;
+    align-items: flex-start;
+
+    padding: 15px 13px;
+    min-height: 120px;
+  }
+
+  .mz-about .count-title {
+    font-size: 24px;
+  }
+
+  .mz-about .about-intro-image {
+    height: 250px;
+  }
+
+  .mz-about .about-intro-title {
+    font-size: 22px;
+  }
+
+  .mz-about .value-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .mz-about .value-card-wrap {
+    padding: 23px 20px;
+  }
+
+  .mz-about .cta-image-wrap {
+    min-height: 235px;
+  }
+
+  .mz-about .cta-title-wrap .section-title {
+    font-size: 23px;
+  }
+
+}
+
+
+/* ============================================================
+   12 — REDUCED MOTION
+   ============================================================ */
+
+@media (prefers-reduced-motion: reduce) {
+
+  .mz-about .banner-image,
+  .mz-about .about-intro-image,
+  .mz-about .count-card-wrap,
+  .mz-about .value-card-wrap,
+  .mz-about .history-left-wrap {
+    transition: none;
+  }
+
+}
