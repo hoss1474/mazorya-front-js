@@ -1,14 +1,10 @@
 
 /**
- * Mazorya Group - Router
+ * Mazorya Group - SPA Router
  * File: core/router.js
  */
 
 import { i18n } from './i18n.js';
-
-// ============================================================
-// CONFIGURATION
-// ============================================================
 
 const SUPPORTED_LANGS = [
   'en',
@@ -28,64 +24,50 @@ const DEFAULT_LANG = 'en';
 
 const routeLoaders = {
   home: () =>
-    import('../pages/home.js').then(
-      module => module.renderHome
-    ),
+    import('../pages/home.js').then(m => m.renderHome),
 
   about: () =>
-    import('../pages/about.js').then(
-      module => module.renderAbout
-    ),
+    import('../pages/about.js').then(m => m.renderAbout),
 
   services: () =>
-    import('../pages/services.js').then(
-      module => module.renderServices
-    ),
+    import('../pages/services.js').then(m => m.renderServices),
 
   service: () =>
     import('../pages/serviceDetails.js').then(
-      module => module.renderServiceDetails
+      m => m.renderServiceDetails
     ),
 
   projects: () =>
-    import('../pages/projects.js').then(
-      module => module.renderProjects
-    ),
+    import('../pages/projects.js').then(m => m.renderProjects),
 
   project: () =>
     import('../pages/projectDetails.js').then(
-      module => module.renderProjectDetails
+      m => m.renderProjectDetails
     ),
 
   blog: () =>
-    import('../pages/blog.js').then(
-      module => module.renderBlog
-    ),
+    import('../pages/blog.js').then(m => m.renderBlog),
 
   blogDetails: () =>
     import('../pages/blogDetails.js').then(
-      module => module.renderBlogDetails
+      m => m.renderBlogDetails
     ),
 
   contact: () =>
-    import('../pages/contact.js').then(
-      module => module.renderContact
-    ),
+    import('../pages/contact.js').then(m => m.renderContact),
 
   auth: () =>
-    import('../pages/auth.js').then(
-      module => module.renderAuth
-    ),
+    import('../pages/auth.js').then(m => m.renderAuth),
 
   profile: () =>
-    import('../pages/profile.js').then(
-      module => module.renderProfile
-    ),
+    import('../pages/profile.js').then(m => m.renderProfile),
+  app: () =>
+  import('../pages/appDownload.js').then(
+    module => module.renderAppDownload
+  ),
 
   '404': () =>
-    import('../pages/404.js').then(
-      module => module.render404
-    )
+    import('../pages/404.js').then(m => m.render404)
 };
 
 // ============================================================
@@ -108,9 +90,7 @@ class Router {
   // ==========================================================
 
   init() {
-    if (this._initialized) {
-      return;
-    }
+    if (this._initialized) return;
 
     this._initialized = true;
 
@@ -118,6 +98,7 @@ class Router {
       void this.handleRoute();
     });
 
+    // Preserve custom navigation used by existing components.
     window.addEventListener('navigate', event => {
       const path = event.detail?.path;
 
@@ -134,30 +115,46 @@ class Router {
   // ==========================================================
 
   async navigateTo(path, replace = false) {
-    if (typeof path !== 'string' || !path.trim()) {
+    if (
+      typeof path !== 'string' ||
+      !path.trim()
+    ) {
       return false;
     }
 
     let target;
 
     try {
-      target = new URL(path, window.location.origin);
+      target = new URL(
+        path,
+        window.location.origin
+      );
     } catch (error) {
       console.error(
         '[Router] Invalid navigation URL:',
         error
       );
+
       return false;
     }
 
-    // External URLs are not handled by the SPA router.
+    if (
+      !['http:', 'https:'].includes(
+        target.protocol
+      )
+    ) {
+      return false;
+    }
+
     if (target.origin !== window.location.origin) {
       window.location.assign(target.href);
       return true;
     }
 
     const targetPath =
-      target.pathname + target.search + target.hash;
+      target.pathname +
+      target.search +
+      target.hash;
 
     const currentPath =
       window.location.pathname +
@@ -188,7 +185,7 @@ class Router {
   }
 
   // ==========================================================
-  // PARSE URL
+  // PARSE PATH
   // ==========================================================
 
   parsePath(path) {
@@ -197,10 +194,9 @@ class Router {
         ? path.split(/[?#]/)[0]
         : '/';
 
-    const cleanPath =
-      pathname.replace(/\/+$/, '') || '/';
-
-    const rawSegments = cleanPath
+    const rawSegments = (
+      pathname.replace(/\/+$/, '') || '/'
+    )
       .split('/')
       .filter(Boolean);
 
@@ -210,7 +206,7 @@ class Router {
       segments = rawSegments.map(segment =>
         decodeURIComponent(segment)
       );
-    } catch (error) {
+    } catch {
       return {
         routeName: '404',
         params: {},
@@ -220,10 +216,8 @@ class Router {
 
     let lang = DEFAULT_LANG;
 
-    // Only remove the first segment if it is a
-    // supported language.
     if (
-      segments.length > 0 &&
+      segments.length &&
       SUPPORTED_LANGS.includes(segments[0])
     ) {
       lang = segments.shift();
@@ -237,10 +231,7 @@ class Router {
       lang
     };
 
-    // ========================================================
     // HOME
-    // ========================================================
-
     if (
       segments.length === 0 ||
       (first === 'home' && segments.length === 1)
@@ -252,13 +243,12 @@ class Router {
       };
     }
 
-    // ========================================================
-    // DYNAMIC ROUTES
-    // ========================================================
-
-    if (first === 'service' && segments.length === 2) {
-      if (!segments[1]) return notFound;
-
+    // SERVICE DETAILS
+    if (
+      first === 'service' &&
+      segments.length === 2 &&
+      segments[1]
+    ) {
       return {
         routeName: 'service',
         params: {
@@ -268,9 +258,15 @@ class Router {
       };
     }
 
-    if (first === 'project' && segments.length === 2) {
-      if (!segments[1]) return notFound;
-
+    // PROJECT DETAILS
+    // Supports both:
+    // /en/project/34
+    // /en/projects/34
+    if (
+      (first === 'project' || first === 'projects') &&
+      segments.length === 2 &&
+      segments[1]
+    ) {
       return {
         routeName: 'project',
         params: {
@@ -280,12 +276,12 @@ class Router {
       };
     }
 
+    // BLOG DETAILS
     if (
       first === 'blog-details' &&
-      segments.length === 2
+      segments.length === 2 &&
+      segments[1]
     ) {
-      if (!segments[1]) return notFound;
-
       return {
         routeName: 'blogDetails',
         params: {
@@ -295,10 +291,7 @@ class Router {
       };
     }
 
-    // ========================================================
     // PROFILE
-    // ========================================================
-
     if (
       first === 'profile' &&
       segments.length === 1
@@ -310,16 +303,26 @@ class Router {
       };
     }
 
-    // ========================================================
-    // STATIC ROUTES
-    // ========================================================
+    // LOGIN ALIAS
+    if (
+      first === 'login' &&
+      segments.length === 1
+    ) {
+      return {
+        routeName: 'auth',
+        params: {},
+        lang
+      };
+    }
 
+    // STATIC ROUTES
     const staticRoutes = [
       'about',
       'services',
       'projects',
       'blog',
       'contact',
+      'app',
       'auth'
     ];
 
@@ -344,13 +347,13 @@ class Router {
   async handleRoute() {
     const navigationId = ++this._navigationId;
 
-    const path = window.location.pathname;
-
     const {
       routeName,
       params,
       lang
-    } = this.parsePath(path);
+    } = this.parsePath(
+      window.location.pathname
+    );
 
     const app = document.getElementById('app');
 
@@ -362,20 +365,21 @@ class Router {
     }
 
     try {
-      // Synchronize URL language with i18n.
-      if (lang !== i18n.getCurrentLanguage()) {
+      if (
+        lang !== i18n.getCurrentLanguage()
+      ) {
         await i18n.setLanguage(lang);
       }
 
-      // A newer navigation has started.
-      if (navigationId !== this._navigationId) {
+      if (
+        navigationId !== this._navigationId
+      ) {
         return;
       }
 
       this.currentRoute = routeName;
       this.currentParams = params;
 
-      // Show loader while importing the page.
       app.innerHTML = `
         <div
           class="loading-spinner"
@@ -386,9 +390,13 @@ class Router {
         </div>
       `;
 
-      const render = await this.loadRoute(routeName);
+      const render = await this.loadRoute(
+        routeName
+      );
 
-      if (navigationId !== this._navigationId) {
+      if (
+        navigationId !== this._navigationId
+      ) {
         return;
       }
 
@@ -398,16 +406,22 @@ class Router {
         await this.render404();
       }
 
-      if (navigationId !== this._navigationId) {
+      if (
+        navigationId !== this._navigationId
+      ) {
         return;
       }
 
-      // Preserve the animation callback used by app.js.
-      if (typeof this.afterRender === 'function') {
+      if (
+        typeof this.afterRender === 'function'
+      ) {
         await this.afterRender();
       }
+
     } catch (error) {
-      if (navigationId !== this._navigationId) {
+      if (
+        navigationId !== this._navigationId
+      ) {
         return;
       }
 
@@ -427,13 +441,17 @@ class Router {
   async loadRoute(routeName) {
     const loader = routeLoaders[routeName];
 
-    if (typeof loader !== 'function') {
+    if (
+      typeof loader !== 'function'
+    ) {
       return null;
     }
 
     const render = await loader();
 
-    if (typeof render !== 'function') {
+    if (
+      typeof render !== 'function'
+    ) {
       throw new Error(
         `Invalid render function for route: ${routeName}`
       );
@@ -454,7 +472,9 @@ class Router {
     try {
       const render = await this.loadRoute('404');
 
-      if (typeof render === 'function') {
+      if (
+        typeof render === 'function'
+      ) {
         await render({});
         return;
       }
@@ -535,11 +555,14 @@ class Router {
       </section>
     `;
 
-    console.error('[Router] Render error:', error);
+    console.error(
+      '[Router] Render error:',
+      error
+    );
   }
 
   // ==========================================================
-  // GET CURRENT ROUTE
+  // CURRENT ROUTE
   // ==========================================================
 
   getCurrentRoute() {

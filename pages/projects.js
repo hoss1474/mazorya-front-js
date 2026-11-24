@@ -3,8 +3,10 @@
  * Mazorya Group - Projects Listing
  * File: pages/projects.js
  *
- * Fixed categories, Laravel API, filters,
- * multilingual content and existing Webflow layout.
+ * Laravel API
+ * Multilingual categories
+ * Webflow layout
+ * Prompt category support
  */
 
 import { i18n } from '../core/i18n.js';
@@ -19,7 +21,10 @@ import {
   attachFooterEvents
 } from '../components/footer.js';
 
-import { getProjects } from '../core/api.js';
+import {
+  getProjects,
+  resolveMediaUrl
+} from '../core/api.js';
 
 // ============================================================
 // CONFIGURATION
@@ -27,48 +32,84 @@ import { getProjects } from '../core/api.js';
 
 const DEFAULT_IMAGE = '/assets/img/default-project.jpg';
 
-const API_URL =
-  import.meta.env?.VITE_API_URL ||
-  'https://api.mazoryagroup.com/api';
-
 let renderRequestId = 0;
 
 // ============================================================
-// FIXED CATEGORIES
+// CATEGORIES
 // ============================================================
 
 const CATEGORIES = [
   { id: 'all', label: 'همه', labelEn: 'All' },
   { id: 'website', label: 'وبسایت', labelEn: 'Website' },
   { id: 'ui-ux', label: 'UI/UX', labelEn: 'UI/UX' },
-  { id: 'social-media', label: 'سوشیال مدیا', labelEn: 'Social Media' },
-  { id: 'seo', label: 'سئو', labelEn: 'SEO' },
+  {
+    id: 'social-media',
+    label: 'سوشیال مدیا',
+    labelEn: 'Social Media'
+  },
+  {
+    id: 'prompts',
+    label: 'پرامپت‌ها',
+    labelEn: 'Prompts'
+  },
   { id: 'graphic', label: 'گرافیک', labelEn: 'Graphic' },
   { id: 'other', label: 'سایر', labelEn: 'Other' }
 ];
 
+// Prompts must be checked before Website.
 const CATEGORY_MAP = {
+  prompts: [
+    'prompts',
+    'prompt',
+    'ai prompt',
+    'ai prompts',
+    'website prompt',
+    'website prompts',
+    'web prompt',
+    'prompt engineering',
+    'پرامپت',
+    'پرامپت‌ها',
+    'پرامپت ها',
+    'پرامپت سایت',
+    'پرامپت آماده'
+  ],
+
   website: [
-    'website', 'web', 'وبسایت', 'وب سایت',
-    'site', 'web development'
+    'website',
+    'web',
+    'وبسایت',
+    'وب سایت',
+    'site',
+    'web development'
   ],
+
   'ui-ux': [
-    'ui-ux', 'ui/ux', 'uiux',
-    'user interface', 'user experience',
-    'طراحی رابط کاربری', 'تجربه کاربری'
+    'ui-ux',
+    'ui/ux',
+    'uiux',
+    'user interface',
+    'user experience',
+    'طراحی رابط کاربری',
+    'تجربه کاربری'
   ],
+
   'social-media': [
-    'social-media', 'social media',
-    'social', 'سوشیال', 'سوشیال مدیا',
-    'instagram', 'telegram'
+    'social-media',
+    'social media',
+    'social',
+    'سوشیال',
+    'سوشیال مدیا',
+    'instagram',
+    'telegram'
   ],
-  seo: [
-    'seo', 'سئو', 'بهینه سازی',
-    'بهینه‌سازی', 'search engine'
-  ],
+
   graphic: [
-    'graphic', 'graphics', 'گرافیک',
-    'طراحی گرافیک', 'illustration', 'تصویرسازی'
+    'graphic',
+    'graphics',
+    'گرافیک',
+    'طراحی گرافیک',
+    'illustration',
+    'تصویرسازی'
   ]
 };
 
@@ -114,18 +155,22 @@ function getCategoryLabel(category, lang) {
     item => item.id === category
   );
 
-  if (found) {
-    return isPersian(lang)
-      ? found.label
-      : found.labelEn;
-  }
-
-  return String(category);
+  return found
+    ? (
+        isPersian(lang)
+          ? found.label
+          : found.labelEn
+      )
+    : String(category);
 }
 
 function getProjectCountLabel(count, lang) {
   return `${count} ${
-    isPersian(lang) ? 'پروژه' : count === 1 ? 'project' : 'projects'
+    isPersian(lang)
+      ? 'پروژه'
+      : count === 1
+        ? 'project'
+        : 'projects'
   }`;
 }
 
@@ -134,7 +179,7 @@ function normalizeText(value) {
     .normalize('NFKC')
     .toLowerCase()
     .replace(/[\u200c\u200d]/g, ' ')
-    .replace(/[_-]/g, ' ')
+    .replace(/[\_-]/g, ' ')
     .replace(/\s+/g, ' ')
     .trim();
 }
@@ -151,14 +196,12 @@ function extractCategoryValues(value) {
   }
 
   if (typeof value === 'object') {
-    const candidates = [
+    return [
       value.slug,
       value.name,
       value.title,
       value.label
-    ];
-
-    return candidates
+    ]
       .filter(item => typeof item === 'string')
       .map(normalizeText)
       .filter(Boolean);
@@ -169,6 +212,7 @@ function extractCategoryValues(value) {
     typeof value === 'number'
   ) {
     const normalized = normalizeText(value);
+
     return normalized ? [normalized] : [];
   }
 
@@ -180,25 +224,31 @@ function matchCategory(value) {
 
   if (!normalized) return null;
 
-  for (const [id, keywords] of Object.entries(CATEGORY_MAP)) {
+  for (
+    const [id, keywords]
+    of Object.entries(CATEGORY_MAP)
+  ) {
     const matches = keywords.some(keyword => {
       const key = normalizeText(keyword);
 
-      if (normalized === key) return true;
+      if (normalized === key) {
+        return true;
+      }
 
-      // Short keywords must match whole tokens
-      // to avoid accidental matches.
       if (key.length <= 3) {
         const tokens = normalized.split(
           /[\s/,+&()]+/
         );
+
         return tokens.includes(key);
       }
 
       return normalized.includes(key);
     });
 
-    if (matches) return id;
+    if (matches) {
+      return id;
+    }
   }
 
   return null;
@@ -213,7 +263,10 @@ function getProjectCategory(project) {
 
   for (const value of values) {
     const match = matchCategory(value);
-    if (match) return match;
+
+    if (match) {
+      return match;
+    }
   }
 
   return 'other';
@@ -223,11 +276,15 @@ function groupProjectsByCategory(projects) {
   const categorized = Object.fromEntries(
     CATEGORIES
       .filter(category => category.id !== 'all')
-      .map(category => [category.id, []])
+      .map(category => [
+        category.id,
+        []
+      ])
   );
 
   projects.forEach(project => {
     const categoryId = getProjectCategory(project);
+
     categorized[categoryId].push(project);
   });
 
@@ -239,67 +296,38 @@ function groupProjectsByCategory(projects) {
 // ============================================================
 
 function resolveImageUrl(value) {
-  if (typeof value !== 'string' || !value.trim()) {
-    return DEFAULT_IMAGE;
-  }
-
-  const path = value.trim();
-
-  try {
-    if (
-      path.startsWith('//') ||
-      (/^[a-z][a-z\d+.-]*:/i.test(path) &&
-        !/^https?:\/\//i.test(path))
-    ) {
-      return DEFAULT_IMAGE;
-    }
-
-    const apiOrigin = new URL(
-      API_URL,
-      window.location.origin
-    ).origin;
-
-    let url;
-
-    if (/^https?:\/\//i.test(path)) {
-      url = new URL(path);
-    } else if (
-      path.startsWith('/assets/') ||
-      path.startsWith('assets/')
-    ) {
-      url = new URL(
-        path.startsWith('/') ? path : `/${path}`,
-        window.location.origin
-      );
-    } else {
-      url = new URL(
-        `/${path.replace(/^\/+/, '')}`,
-        apiOrigin
-      );
-    }
-
-    if (!['http:', 'https:'].includes(url.protocol)) {
-      return DEFAULT_IMAGE;
-    }
-
-    return escapeHtml(url.href);
-  } catch {
-    return DEFAULT_IMAGE;
-  }
+  return escapeHtml(
+    resolveMediaUrl(value) || DEFAULT_IMAGE
+  );
 }
 
 function getProjectImage(project) {
   const images = project?.images;
 
-  const image =
-    (typeof images === 'string' ? images : null) ||
-    images?.image ||
-    images?.cover ||
-    project?.cover_url ||
-    project?.image_url ||
-    project?.image;
+  const candidates = [
+    typeof images === 'string' ? images : null,
+    images?.image,
+    images?.cover,
+    project?.cover_url,
+    project?.image_url,
+    project?.image
+  ];
 
-  return resolveImageUrl(image);
+  for (const candidate of candidates) {
+    const image =
+      typeof candidate === 'string'
+        ? candidate
+        : candidate?.url ?? candidate?.path ?? null;
+
+    if (
+      image &&
+      resolveMediaUrl(image)
+    ) {
+      return resolveImageUrl(image);
+    }
+  }
+
+  return DEFAULT_IMAGE;
 }
 
 // ============================================================
@@ -307,18 +335,22 @@ function getProjectImage(project) {
 // ============================================================
 
 function getProjectLink(project, lang) {
-  const slug = project?.slug;
+  const cleanSlug = String(
+    project?.slug ?? ''
+  ).trim();
+
+  const identifier = cleanSlug || project?.id;
 
   if (
-    slug === undefined ||
-    slug === null ||
-    String(slug).trim() === ''
+    identifier === undefined ||
+    identifier === null ||
+    String(identifier).trim() === ''
   ) {
     return null;
   }
 
-  return `/${lang}/project/${encodeURIComponent(
-    String(slug)
+  return `/${encodeURIComponent(lang)}/project/${encodeURIComponent(
+    String(identifier).trim()
   )}`;
 }
 
@@ -328,7 +360,10 @@ function getProjectLink(project, lang) {
 
 function renderCategoryFilters(lang) {
   return CATEGORIES.map(category => {
-    const label = getCategoryLabel(category.id, lang);
+    const label = getCategoryLabel(
+      category.id,
+      lang
+    );
 
     const active = category.id === 'all';
 
@@ -354,7 +389,10 @@ function renderProjectCards(
   lang,
   showCategory = false
 ) {
-  if (!Array.isArray(projects) || !projects.length) {
+  if (
+    !Array.isArray(projects) ||
+    !projects.length
+  ) {
     return `
       <div class="no-projects">
         <p>
@@ -369,15 +407,21 @@ function renderProjectCards(
     `;
   }
 
-  // Preserve the original two-column row layout.
   const rows = [];
 
-  for (let i = 0; i < projects.length; i += 2) {
-    rows.push(projects.slice(i, i + 2));
+  for (
+    let i = 0;
+    i < projects.length;
+    i += 2
+  ) {
+    rows.push(
+      projects.slice(i, i + 2)
+    );
   }
 
   return rows.map(row => `
     <div class="projects-row">
+
       ${row.map(project => {
         const title = String(
           project?.name ||
@@ -388,7 +432,9 @@ function renderProjectCards(
         const image = getProjectImage(project);
         const link = getProjectLink(project, lang);
 
-        const categoryId = getProjectCategory(project);
+        const categoryId =
+          getProjectCategory(project);
+
         const categoryLabel = showCategory
           ? getCategoryLabel(categoryId, lang)
           : '';
@@ -405,6 +451,7 @@ function renderProjectCards(
 
         return `
           <div class="project-collection-item">
+
             <div class="project-card-wrap">
 
               <div class="project-image-area">
@@ -447,7 +494,10 @@ function renderProjectCards(
                 ${
                   link
                     ? `
-                      <a href="${link}" class="project-title">
+                      <a
+                        href="${link}"
+                        class="project-title"
+                      >
                         ${escapeHtml(title)}
                       </a>
                     `
@@ -471,9 +521,11 @@ function renderProjectCards(
               </div>
 
             </div>
+
           </div>
         `;
       }).join('')}
+
     </div>
   `).join('');
 }
@@ -482,7 +534,10 @@ function renderProjectCards(
 // CATEGORY SECTIONS
 // ============================================================
 
-function renderCategories(categorizedProjects, lang) {
+function renderCategories(
+  categorizedProjects,
+  lang
+) {
   return CATEGORIES
     .filter(category => category.id !== 'all')
     .map(category => {
@@ -500,16 +555,22 @@ function renderCategories(categorizedProjects, lang) {
           data-category="${category.id}"
           style="display:none;"
         >
+
           <div class="category-header">
+
             <h2 class="category-title">
               ${escapeHtml(label)}
             </h2>
 
             <span class="category-count">
               ${escapeHtml(
-                getProjectCountLabel(projects.length, lang)
+                getProjectCountLabel(
+                  projects.length,
+                  lang
+                )
               )}
             </span>
+
           </div>
 
           <div class="category-projects">
@@ -519,6 +580,7 @@ function renderCategories(categorizedProjects, lang) {
               true
             )}
           </div>
+
         </div>
       `;
     })
@@ -534,6 +596,7 @@ function renderBannerSection(lang) {
     <section class="projects-banner">
 
       <div class="w-layout-blockcontainer container-regular w-container">
+
         <div class="align-center">
 
           <div class="banner-title-wrap small">
@@ -559,7 +622,9 @@ function renderBannerSection(lang) {
           </div>
 
         </div>
+
       </div>
+
     </section>
   `;
 }
@@ -571,11 +636,15 @@ function renderBannerSection(lang) {
 function renderFilterSection(lang) {
   return `
     <section class="category-filter-section">
+
       <div class="w-layout-blockcontainer container-regular w-container">
+
         <div class="category-filter-wrap">
           ${renderCategoryFilters(lang)}
         </div>
+
       </div>
+
     </section>
   `;
 }
@@ -611,12 +680,15 @@ function renderProjectsGrid(
             <div class="category-header">
 
               <h2 class="category-title">
-                ${allTitle}
+                ${escapeHtml(allTitle)}
               </h2>
 
               <span class="category-count">
                 ${escapeHtml(
-                  getProjectCountLabel(projects.length, lang)
+                  getProjectCountLabel(
+                    projects.length,
+                    lang
+                  )
                 )}
               </span>
 
@@ -652,7 +724,7 @@ function renderProjectsGrid(
 }
 
 // ============================================================
-// CTA
+// CTA SECTION
 // ============================================================
 
 function renderCTASection(lang) {
@@ -685,8 +757,9 @@ function renderCTASection(lang) {
               </h2>
 
               <div class="cta-button-wrap">
+
                 <a
-                  href="/${lang}/contact"
+                  href="/${encodeURIComponent(lang)}/contact"
                   class="cta-button"
                   data-route="contact"
                 >
@@ -697,6 +770,7 @@ function renderCTASection(lang) {
                       : "Let's Talk"
                   )}
                 </a>
+
               </div>
 
             </div>
@@ -704,6 +778,7 @@ function renderCTASection(lang) {
           </div>
 
           <div class="cta-bg-wrap"></div>
+
         </div>
 
       </div>
@@ -718,7 +793,9 @@ function renderCTASection(lang) {
 
 function initCategoryFilter(app) {
   const buttons = [
-    ...app.querySelectorAll('.category-filter-btn')
+    ...app.querySelectorAll(
+      '.category-filter-btn'
+    )
   ];
 
   const allView = app.querySelector(
@@ -730,19 +807,31 @@ function initCategoryFilter(app) {
   );
 
   const sections = [
-    ...app.querySelectorAll('.category-section')
+    ...app.querySelectorAll(
+      '.category-section'
+    )
   ];
 
-  if (!buttons.length || !allView || !categoriesView) {
+  if (
+    !buttons.length ||
+    !allView ||
+    !categoriesView
+  ) {
     return;
   }
 
-  function activateCategory(selectedCategory) {
+  function activateCategory(
+    selectedCategory
+  ) {
     buttons.forEach(button => {
       const active =
-        button.dataset.category === selectedCategory;
+        button.dataset.category ===
+        selectedCategory;
 
-      button.classList.toggle('active', active);
+      button.classList.toggle(
+        'active',
+        active
+      );
 
       button.setAttribute(
         'aria-pressed',
@@ -750,7 +839,8 @@ function initCategoryFilter(app) {
       );
     });
 
-    const showAll = selectedCategory === 'all';
+    const showAll =
+      selectedCategory === 'all';
 
     allView.style.display = showAll
       ? 'block'
@@ -763,7 +853,8 @@ function initCategoryFilter(app) {
     sections.forEach(section => {
       section.style.display =
         !showAll &&
-        section.dataset.category === selectedCategory
+        section.dataset.category ===
+          selectedCategory
           ? 'block'
           : 'none';
     });
@@ -771,21 +862,26 @@ function initCategoryFilter(app) {
 
   buttons.forEach(button => {
     button.addEventListener('click', () => {
-      const category = button.dataset.category;
+      const category =
+        button.dataset.category;
 
       if (!category) return;
 
       activateCategory(category);
 
-      const projectsSection = app.querySelector(
-        '.projects-list-section'
-      );
+      const projectsSection =
+        app.querySelector(
+          '.projects-list-section'
+        );
 
       if (projectsSection) {
-        projectsSection.scrollIntoView({
-          behavior: window.matchMedia?.(
+        const reducedMotion =
+          window.matchMedia?.(
             '(prefers-reduced-motion: reduce)'
-          ).matches
+          )?.matches;
+
+        projectsSection.scrollIntoView({
+          behavior: reducedMotion
             ? 'auto'
             : 'smooth',
           block: 'start'
@@ -802,7 +898,9 @@ function initCategoryFilter(app) {
 // ============================================================
 
 export async function renderProjects() {
-  const app = document.getElementById('app');
+  const app = document.getElementById(
+    'app'
+  );
 
   if (!app) {
     console.error(
@@ -811,9 +909,14 @@ export async function renderProjects() {
     return;
   }
 
-  const currentLang = i18n.getCurrentLanguage();
-  const initialPath = window.location.pathname;
-  const requestId = ++renderRequestId;
+  const currentLang =
+    i18n.getCurrentLanguage();
+
+  const initialPath =
+    window.location.pathname;
+
+  const requestId =
+    ++renderRequestId;
 
   let projects = [];
 
@@ -822,7 +925,8 @@ export async function renderProjects() {
 
     if (Array.isArray(result)) {
       projects = result.filter(
-        project => project &&
+        project =>
+          project &&
           typeof project === 'object'
       );
     }
@@ -833,7 +937,7 @@ export async function renderProjects() {
     );
   }
 
-  // Ignore outdated responses.
+  // Ignore outdated SPA responses
   if (
     requestId !== renderRequestId ||
     window.location.pathname !== initialPath ||
@@ -845,44 +949,36 @@ export async function renderProjects() {
   const categorizedProjects =
     groupProjectsByCategory(projects);
 
- 
-app.innerHTML = `
-  ${renderHeader()}
+  app.innerHTML = `
+    ${renderHeader()}
 
-  <main class="mz-projects" id="mazoryaProjects">
-    ${renderBannerSection(currentLang)}
-    ${renderFilterSection(currentLang)}
+    <main
+      class="mz-projects"
+      id="mazoryaProjects"
+    >
+      ${renderBannerSection(currentLang)}
 
-    ${renderProjectsGrid(
-      projects,
-      categorizedProjects,
-      currentLang
-    )}
+      ${renderFilterSection(currentLang)}
 
-    ${renderCTASection(currentLang)}
-  </main>
+      ${renderProjectsGrid(
+        projects,
+        categorizedProjects,
+        currentLang
+      )}
 
-  ${renderFooter()}
-`;
+      ${renderCTASection(currentLang)}
+    </main>
 
+    ${renderFooter()}
+  `;
 
-  // Shared header/footer components
   attachHeaderEvents();
   attachFooterEvents();
 
-  // Category filtering
   initCategoryFilter(app);
 
-  /*
-   * Animation Manager:
-   *
-   * app.js
-   * -> router.afterRender
-   * -> reinitAnimations()
-   *
-   * Existing animation classes are preserved.
-   * Native navigation links remain functional.
-   */
+  // Animation Manager:
+  // app.js -> router.afterRender -> reinitAnimations()
 
   console.log(
     '[Projects] Page rendered:',
@@ -891,7 +987,10 @@ app.innerHTML = `
       projects: projects.length,
       categories: Object.fromEntries(
         Object.entries(categorizedProjects).map(
-          ([key, values]) => [key, values.length]
+          ([key, values]) => [
+            key,
+            values.length
+          ]
         )
       )
     }

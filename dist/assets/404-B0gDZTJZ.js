@@ -1,4 +1,4 @@
-import{m as e}from"./index-BZXsUPAf.js";import{r as c,a as i}from"./header-hNak-YC9.js";import{r as d,a as l}from"./footer-CBaj94Xp.js";async function g(){const a=document.getElementById("app"),r=e.getCurrentLanguage(),n=r==="fa"||r==="ar";a.innerHTML=`
+import{m as e}from"./index-6O3GMm5i.js";import{r as c,a as i}from"./header-CtcPUyL-.js";import{r as d,a as l}from"./footer-uRjdZ6qW.js";async function g(){const a=document.getElementById("app"),r=e.getCurrentLanguage(),n=r==="fa"||r==="ar";a.innerHTML=`
     ${c()}
     
     <!-- ===== 404 Section ===== -->

@@ -2,6 +2,13 @@
 /**
  * Mazorya Group - API Manager
  * File: core/api.js
+ *
+ * Laravel API integration
+ * Authentication
+ * Profile management
+ * Projects / Blogs / Services
+ * Media URL resolver
+ * Public API cache
  */
 
 import { i18n } from './i18n.js';
@@ -10,17 +17,144 @@ import { i18n } from './i18n.js';
 // API CONFIGURATION
 // ============================================================
 
-const DEFAULT_API_URL = '.';
+const DEFAULT_API_URL =
+  'https://api.mazoryagroup.com/api';
 
-const configuredApiUrl =
-  import.meta.env?.VITE_API_URL || DEFAULT_API_URL;
+function normalizeApiBase(value) {
+  if (
+    typeof value !== 'string' ||
+    !value.trim()
+  ) {
+    return DEFAULT_API_URL;
+  }
 
-const API_BASE = String(configuredApiUrl)
-  .trim()
-  .replace(/\/+$/, '');
+  try {
+    const url = new URL(value.trim());
+
+    if (
+      !['https:', 'http:'].includes(url.protocol) ||
+      url.username ||
+      url.password ||
+      url.search ||
+      url.hash
+    ) {
+      throw new Error('Invalid API base URL');
+    }
+
+    return url.href.replace(/\/+$/, '');
+
+  } catch {
+    console.warn(
+      '[API] Invalid VITE_API_URL. Using default backend.'
+    );
+
+    return DEFAULT_API_URL;
+  }
+}
+
+const API_BASE = normalizeApiBase(
+  import.meta.env?.VITE_API_URL
+);
 
 const REQUEST_TIMEOUT = 15000;
+
 const PUBLIC_CACHE_TIME = 5 * 60 * 1000;
+
+// ============================================================
+// MEDIA URL RESOLVER
+// ============================================================
+
+/**
+ * Resolve frontend assets and Laravel media URLs.
+ *
+ * Examples:
+ *
+ * https://cdn.example.com/photo.jpg
+ *   -> unchanged
+ *
+ * /assets/img/3.png
+ *   -> frontend domain
+ *
+ * storage/blogs/photo.jpg
+ *   -> backend domain
+ *
+ * blogs/photo.jpg
+ *   -> backend /storage/blogs/photo.jpg
+ */
+
+export function resolveMediaUrl(value) {
+  if (typeof value !== 'string') {
+    return null;
+  }
+
+  const path = value.trim();
+
+  if (
+    !path ||
+    path.startsWith('//') ||
+    /[\u0000-\u001f\u007f\\]/.test(path)
+  ) {
+    return null;
+  }
+
+  try {
+    // Absolute URLs
+    if (/^[a-z][a-z0-9+.-]*:/i.test(path)) {
+      const absolute = new URL(path);
+
+      return ['http:', 'https:'].includes(
+        absolute.protocol
+      )
+        ? absolute.href
+        : null;
+    }
+
+    const cleanPath = path.replace(/^\/+/, '');
+
+    // Local frontend assets
+    if (/^assets\//i.test(cleanPath)) {
+      return new URL(
+        `/${cleanPath}`,
+        window.location.origin
+      ).href;
+    }
+
+    const backendOrigin = new URL(
+      API_BASE,
+      window.location.origin
+    ).origin;
+
+    // Root-relative backend paths
+    if (path.startsWith('/')) {
+      return new URL(
+        path,
+        backendOrigin
+      ).href;
+    }
+
+    // Laravel storage / uploads
+    if (/^(storage|uploads)\//i.test(cleanPath)) {
+      return new URL(
+        `/${cleanPath}`,
+        backendOrigin
+      ).href;
+    }
+
+    // Filament public disk relative path
+    return new URL(
+      `/storage/${cleanPath}`,
+      backendOrigin
+    ).href;
+
+  } catch (error) {
+    console.warn(
+      '[API] Invalid media URL:',
+      error
+    );
+
+    return null;
+  }
+}
 
 // ============================================================
 // APP STORE
@@ -46,11 +180,18 @@ class AppStore {
     return this.data[key] ?? [];
   }
 
-  isInitialized(lang = i18n.getCurrentLanguage()) {
-    return this._initialized && this._language === lang;
+  isInitialized(
+    lang = i18n.getCurrentLanguage()
+  ) {
+    return (
+      this._initialized &&
+      this._language === lang
+    );
   }
 
-  setInitialized(lang = i18n.getCurrentLanguage()) {
+  setInitialized(
+    lang = i18n.getCurrentLanguage()
+  ) {
     this._initialized = true;
     this._language = lang;
   }
@@ -83,9 +224,15 @@ function storageGet(key) {
 
 function storageSet(key, value) {
   try {
-    localStorage.setItem(key, String(value));
+    localStorage.setItem(
+      key,
+      String(value)
+    );
   } catch (error) {
-    console.warn('[API] Storage write failed:', error);
+    console.warn(
+      '[API] Storage write failed:',
+      error
+    );
   }
 }
 
@@ -93,7 +240,7 @@ function storageRemove(key) {
   try {
     localStorage.removeItem(key);
   } catch {
-    // Storage might be unavailable.
+    // Storage may be unavailable
   }
 }
 
@@ -111,25 +258,39 @@ export function setAuthToken(
   expiresIn = 7200,
   refreshToken = null
 ) {
-  if (!token || typeof token !== 'string') {
+  if (
+    !token ||
+    typeof token !== 'string'
+  ) {
     return false;
   }
 
   const expires = Number(expiresIn);
+
   const duration =
     Number.isFinite(expires) && expires > 0
       ? expires
       : 7200;
 
   _authToken = token;
-  _tokenExpiry = Date.now() + duration * 1000;
+
+  _tokenExpiry =
+    Date.now() + duration * 1000;
 
   storageSet('auth_token', token);
-  storageSet('token_expires_at', _tokenExpiry);
+
+  storageSet(
+    'token_expires_at',
+    _tokenExpiry
+  );
 
   if (refreshToken) {
     _refreshToken = refreshToken;
-    storageSet('refresh_token', refreshToken);
+
+    storageSet(
+      'refresh_token',
+      refreshToken
+    );
   }
 
   return true;
@@ -147,6 +308,7 @@ export function getAuthToken() {
   }
 
   const token = storageGet('auth_token');
+
   const expiresAt = Number(
     storageGet('token_expires_at')
   );
@@ -162,7 +324,6 @@ export function getAuthToken() {
     return token;
   }
 
-  // Keep refresh token available for session renewal.
   _authToken = null;
   _tokenExpiry = null;
 
@@ -170,7 +331,10 @@ export function getAuthToken() {
 }
 
 export function getRefreshToken() {
-  return _refreshToken || storageGet('refresh_token');
+  return (
+    _refreshToken ||
+    storageGet('refresh_token')
+  );
 }
 
 export function clearAuthData() {
@@ -203,9 +367,15 @@ export function getUserData() {
     }
 
     return JSON.parse(stored);
+
   } catch (error) {
-    console.error('[API] Invalid user data:', error);
+    console.error(
+      '[API] Invalid user data:',
+      error
+    );
+
     storageRemove('user_data');
+
     return null;
   }
 }
@@ -216,7 +386,10 @@ export function setUserData(userData) {
     return;
   }
 
-  storageSet('user_data', JSON.stringify(userData));
+  storageSet(
+    'user_data',
+    JSON.stringify(userData)
+  );
 }
 
 // ============================================================
@@ -232,11 +405,15 @@ function isSuccessResponse(data) {
 }
 
 function getErrorMessage(data) {
-  if (typeof data?.message === 'string') {
+  if (
+    typeof data?.message === 'string'
+  ) {
     return data.message;
   }
 
-  if (typeof data?.error === 'string') {
+  if (
+    typeof data?.error === 'string'
+  ) {
     return data.error;
   }
 
@@ -247,7 +424,9 @@ async function readJSON(response) {
   const contentType =
     response.headers.get('content-type') || '';
 
-  if (!contentType.toLowerCase().includes('json')) {
+  if (
+    !contentType.toLowerCase().includes('json')
+  ) {
     throw new Error(
       `Expected JSON but received ${
         contentType || 'unknown content type'
@@ -275,7 +454,9 @@ async function fetchWithTimeout(
 
   const externalSignal = options.signal;
 
-  const abortHandler = () => controller.abort();
+  const abortHandler = () => {
+    controller.abort();
+  };
 
   if (externalSignal) {
     if (externalSignal.aborted) {
@@ -294,6 +475,7 @@ async function fetchWithTimeout(
       ...options,
       signal: controller.signal
     });
+
   } catch (error) {
     if (error.name === 'AbortError') {
       throw new Error(
@@ -304,6 +486,7 @@ async function fetchWithTimeout(
     }
 
     throw error;
+
   } finally {
     clearTimeout(timer);
 
@@ -323,19 +506,29 @@ async function fetchWithRetry(
   options = {},
   retries = 3
 ) {
-  const method = (options.method || 'GET')
-    .toUpperCase();
+  const method = (
+    options.method || 'GET'
+  ).toUpperCase();
 
-  // Never automatically repeat non-idempotent requests.
-  const attempts = ['GET', 'HEAD'].includes(method)
-    ? Math.max(1, retries)
-    : 1;
+  // Never retry non-idempotent requests
+  const attempts =
+    ['GET', 'HEAD'].includes(method)
+      ? Math.max(1, retries)
+      : 1;
 
   let lastError;
 
-  for (let attempt = 0; attempt < attempts; attempt++) {
+  for (
+    let attempt = 0;
+    attempt < attempts;
+    attempt++
+  ) {
     try {
-      return await fetchWithTimeout(url, options);
+      return await fetchWithTimeout(
+        url,
+        options
+      );
+
     } catch (error) {
       lastError = error;
 
@@ -348,7 +541,10 @@ async function fetchWithRetry(
 
       if (attempt < attempts - 1) {
         await new Promise(resolve => {
-          setTimeout(resolve, 500 * (attempt + 1));
+          setTimeout(
+            resolve,
+            500 * (attempt + 1)
+          );
         });
       }
     }
@@ -396,7 +592,8 @@ export async function refreshAuthToken() {
 
       const result = await readJSON(response);
 
-      const payload = result?.data || result;
+      const payload =
+        result?.data || result;
 
       if (
         isSuccessResponse(result) &&
@@ -411,16 +608,25 @@ export async function refreshAuthToken() {
         return true;
       }
 
-      throw new Error('Invalid refresh response');
+      throw new Error(
+        'Invalid refresh response'
+      );
+
     } catch (error) {
-      console.error('[API] Refresh failed:', error);
+      console.error(
+        '[API] Refresh failed:',
+        error
+      );
+
       clearAuthData();
+
       return false;
     }
   })();
 
   try {
     return await refreshPromise;
+
   } finally {
     refreshPromise = null;
   }
@@ -437,25 +643,42 @@ async function fetchWithAuth(
 ) {
   const url = `${API_BASE}${endpoint}`;
 
-  const headers = new Headers(options.headers || {});
+  const headers = new Headers(
+    options.headers || {}
+  );
 
-  headers.set('Accept', 'application/json');
-  headers.set('X-Requested-With', 'XMLHttpRequest');
+  headers.set(
+    'Accept',
+    'application/json'
+  );
+
+  headers.set(
+    'X-Requested-With',
+    'XMLHttpRequest'
+  );
 
   if (options.body instanceof FormData) {
     headers.delete('Content-Type');
+
   } else if (
     options.body != null &&
     !headers.has('Content-Type')
   ) {
-    headers.set('Content-Type', 'application/json');
+    headers.set(
+      'Content-Type',
+      'application/json'
+    );
   }
 
   if (requireAuth) {
     let token = getAuthToken();
 
-    if (!token && getRefreshToken()) {
-      const refreshed = await refreshAuthToken();
+    if (
+      !token &&
+      getRefreshToken()
+    ) {
+      const refreshed =
+        await refreshAuthToken();
 
       if (refreshed) {
         token = getAuthToken();
@@ -463,36 +686,58 @@ async function fetchWithAuth(
     }
 
     if (!token) {
-      throw new Error('Not authenticated');
+      throw new Error(
+        'Not authenticated'
+      );
     }
 
-    headers.set('Authorization', `Bearer ${token}`);
+    headers.set(
+      'Authorization',
+      `Bearer ${token}`
+    );
   }
 
-  let response = await fetchWithRetry(url, {
-    ...options,
-    headers
-  });
+  let response = await fetchWithRetry(
+    url,
+    {
+      ...options,
+      headers
+    }
+  );
 
-  if (response.status === 401 && requireAuth) {
-    const refreshed = await refreshAuthToken();
+  if (
+    response.status === 401 &&
+    requireAuth
+  ) {
+    const refreshed =
+      await refreshAuthToken();
 
     if (!refreshed) {
-      throw new Error('Session expired');
+      throw new Error(
+        'Session expired'
+      );
     }
 
     const newToken = getAuthToken();
 
     if (!newToken) {
-      throw new Error('Session expired');
+      throw new Error(
+        'Session expired'
+      );
     }
 
-    headers.set('Authorization', `Bearer ${newToken}`);
+    headers.set(
+      'Authorization',
+      `Bearer ${newToken}`
+    );
 
-    response = await fetchWithRetry(url, {
-      ...options,
-      headers
-    });
+    response = await fetchWithRetry(
+      url,
+      {
+        ...options,
+        headers
+      }
+    );
   }
 
   return response;
@@ -517,7 +762,10 @@ export async function loginUser(
           'Content-Type': 'application/json',
           'X-Requested-With': 'XMLHttpRequest'
         },
-        body: JSON.stringify({ email, password })
+        body: JSON.stringify({
+          email,
+          password
+        })
       }
     );
 
@@ -529,7 +777,6 @@ export async function loginUser(
       isSuccessResponse(result) &&
       payload.access_token
     ) {
-      // Remove credentials from any previous session.
       clearAuthData();
 
       setAuthToken(
@@ -554,8 +801,12 @@ export async function loginUser(
       error: getErrorMessage(result),
       details: result
     };
+
   } catch (error) {
-    console.error('[API] Login failed:', error);
+    console.error(
+      '[API] Login failed:',
+      error
+    );
 
     return {
       success: false,
@@ -571,19 +822,32 @@ export async function loginUser(
 
 export async function logoutUser() {
   try {
-    if (getAuthToken() || getRefreshToken()) {
-      await fetchWithAuth('/auth/logout', {
-        method: 'POST'
-      });
+    if (
+      getAuthToken() ||
+      getRefreshToken()
+    ) {
+      await fetchWithAuth(
+        '/auth/logout',
+        {
+          method: 'POST'
+        }
+      );
     }
+
   } catch (error) {
-    console.warn('[API] Logout request failed:', error);
+    console.warn(
+      '[API] Logout request failed:',
+      error
+    );
+
   } finally {
     clearAuthData();
     window.location.href = '/';
   }
 
-  return { success: true };
+  return {
+    success: true
+  };
 }
 
 // ============================================================
@@ -594,28 +858,42 @@ export async function getUserProfile() {
   try {
     const response = await fetchWithAuth(
       '/user/profile',
-      { method: 'GET' }
+      {
+        method: 'GET'
+      }
     );
 
     if (!response.ok) {
-      throw new Error(`HTTP ${response.status}`);
+      throw new Error(
+        `HTTP ${response.status}`
+      );
     }
 
     const result = await readJSON(response);
 
-    if (isSuccessResponse(result) && result.data) {
+    if (
+      isSuccessResponse(result) &&
+      result.data
+    ) {
       setUserData(result.data);
       return result.data;
     }
 
     return null;
+
   } catch (error) {
-    console.error('[API] Get profile failed:', error);
+    console.error(
+      '[API] Get profile failed:',
+      error
+    );
+
     return null;
   }
 }
 
-export async function updateUserProfile(profileData) {
+export async function updateUserProfile(
+  profileData
+) {
   try {
     const response = await fetchWithAuth(
       '/user/profile',
@@ -627,7 +905,10 @@ export async function updateUserProfile(profileData) {
 
     const result = await readJSON(response);
 
-    if (response.ok && isSuccessResponse(result)) {
+    if (
+      response.ok &&
+      isSuccessResponse(result)
+    ) {
       if (result.data) {
         setUserData(result.data);
       }
@@ -642,6 +923,7 @@ export async function updateUserProfile(profileData) {
       success: false,
       error: getErrorMessage(result)
     };
+
   } catch (error) {
     return {
       success: false,
@@ -663,7 +945,11 @@ export async function uploadAvatar(file) {
   }
 
   const formData = new FormData();
-  formData.append('avatar', file);
+
+  formData.append(
+    'avatar',
+    file
+  );
 
   try {
     const response = await fetchWithAuth(
@@ -676,8 +962,12 @@ export async function uploadAvatar(file) {
 
     const result = await readJSON(response);
 
-    if (response.ok && isSuccessResponse(result)) {
-      const avatarUrl = result.data?.avatar_url;
+    if (
+      response.ok &&
+      isSuccessResponse(result)
+    ) {
+      const avatarUrl =
+        result.data?.avatar_url;
 
       if (avatarUrl) {
         const user = getUserData();
@@ -698,6 +988,7 @@ export async function uploadAvatar(file) {
       success: false,
       error: getErrorMessage(result)
     };
+
   } catch (error) {
     return {
       success: false,
@@ -729,14 +1020,17 @@ export async function changePassword(
 
     const result = await readJSON(response);
 
+    const success =
+      response.ok &&
+      isSuccessResponse(result);
+
     return {
-      success:
-        response.ok && isSuccessResponse(result),
-      error: response.ok &&
-        isSuccessResponse(result)
-          ? null
-          : getErrorMessage(result)
+      success,
+      error: success
+        ? null
+        : getErrorMessage(result)
     };
+
   } catch (error) {
     return {
       success: false,
@@ -759,7 +1053,9 @@ export async function forgotPassword(email) {
           Accept: 'application/json',
           'Content-Type': 'application/json'
         },
-        body: JSON.stringify({ email })
+        body: JSON.stringify({
+          email
+        })
       }
     );
 
@@ -769,6 +1065,7 @@ export async function forgotPassword(email) {
       success: response.ok,
       message: getErrorMessage(result)
     };
+
   } catch (error) {
     return {
       success: false,
@@ -810,6 +1107,7 @@ export async function resetPassword(
       success: response.ok,
       message: getErrorMessage(result)
     };
+
   } catch (error) {
     return {
       success: false,
@@ -826,18 +1124,27 @@ export async function getUserProjects() {
   try {
     const response = await fetchWithAuth(
       '/user/projects',
-      { method: 'GET' }
+      {
+        method: 'GET'
+      }
     );
 
-    if (!response.ok) return [];
+    if (!response.ok) {
+      return [];
+    }
 
     const result = await readJSON(response);
 
     return Array.isArray(result.data)
       ? result.data
       : [];
+
   } catch (error) {
-    console.error('[API] User projects error:', error);
+    console.error(
+      '[API] User projects error:',
+      error
+    );
+
     return [];
   }
 }
@@ -853,20 +1160,25 @@ export async function updateProjectProgress(
       `/user/projects/${id}/progress`,
       {
         method: 'PUT',
-        body: JSON.stringify({ progress })
+        body: JSON.stringify({
+          progress
+        })
       }
     );
 
     const result = await readJSON(response);
 
+    const success =
+      response.ok &&
+      isSuccessResponse(result);
+
     return {
-      success:
-        response.ok && isSuccessResponse(result),
-      error: response.ok &&
-        isSuccessResponse(result)
-          ? null
-          : getErrorMessage(result)
+      success,
+      error: success
+        ? null
+        : getErrorMessage(result)
     };
+
   } catch (error) {
     return {
       success: false,
@@ -883,18 +1195,27 @@ export async function getInvoices() {
   try {
     const response = await fetchWithAuth(
       '/user/invoices',
-      { method: 'GET' }
+      {
+        method: 'GET'
+      }
     );
 
-    if (!response.ok) return [];
+    if (!response.ok) {
+      return [];
+    }
 
     const result = await readJSON(response);
 
     return Array.isArray(result.data)
       ? result.data
       : [];
+
   } catch (error) {
-    console.error('[API] Invoices error:', error);
+    console.error(
+      '[API] Invoices error:',
+      error
+    );
+
     return [];
   }
 }
@@ -917,9 +1238,20 @@ export async function uploadInvoice(
 
   const formData = new FormData();
 
-  formData.append('client_project_id', projectId);
-  formData.append('invoice_number', invoiceNumber);
-  formData.append('file', file);
+  formData.append(
+    'client_project_id',
+    projectId
+  );
+
+  formData.append(
+    'invoice_number',
+    invoiceNumber
+  );
+
+  formData.append(
+    'file',
+    file
+  );
 
   try {
     const response = await fetchWithAuth(
@@ -932,7 +1264,10 @@ export async function uploadInvoice(
 
     const result = await readJSON(response);
 
-    if (response.ok && isSuccessResponse(result)) {
+    if (
+      response.ok &&
+      isSuccessResponse(result)
+    ) {
       return {
         success: true,
         invoice: result.data,
@@ -944,6 +1279,7 @@ export async function uploadInvoice(
       success: false,
       error: getErrorMessage(result)
     };
+
   } catch (error) {
     return {
       success: false,
@@ -971,15 +1307,18 @@ async function fetchPublicAPI(
   });
 
   const query = queryParams.toString();
-  const url = `${API_BASE}${endpoint}?${query}`;
 
-  // URL includes language and query parameters.
+  const url =
+    `${API_BASE}${endpoint}?${query}`;
+
   const cacheKey = url;
 
   const cached = publicCache.get(cacheKey);
 
   if (cached) {
-    if (Date.now() - cached.timestamp < cacheTime) {
+    if (
+      Date.now() - cached.timestamp < cacheTime
+    ) {
       return cached.data;
     }
 
@@ -987,12 +1326,15 @@ async function fetchPublicAPI(
   }
 
   try {
-    const response = await fetchWithRetry(url, {
-      method: 'GET',
-      headers: {
-        Accept: 'application/json'
+    const response = await fetchWithRetry(
+      url,
+      {
+        method: 'GET',
+        headers: {
+          Accept: 'application/json'
+        }
       }
-    });
+    );
 
     if (!response.ok) {
       throw new Error(
@@ -1008,6 +1350,7 @@ async function fetchPublicAPI(
     });
 
     return result;
+
   } catch (error) {
     console.error(
       `[API] Public request failed: ${endpoint}`,
@@ -1023,16 +1366,31 @@ async function fetchPublicAPI(
 // ============================================================
 
 function extractArray(response) {
-  return Array.isArray(response?.data)
-    ? response.data
-    : [];
+  // Standard Laravel response
+  if (Array.isArray(response?.data)) {
+    return response.data;
+  }
+
+  // Laravel paginated response
+  if (Array.isArray(response?.data?.data)) {
+    return response.data.data;
+  }
+
+  return [];
 }
 
 function onlyActive(items) {
-  return items.filter(item => {
-    return item?.is_active !== false &&
-      item?.is_active !== 0;
-  });
+  return items.filter(item => (
+    item?.is_active !== false &&
+    item?.is_active !== 0
+  ));
+}
+
+function hasArrayData(response) {
+  return (
+    Array.isArray(response?.data) ||
+    Array.isArray(response?.data?.data)
+  );
 }
 
 // ============================================================
@@ -1064,13 +1422,25 @@ export async function loadInitialData() {
       blogsResult,
       servicesResult
     ] = await Promise.all([
-      fetchPublicAPI('/projects', { limit: 6 }),
-      fetchPublicAPI('/blogs', { limit: 4 }),
-      fetchPublicAPI('/Services')
+      fetchPublicAPI(
+        '/projects',
+        { limit: 6 }
+      ),
+
+      fetchPublicAPI(
+        '/blogs',
+        { limit: 4 }
+      ),
+
+      fetchPublicAPI(
+        '/Services'
+      )
     ]);
 
-    // Ignore outdated language requests.
-    if (lang !== i18n.getCurrentLanguage()) {
+    // Ignore results from an outdated language
+    if (
+      lang !== i18n.getCurrentLanguage()
+    ) {
       return null;
     }
 
@@ -1082,19 +1452,32 @@ export async function loadInitialData() {
       extractArray(blogsResult)
     );
 
-    const services = extractArray(servicesResult);
+    const services = extractArray(
+      servicesResult
+    );
 
-    appStore.setData('projects', projects);
-    appStore.setData('blogs', blogs);
-    appStore.setData('services', services);
+    appStore.setData(
+      'projects',
+      projects
+    );
+
+    appStore.setData(
+      'blogs',
+      blogs
+    );
+
+    appStore.setData(
+      'services',
+      services
+    );
 
     const successful =
       projectsResult !== null &&
       blogsResult !== null &&
       servicesResult !== null &&
-      Array.isArray(projectsResult?.data) &&
-      Array.isArray(blogsResult?.data) &&
-      Array.isArray(servicesResult?.data);
+      hasArrayData(projectsResult) &&
+      hasArrayData(blogsResult) &&
+      hasArrayData(servicesResult);
 
     if (successful) {
       appStore.setInitialized(lang);
@@ -1107,6 +1490,7 @@ export async function loadInitialData() {
 
   try {
     return await promise;
+
   } finally {
     if (initialDataPromise === promise) {
       initialDataPromise = null;
@@ -1120,42 +1504,127 @@ export async function loadInitialData() {
 // ============================================================
 
 export async function getProjects(limit = null) {
-  const params = limit != null ? { limit } : {};
+  const params =
+    limit != null
+      ? { limit }
+      : {};
 
   const result = await fetchPublicAPI(
     '/projects',
     params
   );
 
-  return onlyActive(extractArray(result));
+  return onlyActive(
+    extractArray(result)
+  );
 }
 
-export async function getProjectBySlug(slug) {
-  const lang = i18n.getCurrentLanguage();
+export async function getProjectBySlug(
+  identifier
+) {
+  const value = String(
+    identifier ?? ''
+  ).trim();
 
-  const endpoint =
-    `/projects/${encodeURIComponent(lang)}/` +
-    encodeURIComponent(slug);
-
-  try {
-    const response = await fetchWithRetry(
-      `${API_BASE}${endpoint}`,
-      {
-        headers: {
-          Accept: 'application/json'
-        }
-      }
+  if (
+    !value ||
+    value.includes('/') ||
+    value.includes('\\')
+  ) {
+    console.warn(
+      '[API] Invalid project identifier:',
+      identifier
     );
 
-    if (!response.ok) return null;
-
-    const result = await readJSON(response);
-
-    return result?.data || null;
-  } catch (error) {
-    console.error('[API] Project details error:', error);
     return null;
   }
+
+  const lang = i18n.getCurrentLanguage();
+
+  const encodedId = encodeURIComponent(value);
+  const encodedLang = encodeURIComponent(lang);
+
+  // Original route first, then ID route on 404
+  const endpoints = [
+    `/projects/${encodedLang}/${encodedId}`,
+    `/projects/${encodedId}`
+  ];
+
+  for (const endpoint of endpoints) {
+    const url = `${API_BASE}${endpoint}`;
+
+    try {
+      const response = await fetchWithRetry(
+        url,
+        {
+          method: 'GET',
+          headers: {
+            Accept: 'application/json'
+          }
+        },
+        1
+      );
+
+      if (response.status === 404) {
+        console.info(
+          '[API] Project endpoint not found:',
+          url
+        );
+
+        continue;
+      }
+
+      if (!response.ok) {
+        console.warn(
+          '[API] Project request failed:',
+          url,
+          response.status
+        );
+
+        return null;
+      }
+
+      const result = await readJSON(response);
+
+      const data =
+        result?.data?.project ??
+        result?.data ??
+        result?.project ??
+        null;
+
+      if (
+        data &&
+        typeof data === 'object' &&
+        !Array.isArray(data)
+      ) {
+        return data;
+      }
+
+      console.warn(
+        '[API] Unexpected project response:',
+        url,
+        result
+      );
+
+      return null;
+
+    } catch (error) {
+      console.error(
+        '[API] Project details error:',
+        url,
+        error
+      );
+
+      return null;
+    }
+  }
+
+  console.warn(
+    '[API] No matching project details endpoint:',
+    value
+  );
+
+  return null;
 }
 
 // ============================================================
@@ -1163,18 +1632,24 @@ export async function getProjectBySlug(slug) {
 // ============================================================
 
 export async function getBlogs(limit = null) {
-  const params = limit != null ? { limit } : {};
+  const params =
+    limit != null
+      ? { limit }
+      : {};
 
   const result = await fetchPublicAPI(
     '/blogs',
     params
   );
 
-  return onlyActive(extractArray(result));
+  return onlyActive(
+    extractArray(result)
+  );
 }
 
 export async function getBlogById(id) {
-  const endpoint = `/blogs/${encodeURIComponent(id)}`;
+  const endpoint =
+    `/blogs/${encodeURIComponent(id)}`;
 
   try {
     const response = await fetchWithRetry(
@@ -1186,13 +1661,20 @@ export async function getBlogById(id) {
       }
     );
 
-    if (!response.ok) return null;
+    if (!response.ok) {
+      return null;
+    }
 
     const result = await readJSON(response);
 
     return result?.data || null;
+
   } catch (error) {
-    console.error('[API] Blog details error:', error);
+    console.error(
+      '[API] Blog details error:',
+      error
+    );
+
     return null;
   }
 }
@@ -1202,7 +1684,9 @@ export async function getBlogById(id) {
 // ============================================================
 
 export async function getServices() {
-  const result = await fetchPublicAPI('/Services');
+  const result = await fetchPublicAPI(
+    '/Services'
+  );
 
   return extractArray(result);
 }
@@ -1224,13 +1708,20 @@ export async function getServiceBySlug(slug) {
       }
     );
 
-    if (!response.ok) return null;
+    if (!response.ok) {
+      return null;
+    }
 
     const result = await readJSON(response);
 
     return result?.data || null;
+
   } catch (error) {
-    console.error('[API] Service details error:', error);
+    console.error(
+      '[API] Service details error:',
+      error
+    );
+
     return null;
   }
 }
@@ -1239,7 +1730,9 @@ export async function getServiceBySlug(slug) {
 // CONTACT FORM
 // ============================================================
 
-export async function submitContactForm(formData) {
+export async function submitContactForm(
+  formData
+) {
   try {
     const response = await fetchWithRetry(
       `${API_BASE}/messages`,
@@ -1266,8 +1759,12 @@ export async function submitContactForm(formData) {
       success: true,
       message: getErrorMessage(result)
     };
+
   } catch (error) {
-    console.error('[API] Contact form error:', error);
+    console.error(
+      '[API] Contact form error:',
+      error
+    );
 
     return {
       success: false,
@@ -1280,7 +1777,9 @@ export async function submitContactForm(formData) {
 // NEWSLETTER
 // ============================================================
 
-export async function subscribeNewsletter(email) {
+export async function subscribeNewsletter(
+  email
+) {
   const lang = i18n.getCurrentLanguage();
 
   try {
@@ -1292,7 +1791,10 @@ export async function subscribeNewsletter(email) {
           Accept: 'application/json',
           'Content-Type': 'application/json'
         },
-        body: JSON.stringify({ email, lang })
+        body: JSON.stringify({
+          email,
+          lang
+        })
       }
     );
 
@@ -1307,6 +1809,7 @@ export async function subscribeNewsletter(email) {
         ),
       message: getErrorMessage(result)
     };
+
   } catch (error) {
     return {
       success: false,
@@ -1372,5 +1875,6 @@ export default {
 
   // Utilities
   clearCache,
+  resolveMediaUrl,
   appStore
 };

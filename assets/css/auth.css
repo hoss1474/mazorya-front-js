@@ -422,429 +422,312 @@
   .mz-auth-shell .portal-stage { padding: 100px 16px 32px; }
 }
 
-
 /* ==========================================================
-   PORTAL 02 — RECOVERY EXPERIENCE (APPROVED DESIGN)
-   Page-specific; preserves the existing auth API and events.
+   PORTAL 02 — FLIP CARD / RECOVERY ON SAME CARD
    ========================================================== */
 
-.mz-auth-shell .mz-auth #forgotModal.portal-recovery-modal {
-  position: fixed;
-  inset: 0;
-  z-index: 5000;
-  width: 100%;
-  height: 100dvh;
-  max-height: 100dvh;
-  padding: 0;
-  margin: 0;
-  overflow-y: auto;
-  overflow-x: hidden;
-  overscroll-behavior: contain;
-  align-items: stretch;
-  justify-content: stretch;
-  background: #0c0f17;
-  color: #fff;
-}
-
-.mz-auth-shell .mz-auth #forgotModal .recovery-backdrop {
-  position: fixed;
-  inset: 0;
-  z-index: 0;
-  background: rgba(8, 10, 17, .94);
-  backdrop-filter: blur(10px);
-  -webkit-backdrop-filter: blur(10px);
-  cursor: default;
-}
-
-.mz-auth-shell .mz-auth #forgotModal .recovery-scene {
+.mz-auth .portal-flip-card {
   position: relative;
-  isolation: isolate;
+  z-index: 5;
+  width: min(100%, 425px);
+  height: 410px; /* JS measures actual visible card height */
+  flex: none;
+  perspective: 1600px;
+  transform: translate(
+    calc(var(--portal-x) * -8px),
+    calc(var(--portal-y) * -6px)
+  );
+  transition: height .42s cubic-bezier(.2,.75,.2,1), transform .32s ease-out;
+}
+
+.mz-auth .portal-flip-inner {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  transform-style: preserve-3d;
+  transition: transform .76s cubic-bezier(.2,.8,.2,1);
+}
+
+.mz-auth .portal-flip-card.is-flipped .portal-flip-inner {
+  transform: rotateY(180deg);
+}
+
+.mz-auth .portal-flip-face {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  backface-visibility: hidden;
+  -webkit-backface-visibility: hidden;
+  transform-style: preserve-3d;
+  overflow: visible;
+}
+
+.mz-auth .portal-flip-front { transform: rotateY(0deg); }
+.mz-auth .portal-flip-back { transform: rotateY(180deg); }
+
+/* Both faces share the same material, position, and width. */
+.mz-auth .portal-flip-front .portal-card,
+.mz-auth .portal-flip-back .recovery-card {
+  position: relative;
   z-index: 1;
   width: 100%;
   max-width: none;
-  min-height: 100dvh;
   height: auto;
   margin: 0;
-  padding: 100px 22px 64px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  overflow: hidden;
-  background:
-    radial-gradient(ellipse at 50% 42%, #282030 0%, #15151f 48%, #0b0e17 100%);
-  perspective: 1200px;
-}
-
-.mz-auth-shell .mz-auth #forgotModal .recovery-grain {
-  position: absolute;
-  inset: 0;
-  z-index: -1;
-  pointer-events: none;
-  opacity: .27;
-  background-image: radial-gradient(rgba(255,255,255,.26) .5px, transparent .8px);
-  background-size: 5px 5px;
-}
-
-.mz-auth-shell .mz-auth #forgotModal .recovery-floor {
-  position: absolute;
-  inset: 42% -30% -25%;
-  z-index: -1;
-  pointer-events: none;
-  background:
-    linear-gradient(transparent 35%, #0b0e17 95%),
-    repeating-linear-gradient(0deg, transparent 0 44px, rgba(255,107,107,.10) 45px 46px),
-    repeating-linear-gradient(90deg, transparent 0 44px, rgba(255,107,107,.10) 45px 46px);
-  transform: perspective(420px) rotateX(65deg) scale(1.5);
-  transform-origin: center top;
-  opacity: .7;
-}
-
-.mz-auth-shell .mz-auth #forgotModal .recovery-arch {
-  position: absolute;
-  z-index: -1;
-  top: 50%;
-  left: 50%;
-  width: min(80vw, 660px);
-  height: 560px;
-  border: 2px solid rgba(255,107,107,.33);
-  border-radius: 17px;
-  box-shadow: 0 0 40px rgba(255,107,107,.1);
-  pointer-events: none;
-  transform-style: preserve-3d;
-  transform: translate(-50%, -50%) rotate(-9deg);
-}
-.mz-auth-shell .mz-auth #forgotModal .recovery-arch--middle {
-  width: min(67vw, 545px);
-  height: 450px;
-  opacity: .57;
-}
-.mz-auth-shell .mz-auth #forgotModal .recovery-arch--back {
-  width: min(54vw, 435px);
-  height: 355px;
-  opacity: .35;
-}
-
-.mz-auth-shell .mz-auth #forgotModal .recovery-scene-brand {
-  position: absolute;
-  z-index: 1;
-  top: 25px;
-  left: 32px;
-  font: 900 19px/1.2 'Syne', 'Ubuntu', sans-serif;
-  letter-spacing: -.045em;
-  direction: ltr;
-}
-.mz-auth-shell .mz-auth #forgotModal .recovery-scene-brand span { color: #ff6b6b; }
-.mz-auth-shell .mz-auth #forgotModal .recovery-scene-label {
-  position: absolute;
-  z-index: 1;
-  top: 30px;
-  right: 32px;
-  font: 700 10px/1.5 'Ubuntu', sans-serif;
-  color: #9c9ba8;
-  letter-spacing: .13em;
-}
-
-.mz-auth-shell .mz-auth #forgotModal .recovery-card {
-  position: relative;
-  z-index: 2;
-  display: block;
-  width: min(100%, 465px);
-  max-width: 465px;
-  max-height: none;
-  height: auto;
-  margin: 0;
-  padding: 31px 34px 28px;
-  overflow: visible;
+  padding: 32px 30px 26px;
   border: 1px solid rgba(255,255,255,.2);
-  border-radius: 22px;
-  background: linear-gradient(138deg, rgba(45,47,63,.97), rgba(24,27,40,.97) 65%, rgba(41,31,43,.97));
-  box-shadow: 0 30px 85px rgba(0,0,0,.55), 0 0 60px rgba(255,107,107,.085), inset 0 1px rgba(255,255,255,.085);
-  backdrop-filter: blur(22px);
-  -webkit-backdrop-filter: blur(22px);
+  border-radius: 17px;
+  background: linear-gradient(145deg,rgba(35,38,53,.97),rgba(16,19,29,.98));
+  box-shadow: 0 28px 90px rgba(0,0,0,.7),0 0 60px rgba(255,107,107,.075),inset 0 1px rgba(255,255,255,.08);
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
   color: #fff;
-  font-family: 'Ubuntu', sans-serif;
+  font-family: 'Ubuntu', Arial, sans-serif;
+  transform: none;
+  overflow: visible;
   text-align: start;
 }
-.mz-auth-shell .mz-auth #forgotModal .recovery-card * { box-sizing: border-box; }
 
-.mz-auth-shell .mz-auth #forgotModal .recovery-card-top {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 12px;
-  margin-bottom: 24px;
+.mz-auth .portal-flip-back .recovery-card *,
+.mz-auth .portal-flip-front .portal-card * {
+  box-sizing: border-box;
 }
-.mz-auth-shell .mz-auth #forgotModal .recovery-kicker {
-  color: #ff8e86;
+
+/* Hide inactive face from pointer events during animation. */
+.mz-auth .portal-flip-front { pointer-events: auto; }
+.mz-auth .portal-flip-back { pointer-events: none; }
+.mz-auth .portal-flip-card.is-flipped .portal-flip-front { pointer-events: none; }
+.mz-auth .portal-flip-card.is-flipped .portal-flip-back { pointer-events: auto; }
+
+.mz-auth .portal-flip-back .recovery-card-top {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 18px;
+}
+
+.mz-auth .portal-flip-back .recovery-kicker {
+  color: #ff817a;
   font-size: 10px;
   font-weight: 800;
-  letter-spacing: .14em;
-}
-.mz-auth-shell .mz-auth #forgotModal .recovery-close {
-  position: static;
-  inset: auto;
-  display: grid;
-  place-items: center;
-  width: 34px;
-  height: 34px;
-  padding: 0;
-  margin: 0;
-  flex: none;
-  background: rgba(255,255,255,.06);
-  border: 1px solid rgba(255,255,255,.13);
-  border-radius: 50%;
-  color: #dedee7;
-  font: 400 24px/1 'Ubuntu', sans-serif;
-  cursor: pointer;
-  transform: none;
-}
-.mz-auth-shell .mz-auth #forgotModal .recovery-close:hover {
-  background: rgba(255,107,107,.15);
-  color: #fff;
+  letter-spacing: .12em;
 }
 
-.mz-auth-shell .mz-auth #forgotModal .recovery-symbol {
+.mz-auth .portal-flip-back .recovery-close {
+  position: static;
   display: grid;
   place-items: center;
-  width: 62px;
-  height: 62px;
-  margin-bottom: 20px;
-  border: 1px solid rgba(255,107,107,.38);
-  border-radius: 18px;
-  background: linear-gradient(140deg, rgba(255,107,107,.24), rgba(255,107,107,.04));
-  box-shadow: 0 0 35px rgba(255,107,107,.1);
-  color: #ff9288;
-  font-size: 30px;
-}
-.mz-auth-shell .mz-auth #forgotModal .recovery-header {
-  display: block;
-  margin: 0 0 23px;
+  flex: none;
+  width: 32px;
+  height: 32px;
   padding: 0;
-  text-align: start;
+  border: 1px solid rgba(255,255,255,.15);
+  border-radius: 50%;
+  background: rgba(255,255,255,.05);
+  color: #fff;
+  font-size: 22px;
+  cursor: pointer;
 }
-.mz-auth-shell .mz-auth #forgotModal .recovery-header h2 {
-  margin: 0 0 12px;
+
+.mz-auth .portal-flip-back .recovery-symbol {
+  display: grid;
+  place-items: center;
+  width: 50px;
+  height: 50px;
+  margin-bottom: 15px;
+  border: 1px solid rgba(255,107,107,.35);
+  border-radius: 15px;
+  background: rgba(255,107,107,.12);
+  color: #ff8e86;
+  font-size: 26px;
+}
+
+.mz-auth .portal-flip-back .recovery-header { margin: 0 0 22px; text-align: start; }
+.mz-auth .portal-flip-back .recovery-header h2 {
+  margin: 0 0 9px;
   padding: 0;
   color: #fff;
-  font: 900 clamp(29px, 4vw, 39px)/1.12 'Syne', 'Ubuntu', sans-serif;
-  letter-spacing: -.045em;
+  font: 800 clamp(25px,3vw,32px)/1.15 'Syne','Ubuntu',sans-serif;
+  letter-spacing: -.035em;
 }
-.mz-auth-shell .mz-auth #forgotModal .recovery-header p {
+.mz-auth .portal-flip-back .recovery-header p {
   margin: 0;
-  color: #a7a8b7;
+  color: #a7a9b5;
   font-size: 12px;
-  line-height: 1.75;
+  line-height: 1.65;
 }
-.mz-auth-shell .mz-auth #forgotModal .recovery-progress {
-  display: flex;
-  gap: 7px;
-  width: 100%;
-  margin: 0 0 23px;
-}
-.mz-auth-shell .mz-auth #forgotModal .recovery-progress-segment {
+
+.mz-auth .portal-flip-back .recovery-progress { display: flex; gap: 7px; margin: 0 0 21px; }
+.mz-auth .portal-flip-back .recovery-progress-segment {
   flex: 1;
   height: 3px;
-  border-radius: 20px;
+  border-radius: 10px;
   background: rgba(255,255,255,.15);
-  transition: background .25s;
 }
-.mz-auth-shell .mz-auth #forgotModal .recovery-progress-segment.active {
+.mz-auth .portal-flip-back .recovery-progress-segment.active {
   background: #ff8179;
   box-shadow: 0 0 12px rgba(255,107,107,.4);
 }
 
-/* The original API-driven setStep() controls which step is visible. */
-.mz-auth-shell .mz-auth #forgotModal .recovery-step { display: block; }
-.mz-auth-shell .mz-auth #forgotModal .recovery-step[hidden] { display: none !important; }
-.mz-auth-shell .mz-auth #forgotModal .recovery-label {
+.mz-auth .portal-flip-back .recovery-step { display: block; }
+.mz-auth .portal-flip-back .recovery-step[hidden] { display: none !important; }
+
+.mz-auth .portal-flip-back .recovery-label {
   display: block;
-  margin: 0 0 9px;
-  color: #dddde5;
+  margin: 0 0 8px;
+  color: #cbccd3;
   font-size: 10px;
   font-weight: 800;
-  line-height: 1.5;
-  letter-spacing: .055em;
+  letter-spacing: .05em;
 }
-.mz-auth-shell .mz-auth #forgotModal .recovery-field {
-  position: relative;
+
+.mz-auth .portal-flip-back .recovery-field {
   display: flex;
+  position: relative;
   align-items: center;
+  gap: 10px;
   width: 100%;
-  height: 50px;
-  margin: 0 0 18px;
+  min-height: 49px;
   padding: 0 12px;
-  background: rgba(10,14,24,.72);
-  border: 1px solid rgba(255,255,255,.16);
-  border-radius: 10px;
+  margin: 0 0 17px;
+  border: 1px solid rgba(255,255,255,.14);
+  border-radius: 8px;
+  background: rgba(16,19,29,.82);
   box-shadow: none;
 }
-.mz-auth-shell .mz-auth #forgotModal .recovery-field:focus-within {
-  border-color: rgba(255,129,121,.9);
-  box-shadow: 0 0 0 3px rgba(255,107,107,.08);
+.mz-auth .portal-flip-back .recovery-field:focus-within {
+  border-color: #ff7971;
+  box-shadow: 0 0 0 3px rgba(255,107,107,.07);
 }
-.mz-auth-shell .mz-auth #forgotModal .recovery-field .input-icon {
+.mz-auth .portal-flip-back .recovery-field .input-icon {
   position: static;
-  inset: auto;
   flex: none;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 19px;
-  height: 22px;
-  margin: 0 10px 0 0;
+  width: 18px;
+  height: 18px;
+  margin: 0;
   padding: 0;
-  color: #ff8e86;
+  color: #ff817a;
   transform: none;
   pointer-events: none;
 }
-.mz-auth-shell .mz-auth #forgotModal .recovery-field .input-icon svg { width: 18px; height: 18px; }
-.mz-auth-shell .mz-auth #forgotModal .recovery-field > input {
+.mz-auth .portal-flip-back .recovery-field .input-icon svg { width: 18px; height: 18px; }
+.mz-auth .portal-flip-back .recovery-field > input {
   position: static;
   flex: 1;
-  display: block;
-  min-width: 0;
   width: 100%;
-  height: 100%;
+  min-width: 0;
+  height: 47px;
   padding: 0;
   margin: 0;
   border: 0;
-  border-radius: 0;
   outline: 0;
   box-shadow: none;
   background: transparent;
   color: #fff;
-  font: 400 13px/1.4 'Ubuntu', sans-serif;
+  font: 400 13px/1.4 'Ubuntu',sans-serif;
   transform: none;
 }
-.mz-auth-shell .mz-auth #forgotModal .recovery-field > input::placeholder { color: #777b8c; }
-.mz-auth-shell .mz-auth #forgotModal .recovery-field > input[dir='ltr'] { text-align: left; }
-.mz-auth-shell .mz-auth #forgotModal .recovery-eye.password-toggle {
-  position: static;
-  inset: auto;
-  flex: none;
+.mz-auth .portal-flip-back .recovery-field input::placeholder { color: #777c8c; }
+.mz-auth .portal-flip-back .recovery-field input[dir='ltr'] { text-align: left; }
+
+.mz-auth .portal-flip-back .recovery-eye.password-toggle {
   display: grid;
+  position: static;
+  flex: none;
   place-items: center;
-  width: 32px;
-  height: 32px;
+  width: 30px;
+  height: 30px;
+  margin: 0;
   padding: 0;
-  margin: 0 0 0 6px;
   border: 0;
   background: none;
-  color: #bab9c8;
+  color: #a9aab3;
   transform: none;
   cursor: pointer;
 }
-.mz-auth-shell .mz-auth #forgotModal .recovery-eye svg { width: 17px; height: 17px; }
+.mz-auth .portal-flip-back .recovery-eye svg { width: 18px; height: 18px; }
 
-.mz-auth-shell .mz-auth #forgotModal .recovery-primary.auth-modal-btn {
-  position: relative;
+.mz-auth .portal-flip-back .recovery-primary.auth-modal-btn {
   display: flex;
   align-items: center;
   justify-content: space-between;
   gap: 12px;
-  min-height: 52px;
   width: 100%;
+  min-height: 50px;
   margin: 8px 0 0;
   padding: 12px 17px;
   border: 0;
-  border-radius: 10px;
-  background: linear-gradient(115deg, #ff9a88, #ff636b);
-  color: #241c27;
-  font: 800 12px/1.4 'Ubuntu', sans-serif;
-  text-align: start;
-  box-shadow: 0 10px 26px rgba(255,107,107,.14);
+  border-radius: 8px;
+  background: #ff786f;
+  color: #14151e;
+  font: 800 12px/1.4 'Ubuntu',sans-serif;
   cursor: pointer;
-  transition: transform .2s ease,filter .2s ease;
+  box-shadow: none;
 }
-.mz-auth-shell .mz-auth #forgotModal .recovery-primary:hover:not(:disabled) {
-  filter: brightness(1.07);
-  transform: translateY(-1px);
-}
-.mz-auth-shell .mz-auth #forgotModal .recovery-primary:disabled {
-  opacity: .65;
-  cursor: wait;
-}
-.mz-auth-shell .mz-auth #forgotModal .recovery-button-arrow {
-  flex: none;
-  font: 400 22px/1 'Ubuntu', sans-serif;
-}
+.mz-auth .portal-flip-back .recovery-primary:disabled { opacity: .7; cursor: wait; }
+.mz-auth .portal-flip-back .recovery-button-arrow { font-size: 20px; }
 
-/* The existing showMessage() keeps its own .auth-message class. */
-.mz-auth-shell .mz-auth #forgotModal #forgot-message {
-  margin: 15px 0 0;
-  padding: 12px 13px;
-  border: 1px solid rgba(255,107,107,.22);
-  border-radius: 9px;
-  background: rgba(255,107,107,.065);
+.mz-auth .portal-flip-back #forgot-message {
+  margin-top: 14px;
+  padding: 11px 12px;
+  border: 1px solid rgba(255,107,107,.24);
+  border-radius: 8px;
+  background: rgba(255,107,107,.07);
   color: #ffb5b0;
-  font-size: 12px;
-  line-height: 1.6;
+  font-size: 11px;
+  line-height: 1.5;
 }
-.mz-auth-shell .mz-auth #forgotModal #forgot-message.success {
-  border-color: rgba(120,215,173,.25);
-  background: rgba(120,215,173,.08);
+.mz-auth .portal-flip-back #forgot-message.success {
   color: #b8edcf;
+  background: rgba(120,215,173,.08);
+  border-color: rgba(120,215,173,.25);
 }
 
-.mz-auth-shell .mz-auth #forgotModal .recovery-actions.auth-modal-footer {
-  display: block;
-  margin: 20px 0 0;
-  padding: 0;
+.mz-auth .portal-flip-back .recovery-actions { margin: 19px 0 0; padding: 0; }
+.mz-auth .portal-flip-back .recovery-back {
   border: 0;
-  text-align: start;
-}
-.mz-auth-shell .mz-auth #forgotModal .recovery-back.auth-modal-back {
-  display: inline-flex;
-  align-items: center;
-  justify-content: flex-start;
-  gap: 8px;
   padding: 4px 0;
-  border: 0;
   background: none;
   color: #bbb9c7;
   font-size: 12px;
   font-weight: 700;
   cursor: pointer;
 }
-.mz-auth-shell .mz-auth #forgotModal .recovery-back:hover { color: #ff8b82; }
+.mz-auth .portal-flip-back .recovery-back:hover { color: #ff8b82; }
 
-.mz-auth-shell .mz-auth #forgotModal .recovery-meta {
+.mz-auth .portal-flip-back .recovery-meta {
   display: flex;
   justify-content: space-between;
-  align-items: center;
   gap: 12px;
-  margin-top: 24px;
-  padding-top: 16px;
+  align-items: center;
+  margin-top: 20px;
+  padding-top: 15px;
   border-top: 1px solid rgba(255,255,255,.1);
-  color: #858593;
+  color: #777c8b;
   font-size: 9px;
   font-weight: 700;
-  letter-spacing: .075em;
+  letter-spacing: .05em;
   direction: ltr;
 }
-.mz-auth-shell .mz-auth #forgotModal .recovery-meta span:last-child { color: #ff8f84; }
+.mz-auth .portal-flip-back .recovery-meta span:last-child { color: #ff817a; }
 
-/* RTL keeps the portal art in place but mirrors the form layout. */
-.mz-auth-shell .mz-auth #forgotModal .recovery-card[dir='rtl'] .recovery-field .input-icon {
-  margin: 0 0 0 10px;
-}
-.mz-auth-shell .mz-auth #forgotModal .recovery-card[dir='rtl'] .recovery-eye.password-toggle {
-  margin: 0 6px 0 0;
-}
-.mz-auth-shell .mz-auth #forgotModal .recovery-card[dir='rtl'] .recovery-button-arrow {
-  transform: scaleX(-1);
-}
+.mz-auth .portal-flip-back .recovery-card[dir='rtl'] { direction: rtl; text-align: right; }
+.mz-auth .portal-flip-back .recovery-card[dir='rtl'] .recovery-button-arrow { transform: scaleX(-1); }
+.mz-auth .portal-flip-back .recovery-card[dir='rtl'] .recovery-field .input-icon { order: 0; }
 
-@media (max-width: 520px) {
-  .mz-auth-shell .mz-auth #forgotModal .recovery-scene { padding: 82px 16px 45px; }
-  .mz-auth-shell .mz-auth #forgotModal .recovery-scene-brand { top: 19px; left: 18px; font-size: 17px; }
-  .mz-auth-shell .mz-auth #forgotModal .recovery-scene-label { top: 24px; right: 18px; font-size: 8px; }
-  .mz-auth-shell .mz-auth #forgotModal .recovery-arch { width: 110%; }
-  .mz-auth-shell .mz-auth #forgotModal .recovery-card { padding: 26px 22px 24px; }
-  .mz-auth-shell .mz-auth #forgotModal .recovery-header h2 { font-size: 30px; }
+@media (max-width: 620px) {
+  .mz-auth .portal-flip-card { width: min(100%, 425px); }
+  .mz-auth .portal-flip-front .portal-card,
+  .mz-auth .portal-flip-back .recovery-card { padding: 28px 23px 24px; }
+}
+@media (max-width: 390px) {
+  .mz-auth .portal-flip-front .portal-card,
+  .mz-auth .portal-flip-back .recovery-card { padding: 25px 18px 22px; }
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .mz-auth-shell .mz-auth #forgotModal .recovery-primary,
-  .mz-auth-shell .mz-auth #forgotModal .recovery-progress-segment { transition: none !important; }
+  .mz-auth .portal-flip-inner { transition: none !important; }
+  .mz-auth .portal-flip-card { transition: none !important; }
 }

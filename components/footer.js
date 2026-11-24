@@ -337,27 +337,40 @@ export function renderFooter() {
 
           </div>
 
-          <!-- Services -->
-          <div class="mz-footer-column">
+          
+<!-- Services -->
+<div class="mz-footer-column">
 
-            <h4 class="mz-footer-column-title">
-              ${t('footer_services', 'Services')}
-            </h4>
+  <h4 class="mz-footer-column-title">
+    ${t('footer_services', 'Services')}
+  </h4>
 
-            <ul class="mz-footer-links">
+  <ul class="mz-footer-links">
 
-              <li>
-                <a
-                  href="/${lang}/services"
-                  data-route="services"
-                >
-                  ${t('nav_services', 'Services')}
-                </a>
-              </li>
+    <!-- Services -->
+    <li>
+      <a
+        href="/${lang}/services"
+        data-route="services"
+      >
+        ${t('nav_services', 'Services')}
+      </a>
+    </li>
 
-            </ul>
+    <!-- Mazorya App -->
+    <li>
+      <a
+        href="/${lang}/app"
+        data-route="app"
+      >
+        ${t('footer_mazorya_app', 'Mazorya App')}
+      </a>
+    </li>
 
-          </div>
+  </ul>
+
+</div>
+
 
         </div>
 

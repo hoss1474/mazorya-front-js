@@ -1,0 +1,428 @@
+<!doctype html>
+<html lang="en" dir="ltr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="theme-color" content="#0d101b">
+  <meta name="description" content="Mazorya Group — Your next destination begins here.">
+  <title>Mazorya App — My Workspace</title>
+  <meta name="application-name" content="Mazorya App">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <link rel="manifest" href="./manifest.webmanifest">
+  <link rel="icon" type="image/png" sizes="192x192" href="./icons/icon-192.png">
+  <link rel="apple-touch-icon" href="./icons/icon-192.png">
+  <style>
+    :root {
+      color-scheme: dark;
+      --bg: #0d101b;
+      --coral: #ff786e;
+      --coral-soft: #ff9589;
+      --text: #f8f7fa;
+      --muted: #a9a8b9;
+    }
+    *, *::before, *::after { box-sizing: border-box; }
+    html { min-height: 100%; }
+    body {
+      margin: 0;
+      min-height: 100vh;
+      min-height: 100svh;
+      background: var(--bg);
+      color: var(--text);
+      font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      -webkit-font-smoothing: antialiased;
+      overflow-x: hidden;
+    }
+    button, input { font: inherit; }
+    button { cursor: pointer; }
+    button:focus-visible, input:focus-visible, a:focus-visible {
+      outline: 2px solid var(--coral-soft);
+      outline-offset: 3px;
+    }
+    .site {
+      position: relative;
+      isolation: isolate;
+      min-height: 100vh;
+      min-height: 100svh;
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+      background:
+        radial-gradient(ellipse 56% 53% at 50% 44%, rgba(94, 47, 87, .36), transparent 79%),
+        linear-gradient(140deg, #111623 0%, #1b1a2a 56%, #0b101a 100%);
+    }
+    .site::before {
+      content: "";
+      position: absolute;
+      inset: 0;
+      z-index: -1;
+      opacity: .35;
+      pointer-events: none;
+      background-image: linear-gradient(90deg, #ffffff06 1px, transparent 1px), linear-gradient(#ffffff06 1px, transparent 1px);
+      background-size: 39px 39px;
+      -webkit-mask-image: linear-gradient(to bottom, transparent 18%, black 100%);
+      mask-image: linear-gradient(to bottom, transparent 18%, black 100%);
+    }
+    .topbar {
+      position: relative;
+      z-index: 5;
+      width: min(100%, 1280px);
+      margin-inline: auto;
+      padding: 27px clamp(19px, 5vw, 58px);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+    }
+    .identity { display: flex; align-items: center; gap: 11px; text-decoration: none; color: inherit; }
+    .brand-mark {
+      display: grid;
+      place-items: center;
+      width: 42px;
+      height: 42px;
+      flex: none;
+      border-radius: 12px;
+      background: linear-gradient(145deg, #ff827c42, #ff697b13);
+      border: 1px solid #ff9b8a6e;
+      box-shadow: 0 10px 24px #ff6b6b17;
+    }
+    .brand-mark svg { width: 29px; height: 29px; }
+    .brand-copy { display: grid; gap: 2px; }
+    .brand-copy strong { font-size: 16px; letter-spacing: .13em; font-weight: 850; }
+    .brand-copy span { font-size: 8px; letter-spacing: .43em; color: #b5b2c0; }
+    .status { display: flex; align-items: center; gap: 10px; color: #c0b9c7; font-size: 10px; font-weight: 700; letter-spacing: .18em; white-space: nowrap; }
+    .status-dot { width: 6px; height: 6px; border-radius: 50%; background: #ff8f7e; box-shadow: 0 0 12px #ff786e; }
+    .main {
+      flex: 1;
+      position: relative;
+      width: 100%;
+      display: grid;
+      place-items: center;
+      min-height: 565px;
+      padding: 42px 20px 82px;
+      perspective: 1400px;
+    }
+    .brand-shadow {
+      position: absolute;
+      top: 8%; left: 50%;
+      transform: translateX(-50%);
+      color: #ffffff;
+      opacity: .035;
+      font-size: clamp(65px, 15vw, 185px);
+      line-height: 1;
+      font-weight: 950;
+      letter-spacing: -.085em;
+      white-space: nowrap;
+      pointer-events: none;
+      user-select: none;
+    }
+    .portal {
+      position: absolute;
+      left: 50%; top: 46%;
+      width: min(72vw, 520px); height: 430px;
+      transform: translate(-50%, -50%) rotate(-7deg) rotateY(calc(var(--mouse-x, 0) * 3deg)) rotateX(calc(var(--mouse-y, 0) * -3deg));
+      transform-style: preserve-3d;
+      pointer-events: none;
+      transition: transform .35s ease-out;
+    }
+    .portal-frame {
+      position: absolute;
+      inset: 0;
+      border: 2px solid rgba(255, 125, 115, var(--alpha));
+      border-radius: 24px;
+      box-shadow: 0 0 24px #ff706516, inset 0 0 24px #ff70650a;
+      transform: scale(var(--scale)) translateZ(var(--depth));
+    }
+    .portal-frame:nth-child(1) { --scale: 1.26; --depth: -70px; --alpha: .27; }
+    .portal-frame:nth-child(2) { --scale: 1.08; --depth: -35px; --alpha: .43; }
+    .portal-frame:nth-child(3) { --scale: .9; --depth: 0px; --alpha: .6; }
+    .portal-frame:nth-child(4) { --scale: .73; --depth: 35px; --alpha: .44; }
+    .portal-frame:nth-child(5) { --scale: .55; --depth: 70px; --alpha: .28; }
+    .floor {
+      position: absolute;
+      left: -15%; right: -15%; bottom: -160px;
+      height: 375px;
+      pointer-events: none;
+      transform: perspective(380px) rotateX(68deg);
+      background:
+        repeating-linear-gradient(90deg, #ff8e7b1d 0 1px, transparent 1px 62px),
+        repeating-linear-gradient(0deg, #ff8e7b20 0 1px, transparent 1px 58px);
+      -webkit-mask-image: linear-gradient(to bottom, black 30%, transparent 100%);
+      mask-image: linear-gradient(to bottom, black 30%, transparent 100%);
+    }
+    .card {
+      position: relative;
+      z-index: 2;
+      width: min(100%, 446px);
+      padding: 32px 33px 26px;
+      border: 1px solid #ffffff36;
+      border-radius: 17px;
+      background: linear-gradient(142deg, #252636f5, #111521f8);
+      box-shadow: 0 25px 90px #0009, 0 0 80px #ff746511;
+      -webkit-backdrop-filter: blur(24px);
+      backdrop-filter: blur(24px);
+      opacity: 0;
+      transform: translateY(25px) scale(.985);
+      transition: opacity .75s ease, transform .75s cubic-bezier(.2,.8,.2,1);
+    }
+    .is-ready .card { opacity: 1; transform: translateY(0) scale(1); }
+    .card-top { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+    .overline { color: #ff9b90; font-size: 10px; letter-spacing: .19em; font-weight: 800; }
+    .small-arrow { width: 25px; height: 25px; border: 1px solid #ffffff36; border-radius: 6px; display: grid; place-items: center; color: #ff9c90; }
+    .feature-icon {
+      margin: 30px 0 20px;
+      width: 52px; height: 52px;
+      display: grid; place-items: center;
+      border-radius: 15px;
+      color: #291923;
+      background: linear-gradient(140deg, #ff9589, #e96278);
+      box-shadow: 0 13px 27px #f46c6740;
+    }
+    .feature-icon svg { width: 26px; height: 26px; }
+    h1 { font-size: clamp(30px, 5vw, 38px); letter-spacing: -.055em; line-height: 1.15; margin: 0 0 12px; font-weight: 780; }
+    .description { color: var(--muted); font-size: 13px; line-height: 1.75; margin: 0 0 27px; }
+    .field-label { display: block; margin-bottom: 10px; color: #e3dfe7; font-size: 10px; font-weight: 800; letter-spacing: .15em; }
+    .input-wrap {
+      display: flex; align-items: center; gap: 12px;
+      min-width: 0;
+      background: rgba(12,17,28,.83);
+      border: 1px solid #ffffff29;
+      border-radius: 10px;
+      padding: 0 15px;
+      transition: border .2s ease, box-shadow .2s ease;
+    }
+    .input-wrap:focus-within { border-color: #ff9387; box-shadow: 0 0 0 3px #ff786e20; }
+    .input-wrap svg { width: 18px; height: 18px; flex: none; color: #a7a8b6; }
+    #urlInput {
+      width: 100%; min-width: 0;
+      height: 51px;
+      padding: 0;
+      color: #fff;
+      background: transparent;
+      outline: none;
+      border: none;
+      font-size: 14px;
+    }
+    #urlInput::placeholder { color: #656a7c; }
+    .submit {
+      width: 100%; height: 51px;
+      display: flex; align-items: center; justify-content: space-between;
+      gap: 12px;
+      margin-top: 14px; padding: 0 17px;
+      border: none; border-radius: 10px;
+      background: linear-gradient(110deg, #ff9588, #ff707a);
+      color: #221720;
+      font-weight: 850;
+      font-size: 12px;
+      letter-spacing: .09em;
+      transition: filter .2s ease, transform .2s ease;
+    }
+    .submit:hover { filter: brightness(1.09); transform: translateY(-2px); }
+    .submit:active { transform: translateY(0); }
+    .submit svg { width: 21px; height: 21px; }
+    .error { min-height: 21px; margin: 12px 0 0; color: #ffaaa7; font-size: 12px; line-height: 1.5; overflow-wrap: anywhere; }
+    .card-bottom { border-top: 1px solid #ffffff16; padding-top: 18px; margin-top: 10px; display: flex; align-items: center; justify-content: space-between; gap: 10px; color: #9b98a9; font-size: 9px; letter-spacing: .08em; }
+    .card-bottom b { color: #d6d1dc; font-weight: 700; }
+    .card-bottom .spark { font-size: 14px; color: #ff978c; vertical-align: middle; }
+    .footer { width: min(100%,1280px); margin-inline: auto; padding: 16px clamp(19px, 5vw, 58px) 25px; display: flex; justify-content: space-between; gap: 12px; align-items: center; color: #9995a6; font-size: 9px; letter-spacing: .16em; position: relative; z-index: 3; }
+    .footer span:last-child { color: #ffac9f; }
+
+    /* The intro is embedded; no external loader.js is needed. */
+    .intro {
+      position: fixed; inset: 0;
+      z-index: 100;
+      display: flex; flex-direction: column; align-items: center; justify-content: center;
+      gap: 17px;
+      padding: 22px;
+      background: #0d101b;
+      opacity: 0; visibility: hidden;
+      transition: opacity .65s ease, visibility .65s;
+    }
+    .is-loading .intro { opacity: 1; visibility: visible; transition: none; }
+    .intro[hidden] { display: none; }
+    .intro svg { width: min(88vw, 500px); height: auto; overflow: visible; }
+    .intro text {
+      font-family: Arial, sans-serif; font-size: 70px; font-weight: 850; letter-spacing: 10px;
+      fill: transparent; stroke: #ff8579; stroke-width: 1.25;
+      stroke-dasharray: 540; stroke-dashoffset: 540;
+    }
+    .is-loading .intro text { animation: drawLogo 2s ease forwards; }
+    .intro-caption { color: #aea9b6; font-size: 9px; font-weight: 650; letter-spacing: .48em; text-align: center; }
+    .progress { width: 160px; height: 2px; overflow: hidden; margin-top: 5px; background: #ffffff21; border-radius: 3px; }
+    .progress span { display: block; height: 100%; width: 0; background: #ff8377; }
+    .is-loading .progress span { animation: loadProgress 2.1s ease forwards; }
+    @keyframes drawLogo { 0% { stroke-dashoffset: 540; } 77% { stroke-dashoffset: 0; fill: transparent; } 100% { stroke-dashoffset: 0; fill: #ff857914; } }
+    @keyframes loadProgress { to { width: 100%; } }
+
+    @media (max-width: 600px) {
+      .topbar { padding: 21px 19px; }
+      .brand-mark { width: 38px; height: 38px; border-radius: 10px; }
+      .brand-mark svg { width: 26px; height: 26px; }
+      .brand-copy strong { font-size: 13px; }
+      .brand-copy span { font-size: 7px; }
+      .status { font-size: 8px; letter-spacing: .06em; gap: 7px; }
+      .main { min-height: 0; padding: 46px 17px 66px; }
+      .brand-shadow { top: 15%; font-size: 17vw; }
+      .portal { width: min(94vw, 390px); height: 370px; top: 46%; }
+      .portal-frame { border-radius: 17px; }
+      .floor { bottom: -175px; }
+      .card { padding: 27px 23px 23px; border-radius: 15px; }
+      .feature-icon { width: 48px; height: 48px; margin: 24px 0 17px; }
+      h1 { font-size: clamp(29px, 7vw, 36px); }
+      .description { font-size: 12px; margin-bottom: 24px; }
+      .card-bottom { font-size: 8px; }
+      .footer { padding: 12px 19px 22px; font-size: 8px; letter-spacing: .05em; }
+    }
+    @media (max-width: 380px) {
+      .status { font-size: 0; }
+      .status-dot { width: 7px; height: 7px; }
+      .main { padding-inline: 13px; }
+      .card { padding: 24px 18px; }
+      h1 { font-size: 28px; }
+      #urlInput, .submit { height: 48px; }
+      .footer { flex-direction: column; text-align: center; gap: 8px; }
+      .card-bottom { flex-wrap: wrap; }
+    }
+    @media (max-height: 680px) and (min-width: 601px) {
+      .main { min-height: 500px; padding-block: 24px 48px; }
+      .feature-icon { margin: 16px 0; }
+    }
+    @media (prefers-reduced-motion: reduce) {
+      *, *::before, *::after { animation-duration: .01ms !important; animation-iteration-count: 1 !important; transition-duration: .01ms !important; }
+      .card { opacity: 1; transform: none; }
+    }
+
+    /* Workspace manager: extends Portal 02 without changing the original stage. */
+    .brand-mark img { width: 30px; height: 30px; object-fit: contain; }
+    .view[hidden], .cancel[hidden], .install[hidden] { display: none !important; }
+    .optional { color: #777589; font-size: 9px; font-weight: 600; letter-spacing: .05em; }
+    .field-label-gap { margin-top: 17px; }
+    #workspaceName, #urlInput { width: 100%; height: 50px; min-width: 0; padding: 0; background: none; border: 0; color: #fff; outline: 0; font-size: 13px; }
+    #workspaceName::placeholder, #urlInput::placeholder { color: #656a7c; }
+    .url-help { color: #aaa5b6; font-size: 10.5px; line-height: 1.7; margin: 9px 0 0; overflow-wrap: anywhere; }
+    .url-help strong { color: #dbb5b5; font-weight: 600; }
+    .resolved-url { min-height: 0; margin: 7px 0 0; font-size: 10px; color: #ffc4ba; line-height: 1.5; overflow-wrap: anywhere; }
+    .submit { text-decoration: none; }
+    .open-link { align-items: center; }
+    .submit-arrow { font-size: 20px; }
+    .notice { color: #b7d9c7; font-size: 11px; margin: 0; line-height: 1.6; }
+    .notice:empty { display: none; }
+    .workspace-list { display: grid; gap: 9px; max-height: 240px; overflow-y: auto; padding: 2px 3px 4px 1px; scrollbar-color: #67505c transparent; }
+    .workspace-choice { cursor: pointer; width: 100%; display: flex; align-items: center; gap: 12px; min-width: 0; padding: 12px; text-align: left; background: #0d1320b8; border: 1px solid #ffffff24; border-radius: 10px; color: #eeeaf0; transition: border-color .2s, background .2s; }
+    .workspace-choice:hover { border-color: #ff918766; }
+    .workspace-choice.selected { border-color: #ff9289; background: #382731a6; }
+    .choice-logo { flex: 0 0 35px; height: 35px; display: grid; place-items: center; background: #ff776e25; border: 1px solid #ff928950; color: #ff9b8f; border-radius: 9px; font-size: 15px; font-weight: 700; }
+    .choice-text { min-width: 0; display: grid; gap: 4px; flex: 1; }
+    .choice-text strong { font-size: 12px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .choice-text small { color: #a6a1b0; font-size: 10px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .choice-check { font-size: 18px; color: #ffb2a6; }
+    .selection-info { margin: 14px 1px 0; min-height: 17px; color: #bcb0c0; font-size: 10px; line-height: 1.6; overflow-wrap: anywhere; }
+    .workspace-actions { display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px; margin-top: 19px; }
+    .text-button { border: 0; background: none; color: #ffaca2; padding: 3px 0; font-size: 11px; cursor: pointer; }
+    .text-button:hover { color: #ffd4cd; }
+    .text-button.remove { color: #a39eae; }
+    .cancel { margin-top: 14px; }
+    .install { padding: 6px 11px; background: #ff786e20; border: 1px solid #ff897c66; color: #ffb2a8; border-radius: 7px; white-space: nowrap; font-size: 10px; }
+    @media (max-width: 600px) {
+      .site { min-height: 100svh; }
+      .main { padding-top: 25px; padding-bottom: 39px; }
+      .card { width: 100%; }
+      .feature-icon { margin: 20px 0 15px; }
+      .description { margin-bottom: 18px; }
+      .footer { flex-wrap: wrap; }
+      .workspace-list { max-height: 210px; }
+    }
+    @media (max-width: 360px) {
+      .status { display: none; }
+      .workspace-actions { gap: 14px; }
+      .card-bottom { gap: 4px; }
+    }
+  </style>
+</head>
+<body class="is-loading">
+  <div class="site" id="site" aria-hidden="true">
+    <header class="topbar">
+      <a class="identity" href="https://mazoryagroup.com/" aria-label="Mazorya Group home">
+        <span class="brand-mark" aria-hidden="true">
+          <img src="./icons/brand-mark.png" alt="" width="32" height="32">
+        </span>
+        <span class="brand-copy"><strong>MAZORYA</strong><span>G R O U P</span></span>
+      </a>
+      <div class="status"><span class="status-dot" aria-hidden="true"></span> MY WORKSPACE / 001</div>
+    </header>
+
+    <main class="main" id="interactiveStage">
+      <div class="brand-shadow" aria-hidden="true">MAZORYA</div>
+      <div class="portal" aria-hidden="true">
+        <div class="portal-frame"></div><div class="portal-frame"></div>
+        <div class="portal-frame"></div><div class="portal-frame"></div>
+        <div class="portal-frame"></div>
+      </div>
+      <div class="floor" aria-hidden="true"></div>
+
+      <section class="card" aria-labelledby="portalTitle">
+        <div class="card-top">
+          <span class="overline">MAZORYA APP / 01</span>
+          <span class="small-arrow" aria-hidden="true">↗</span>
+        </div>
+        <div class="feature-icon" aria-hidden="true">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M10 13a5 5 0 0 0 7.5.5l3-3A5 5 0 0 0 13.5 3.5l-1.7 1.7"/>
+            <path d="M14 11a5 5 0 0 0-7.5-.5l-3 3A5 5 0 0 0 10.5 20.5l1.7-1.7"/>
+          </svg>
+        </div>
+
+        <!-- First visit / add another workspace -->
+        <div class="view" id="formView">
+          <h1 id="portalTitle">Your next<br>workspace.</h1>
+          <p class="description">Connect your client dashboard once.<br>Return to it with a single tap.</p>
+          <form id="workspaceForm" novalidate>
+            <label class="field-label" for="workspaceName">WORKSPACE NAME <span class="optional">OPTIONAL</span></label>
+            <div class="input-wrap">
+              <input type="text" id="workspaceName" name="name" placeholder="e.g. My Business" maxlength="48" autocomplete="off">
+            </div>
+            <label class="field-label field-label-gap" for="urlInput">CLIENT DOMAIN OR FULL PANEL URL</label>
+            <div class="input-wrap">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3c6 6 6 12 0 18M12 3c-6 6-6 12 0 18"/></svg>
+              <input type="text" id="urlInput" name="url" placeholder="clientdomain.com" inputmode="url" autocomplete="off" autocapitalize="off" spellcheck="false" aria-describedby="urlHelp errorMsg" required>
+            </div>
+            <p class="url-help" id="urlHelp">Domain only? We'll use <strong>api.clientdomain.com/admin/login</strong>. Full URLs are also supported.</p>
+            <p class="resolved-url" id="resolvedUrl" aria-live="polite"></p>
+            <button class="submit" type="submit"><span>SAVE MY WORKSPACE</span><span class="submit-arrow" aria-hidden="true">↗</span></button>
+            <button class="text-button cancel" type="button" id="cancelAdd" hidden>← Back to my workspaces</button>
+          </form>
+        </div>
+
+        <!-- Returning users / one-tap portal -->
+        <div class="view" id="savedView" hidden>
+          <h1>Welcome<br>back.</h1>
+          <p class="description">Your dashboard is one tap away.<br>Select your saved workspace to continue.</p>
+          <div class="workspace-list" id="workspaceList" role="group" aria-label="Saved workspaces"></div>
+          <div class="selection-info" id="selectionInfo" aria-live="polite"></div>
+          <a class="submit open-link" id="openPortalLink" href="#" target="_blank" rel="noopener noreferrer"><span>OPEN MY DASHBOARD</span><span class="submit-arrow" aria-hidden="true">↗</span></a>
+          <div class="workspace-actions">
+            <button class="text-button" id="addWorkspace" type="button">+ Add workspace</button>
+            <button class="text-button remove" id="removeWorkspace" type="button">Remove selected</button>
+          </div>
+        </div>
+
+        <p class="error" id="errorMsg" role="alert" aria-live="polite"></p>
+        <p class="notice" id="noticeMsg" role="status" aria-live="polite"></p>
+        <div class="card-bottom"><span>YOUR PORTALS, ONE PLACE</span><span><span class="spark">✳</span> PRIVATE TO THIS DEVICE</span></div>
+      </section>
+    </main>
+
+    <footer class="footer"><span>© MAZORYA GROUP — DIGITAL EXPERIENCES</span><button id="installApp" class="install" type="button" hidden>+ INSTALL APP</button><span>YOUR NEXT DIMENSION ↗</span></footer>
+  </div>
+
+  <div class="intro" id="intro" role="status" aria-label="Loading Mazorya">
+    <svg viewBox="0 0 570 125" role="img" aria-label="MAZORYA">
+      <text x="285" y="92" text-anchor="middle" textLength="545" lengthAdjust="spacingAndGlyphs">MAZORYA</text>
+    </svg>
+    <div class="intro-caption">GROUP / DIGITAL EXPERIENCE</div>
+    <div class="progress" aria-hidden="true"><span></span></div>
+  </div>
+
+  <script src="./app.js" defer></script>
+</body>
+</html>

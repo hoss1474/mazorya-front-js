@@ -178,7 +178,10 @@ function renderLoginSection(lang) {
         <span class="portal-star portal-star--one" aria-hidden="true">✳</span>
         <span class="portal-star portal-star--two" aria-hidden="true">✳</span>
 
-        <div class="portal-card" dir="${rtl ? 'rtl' : 'ltr'}">
+        <div class="portal-flip-card" id="portalFlipCard">
+          <div class="portal-flip-inner" id="portalFlipInner">
+            <div class="portal-flip-face portal-flip-front" id="portalLoginFace">
+              <div class="portal-card" dir="${rtl ? 'rtl' : 'ltr'}">
           <div class="portal-overline">${text('PRIVATE ACCESS / 02', 'ورود اختصاصی / ۰۲')}</div>
 
           <div class="portal-intro">
@@ -237,8 +240,12 @@ function renderLoginSection(lang) {
           <div class="portal-card-footer">
             <span>${text('SECURED EXPERIENCE', 'اتصال امن')}</span>
             <span class="portal-online">● ${text('ONLINE', 'آنلاین')}</span>
+              </div>
+            </div>
           </div>
+          ${renderForgotFace(lang)}
         </div>
+      </div>
       </div>
 
     </section>
@@ -246,191 +253,137 @@ function renderLoginSection(lang) {
 }
 
 // ============================================================
-// FORGOT PASSWORD MODAL
+// FORGOT PASSWORD CARD FACE
 // ============================================================
 
-function renderForgotModal(lang) {
+function renderForgotFace(lang) {
   const rtl = isRTL(lang);
   const text = (en, fa) => rtl ? fa : en;
 
   return `
     <div
       id="forgotModal"
-      class="auth-modal portal-recovery-modal"
-      style="display:none;"
+      class="portal-flip-face portal-flip-back"
       aria-hidden="true"
+      inert
     >
-      <div class="auth-modal-overlay recovery-backdrop"></div>
-
-      <div class="auth-modal-container recovery-scene">
-        <div class="recovery-grain" aria-hidden="true"></div>
-        <div class="recovery-floor" aria-hidden="true"></div>
-        <div class="recovery-arch recovery-arch--back" aria-hidden="true"></div>
-        <div class="recovery-arch recovery-arch--middle" aria-hidden="true"></div>
-        <div class="recovery-arch recovery-arch--front" aria-hidden="true"></div>
-
-        <div class="recovery-scene-brand" aria-hidden="true">
-          MAZORYA<span>.</span>
+      <div
+        class="recovery-card"
+        dir="${rtl ? 'rtl' : 'ltr'}"
+        aria-labelledby="forgotModalTitle"
+      >
+        <div class="recovery-card-top">
+          <span class="recovery-kicker" id="recoveryKicker">
+            ${text('ACCOUNT RECOVERY / 01', 'بازیابی حساب / ۰۱')}
+          </span>
+          <button
+            type="button" class="recovery-close"
+            id="closeModalBtn"
+            aria-label="${t('close', text('Close', 'بستن'))}"
+          >&times;</button>
         </div>
-        <span class="recovery-scene-label" aria-hidden="true">
-          ${text('SECURE RECOVERY / 002', 'بازیابی امن / ۰۲')}
-        </span>
+
+        <div class="recovery-symbol" aria-hidden="true">↗</div>
+
+        <div class="recovery-header">
+          <h2 id="forgotModalTitle">
+            ${text('Find your way back.', 'راه بازگشت به مزوریا.')}
+          </h2>
+          <p id="recoverySubtitle">
+            ${text(
+              'Every path has a way forward. Enter your email to start your account recovery.',
+              'هر مسیری راه بازگشتی دارد. برای شروع بازیابی حساب، ایمیل خود را وارد کنید.'
+            )}
+          </p>
+        </div>
+
+        <div class="recovery-progress" aria-label="${text('Recovery steps', 'مراحل بازیابی')}">
+          <span class="recovery-progress-segment active" aria-hidden="true"></span>
+          <span class="recovery-progress-segment" aria-hidden="true"></span>
+        </div>
+
+        <div id="forgot-step-1" class="auth-modal-step recovery-step active">
+          <label class="recovery-label" for="forgot-email">
+            ${t('email', text('Email Address', 'آدرس ایمیل'))}
+          </label>
+          <div class="input-group recovery-field">
+            <div class="input-icon" aria-hidden="true">${emailIcon}</div>
+            <input
+              type="email" id="forgot-email"
+              placeholder="${t('email', text('Email Address', 'آدرس ایمیل'))}"
+              autocomplete="email" maxlength="255" dir="ltr"
+            />
+          </div>
+          <button type="button" id="sendCodeBtn" class="auth-modal-btn recovery-primary">
+            <span>${t('send_code', text('Continue to Verification', 'دریافت کد تأیید'))}</span>
+            <span class="recovery-button-arrow" aria-hidden="true">↗</span>
+          </button>
+        </div>
+
+        <div id="forgot-step-2" class="auth-modal-step recovery-step" hidden>
+          <label class="recovery-label" for="reset-code">
+            ${t('verification_code', text('Verification Code', 'کد تأیید'))}
+          </label>
+          <div class="input-group recovery-field">
+            <div class="input-icon" aria-hidden="true">${codeIcon}</div>
+            <input
+              type="text" id="reset-code"
+              placeholder="${t('verification_code', text('Verification Code', 'کد تأیید'))}"
+              autocomplete="one-time-code" maxlength="6"
+              inputmode="numeric" dir="ltr"
+            />
+          </div>
+
+          <label class="recovery-label" for="reset-password">
+            ${t('new_password', text('New Password', 'رمز عبور جدید'))}
+          </label>
+          <div class="input-group recovery-field">
+            <div class="input-icon" aria-hidden="true">${lockIcon}</div>
+            <input
+              type="password" id="reset-password"
+              placeholder="${t('new_password', text('New Password', 'رمز عبور جدید'))}"
+              autocomplete="new-password"
+            />
+            <button
+              type="button" class="password-toggle recovery-eye"
+              data-target="reset-password"
+              aria-label="${t('show_password', text('Show password', 'نمایش رمز عبور'))}"
+              aria-pressed="false"
+            >${eyeIcon}</button>
+          </div>
+
+          <label class="recovery-label" for="reset-confirm-password">
+            ${t('confirm_password', text('Confirm Password', 'تکرار رمز عبور'))}
+          </label>
+          <div class="input-group recovery-field">
+            <div class="input-icon" aria-hidden="true">${lockIcon}</div>
+            <input
+              type="password" id="reset-confirm-password"
+              placeholder="${t('confirm_password', text('Confirm Password', 'تکرار رمز عبور'))}"
+              autocomplete="new-password"
+            />
+          </div>
+          <button type="button" id="resetPasswordBtn" class="auth-modal-btn recovery-primary">
+            <span>${t('reset_password', text('Reset Password', 'تغییر رمز عبور'))}</span>
+            <span class="recovery-button-arrow" aria-hidden="true">↗</span>
+          </button>
+        </div>
 
         <div
-          class="auth-modal-content recovery-card ${rtl ? 'rtl-auth' : ''}"
-          role="dialog"
-          aria-modal="true"
-          aria-labelledby="forgotModalTitle"
-          dir="${rtl ? 'rtl' : 'ltr'}"
-        >
-          <div class="recovery-card-top">
-            <span class="recovery-kicker" id="recoveryKicker">
-              ${text('ACCOUNT RECOVERY / 01', 'بازیابی حساب / ۰۱')}
-            </span>
-            <button
-              type="button"
-              class="auth-modal-close recovery-close"
-              id="closeModalBtn"
-              aria-label="${t('close', text('Close', 'بستن'))}"
-            >
-              &times;
-            </button>
-          </div>
+          id="forgot-message" class="auth-message recovery-message"
+          role="status" aria-live="polite" style="display:none;"
+        ></div>
 
-          <div class="recovery-symbol" aria-hidden="true">↗</div>
+        <div class="recovery-actions">
+          <button type="button" class="recovery-back" id="backToLoginBtn">
+            ${rtl ? '→' : '←'}
+            ${t('back_to_login', text('Back to Login', 'بازگشت به ورود'))}
+          </button>
+        </div>
 
-          <div class="auth-modal-header recovery-header">
-            <h2 id="forgotModalTitle">
-              ${text('Find your way back.', 'راه بازگشت به مزوریا.')}
-            </h2>
-            <p id="recoverySubtitle">
-              ${text(
-                'Every path has a way forward. Enter your email to start your account recovery.',
-                'هر مسیری راه بازگشتی دارد. برای شروع بازیابی حساب، ایمیل خود را وارد کنید.'
-              )}
-            </p>
-          </div>
-
-          <div class="recovery-progress" aria-label="${text('Recovery steps', 'مراحل بازیابی')}">
-            <span class="recovery-progress-segment active" aria-hidden="true"></span>
-            <span class="recovery-progress-segment" aria-hidden="true"></span>
-          </div>
-
-          <!-- Step 1: request verification code -->
-          <div id="forgot-step-1" class="auth-modal-step recovery-step active">
-            <label class="recovery-label" for="forgot-email">
-              ${t('email', text('Email Address', 'آدرس ایمیل'))}
-            </label>
-            <div class="input-group recovery-field">
-              <div class="input-icon" aria-hidden="true">${emailIcon}</div>
-              <input
-                type="email"
-                id="forgot-email"
-                placeholder="${t('email', text('Email Address', 'آدرس ایمیل'))}"
-                aria-label="${t('email', text('Email Address', 'آدرس ایمیل'))}"
-                autocomplete="email"
-                maxlength="255"
-                dir="ltr"
-              />
-            </div>
-
-            <button
-              type="button"
-              id="sendCodeBtn"
-              class="auth-modal-btn recovery-primary"
-            >
-              <span>${t('send_code', text('Continue to Verification', 'دریافت کد تأیید'))}</span>
-              <span class="recovery-button-arrow" aria-hidden="true">↗</span>
-            </button>
-          </div>
-
-          <!-- Step 2: verify code and reset password -->
-          <div id="forgot-step-2" class="auth-modal-step recovery-step" hidden>
-            <label class="recovery-label" for="reset-code">
-              ${t('verification_code', text('Verification Code', 'کد تأیید'))}
-            </label>
-            <div class="input-group recovery-field">
-              <div class="input-icon" aria-hidden="true">${codeIcon}</div>
-              <input
-                type="text"
-                id="reset-code"
-                placeholder="${t('verification_code', text('Verification Code', 'کد تأیید'))}"
-                aria-label="${t('verification_code', text('Verification Code', 'کد تأیید'))}"
-                autocomplete="one-time-code"
-                maxlength="6"
-                inputmode="numeric"
-                dir="ltr"
-              />
-            </div>
-
-            <label class="recovery-label" for="reset-password">
-              ${t('new_password', text('New Password', 'رمز عبور جدید'))}
-            </label>
-            <div class="input-group recovery-field">
-              <div class="input-icon" aria-hidden="true">${lockIcon}</div>
-              <input
-                type="password"
-                id="reset-password"
-                placeholder="${t('new_password', text('New Password', 'رمز عبور جدید'))}"
-                aria-label="${t('new_password', text('New Password', 'رمز عبور جدید'))}"
-                autocomplete="new-password"
-              />
-              <button
-                type="button"
-                class="password-toggle recovery-eye"
-                data-target="reset-password"
-                aria-label="${t('show_password', text('Show password', 'نمایش رمز عبور'))}"
-                aria-pressed="false"
-              >${eyeIcon}</button>
-            </div>
-
-            <label class="recovery-label" for="reset-confirm-password">
-              ${t('confirm_password', text('Confirm Password', 'تکرار رمز عبور'))}
-            </label>
-            <div class="input-group recovery-field">
-              <div class="input-icon" aria-hidden="true">${lockIcon}</div>
-              <input
-                type="password"
-                id="reset-confirm-password"
-                placeholder="${t('confirm_password', text('Confirm Password', 'تکرار رمز عبور'))}"
-                aria-label="${t('confirm_password', text('Confirm Password', 'تکرار رمز عبور'))}"
-                autocomplete="new-password"
-              />
-            </div>
-
-            <button
-              type="button"
-              id="resetPasswordBtn"
-              class="auth-modal-btn recovery-primary"
-            >
-              <span>${t('reset_password', text('Reset Password', 'تغییر رمز عبور'))}</span>
-              <span class="recovery-button-arrow" aria-hidden="true">↗</span>
-            </button>
-          </div>
-
-          <div
-            id="forgot-message"
-            class="auth-message recovery-message"
-            role="status"
-            aria-live="polite"
-            style="display:none;"
-          ></div>
-
-          <div class="auth-modal-footer recovery-actions">
-            <button
-              type="button"
-              class="auth-modal-back recovery-back"
-              id="backToLoginBtn"
-            >
-              ${rtl ? '→' : '←'}
-              ${t('back_to_login', text('Back to Login', 'بازگشت به ورود'))}
-            </button>
-          </div>
-
-          <div class="recovery-meta" aria-hidden="true">
-            <span>MAZORYA / ACCOUNT ACCESS</span>
-            <span>${text('● PRIVATE', '● خصوصی')}</span>
-          </div>
+        <div class="recovery-meta" aria-hidden="true">
+          <span>MAZORYA / ACCOUNT ACCESS</span>
+          <span>${text('● PRIVATE', '● خصوصی')}</span>
         </div>
       </div>
     </div>
@@ -473,10 +426,15 @@ function setBusy(button, busy, label) {
   button.setAttribute('aria-busy', String(busy));
 
   if (busy) {
+    // Preserve the arrow icon and original localized button content.
+    if (!button.dataset.normalHtml) button.dataset.normalHtml = button.innerHTML;
     button.innerHTML = `
       <span class="spinner" aria-hidden="true"></span>
       <span>${escapeHtml(label)}</span>
     `;
+  } else if (button.dataset.normalHtml) {
+    button.innerHTML = button.dataset.normalHtml;
+    delete button.dataset.normalHtml;
   } else {
     button.textContent = label;
   }
@@ -496,6 +454,34 @@ function attachAuthEvents(app, currentLang) {
   );
 
   const modal = app.querySelector('#forgotModal');
+  const flipCard = app.querySelector('#portalFlipCard');
+  const loginFace = app.querySelector('#portalLoginFace');
+  const loginFaceCard = loginFace?.querySelector('.portal-card');
+  const recoveryFaceCard = modal?.querySelector('.recovery-card');
+
+  function syncFlipHeight() {
+    if (!flipCard?.isConnected) return;
+    const activeCard = flipCard.classList.contains('is-flipped')
+      ? recoveryFaceCard
+      : loginFaceCard;
+    if (!activeCard) return;
+    const height = Math.ceil(activeCard.scrollHeight);
+    if (height > 0) flipCard.style.height = `${height}px`;
+  }
+
+  // The second recovery step is taller; resize without leaving a large blank card.
+  if (typeof ResizeObserver !== 'undefined') {
+    const resizeObserver = new ResizeObserver(() => {
+      if (!flipCard?.isConnected) {
+        resizeObserver.disconnect();
+        return;
+      }
+      syncFlipHeight();
+    });
+    if (loginFaceCard) resizeObserver.observe(loginFaceCard);
+    if (recoveryFaceCard) resizeObserver.observe(recoveryFaceCard);
+  }
+  requestAnimationFrame(syncFlipHeight);
   const closeButton = app.querySelector('#closeModalBtn');
   const backButton = app.querySelector('#backToLoginBtn');
 
@@ -667,7 +653,7 @@ function attachAuthEvents(app, currentLang) {
   });
 
   // ==========================================================
-  // MODAL HELPERS
+  // FLIP CARD / RECOVERY HELPERS
   // ==========================================================
 
   function setStep(step) {
@@ -713,6 +699,8 @@ function attachAuthEvents(app, currentLang) {
     progress?.forEach((item, index) => {
       item.classList.toggle('active', index === 0 || !first);
     });
+
+    requestAnimationFrame(syncFlipHeight);
   }
 
   function resetForgotForm() {
@@ -724,37 +712,63 @@ function attachAuthEvents(app, currentLang) {
     setStep(1);
     hideMessage(modalMessage);
     resetCompleted = false;
+    if (resetButton) {
+      resetButton.disabled = false;
+      resetButton.removeAttribute('aria-busy');
+    }
+    requestAnimationFrame(syncFlipHeight);
   }
 
   function openModal() {
-    if (!modal) return;
+    if (!modal || !flipCard || isRecoveryBusy) return;
 
     previousFocus = document.activeElement;
-
     resetForgotForm();
 
-    modal.style.display = 'flex';
-    modal.setAttribute('aria-hidden', 'false');
+    const emailFromLogin = app.querySelector('#login-email')?.value.trim() || '';
+    if (isValidEmail(emailFromLogin) && forgotEmail) {
+      forgotEmail.value = emailFromLogin;
+    }
 
-    // Keep keyboard focus inside the recovery interface.
-    closeButton?.focus();
+    // Enable only the visible face for keyboard and screen-reader users.
+    modal.inert = false;
+    modal.setAttribute('aria-hidden', 'false');
+    if (loginFace) {
+      loginFace.inert = true;
+      loginFace.setAttribute('aria-hidden', 'true');
+    }
+
+    syncFlipHeight();
+    flipCard.classList.add('is-flipped');
+    syncFlipHeight();
+
+    window.setTimeout(() => {
+      if (flipCard.classList.contains('is-flipped') && modal.isConnected) {
+        (forgotEmail || closeButton)?.focus({ preventScroll: true });
+      }
+    }, 750);
   }
 
   function closeModal() {
-    if (!modal || isRecoveryBusy) return;
+    if (!modal || !flipCard || isRecoveryBusy) return;
 
-    modal.style.display = 'none';
+    flipCard.classList.remove('is-flipped');
+    syncFlipHeight();
+
+    if (loginFace) {
+      loginFace.inert = false;
+      loginFace.setAttribute('aria-hidden', 'false');
+    }
+    modal.inert = true;
     modal.setAttribute('aria-hidden', 'true');
 
     resetForgotForm();
 
-    if (
-      previousFocus &&
-      typeof previousFocus.focus === 'function' &&
-      previousFocus.isConnected
-    ) {
-      previousFocus.focus();
-    }
+    window.setTimeout(() => {
+      if (!flipCard.classList.contains('is-flipped') && previousFocus?.isConnected) {
+        previousFocus.focus({ preventScroll: true });
+      }
+    }, 750);
   }
 
   forgotButton?.addEventListener('click', openModal);
@@ -1129,7 +1143,6 @@ app.innerHTML = `
         dir="${isRTL(currentLang) ? 'rtl' : 'ltr'}"
       >
         ${renderLoginSection(currentLang)}
-        ${renderForgotModal(currentLang)}
       </main>
     </div>
   `;

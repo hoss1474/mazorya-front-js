@@ -1,0 +1,940 @@
+
+/*
+ * Mazorya Group — App Download
+ * File: assets/css/appDownload.css
+ */
+
+.mz-app-page {
+  --mz-ink: #12121d;
+  --mz-coral: #ff6b6b;
+
+  position: relative;
+  isolation: isolate;
+  overflow: clip;
+  color: #fff;
+  background: var(--mz-ink);
+}
+
+.mz-app-page *,
+.mz-app-page *::before,
+.mz-app-page *::after {
+  box-sizing: border-box;
+}
+
+.mz-app-page a {
+  text-decoration: none;
+}
+
+.mz-app-page a:focus-visible,
+.mz-app-page button:focus-visible {
+  outline: 2px solid #ffb6ad;
+  outline-offset: 4px;
+}
+
+.mz-app-container {
+  width: min(1180px, calc(100% - 64px));
+  margin-inline: auto;
+}
+
+/* HERO */
+
+.mz-app-hero {
+  min-height: 720px;
+  position: relative;
+  display: flex;
+  align-items: center;
+  padding: 105px 0 90px;
+
+  background:
+    radial-gradient(
+      ellipse 35% 52% at 78% 46%,
+      rgba(255, 107, 107, .18),
+      transparent 75%
+    ),
+    radial-gradient(
+      ellipse 55% 90% at 25% 45%,
+      rgba(80, 72, 104, .13),
+      transparent 85%
+    ),
+    #12121d;
+}
+
+.mz-app-hero::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  opacity: .17;
+
+  background-image:
+    linear-gradient(
+      rgba(255,255,255,.09) 1px,
+      transparent 1px
+    ),
+    linear-gradient(
+      90deg,
+      rgba(255,255,255,.09) 1px,
+      transparent 1px
+    );
+
+  background-size: 64px 64px;
+  mask-image: linear-gradient(
+    to bottom,
+    transparent,
+    #000 25%,
+    #000 75%,
+    transparent
+  );
+}
+
+.mz-app-hero-grid {
+  position: relative;
+  z-index: 1;
+  display: grid;
+  grid-template-columns: 1.08fr .92fr;
+  align-items: center;
+  gap: 20px;
+}
+
+.mz-app-hero-content {
+  position: relative;
+  z-index: 3;
+}
+
+.mz-app-eyebrow,
+.mz-app-platform-label {
+  display: inline-flex;
+  align-items: center;
+  gap: 11px;
+  color: #ffb0a9;
+  letter-spacing: .16em;
+  font-size: 11px;
+  font-weight: 650;
+  text-transform: uppercase;
+}
+
+.mz-app-live-dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: var(--mz-coral);
+  box-shadow: 0 0 16px rgba(255,107,107,.85);
+  flex-shrink: 0;
+}
+
+.mz-app-hero-title {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  margin: 31px 0 25px;
+
+  font-size: clamp(44px, 5.1vw, 80px);
+  line-height: 1.13;
+  font-weight: 650;
+  letter-spacing: -.055em;
+  overflow-wrap: anywhere;
+}
+
+.mz-app-hero-title strong {
+  color: var(--mz-coral);
+  font-weight: inherit;
+  text-shadow: 0 10px 45px rgba(255,107,107,.15);
+}
+
+.mz-app-hero-description {
+  max-width: 540px;
+  color: #b8b8c8;
+  font-size: clamp(15px, 1.4vw, 18px);
+  line-height: 1.9;
+  margin: 0;
+}
+
+.mz-app-hero-actions {
+  margin-top: 34px;
+}
+
+.mz-app-hero-link {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 16px;
+
+  border: 1px solid rgba(255,255,255,.2);
+  border-radius: 100px;
+
+  background: transparent;
+  color: #fff;
+  padding: 14px 23px;
+  font-family: inherit;
+  font-size: 13px;
+  font-weight: 650;
+  cursor: pointer;
+
+  transition:
+    border-color .2s ease,
+    background .2s ease,
+    transform .2s ease;
+}
+
+.mz-app-hero-link:hover {
+  background: rgba(255,107,107,.09);
+  border-color: rgba(255,107,107,.6);
+  transform: translateY(-2px);
+}
+
+.mz-app-benefits {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+  margin-top: 43px;
+}
+
+.mz-app-benefits > span {
+  color: #c1c1cc;
+  font-size: 11px;
+  padding: 8px 12px;
+  border: 1px solid rgba(255,255,255,.12);
+  border-radius: 24px;
+  background: rgba(255,255,255,.025);
+}
+
+/* 3D PORTAL */
+
+.mz-app-art {
+  height: 560px;
+  min-width: 0;
+  position: relative;
+
+  display: grid;
+  place-items: center;
+  perspective: 1000px;
+}
+
+.mz-app-portal {
+  position: absolute;
+  width: 360px;
+  height: 475px;
+
+  border: 2px solid rgba(255,107,107,.45);
+  border-radius: 35px;
+
+  box-shadow:
+    0 0 23px rgba(255,107,107,.12),
+    inset 0 0 25px rgba(255,107,107,.07);
+
+  transform-style: preserve-3d;
+  pointer-events: none;
+}
+
+.mz-app-portal-one {
+  transform: rotate(-20deg) rotateY(-27deg) scale(1.08);
+  opacity: .36;
+}
+
+.mz-app-portal-two {
+  transform: rotate(-11deg) rotateY(-24deg) scale(.92);
+  opacity: .6;
+}
+
+.mz-app-portal-three {
+  transform: rotate(-4deg) rotateY(-17deg) scale(.77);
+  opacity: .68;
+}
+
+/* PHONE MOCKUP */
+
+.mz-app-phone {
+  width: 252px;
+  height: 480px;
+  z-index: 1;
+  position: relative;
+
+  padding: 26px 19px 20px;
+
+  border: 6px solid #343444;
+  border-radius: 38px;
+
+  background:
+    radial-gradient(
+      circle at 50% 27%,
+      rgba(255,107,107,.13),
+      transparent 57%
+    ),
+    linear-gradient(150deg, #242437, #14141e);
+
+  box-shadow:
+    16px 26px 100px rgba(0,0,0,.58),
+    inset 0 0 0 1px rgba(255,255,255,.13);
+
+  transform: rotate(-5deg) rotateY(-12deg);
+  animation: mz-app-floating 5.6s ease-in-out infinite;
+}
+
+.mz-app-phone::before {
+  content: '';
+  position: absolute;
+  top: 7px;
+  left: 50%;
+  width: 70px;
+  height: 18px;
+  transform: translateX(-50%);
+  border-radius: 0 0 15px 15px;
+  background: #0c0c13;
+}
+
+.mz-app-phone-top {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  color: #e5e5ed;
+  font-size: 8px;
+  letter-spacing: .15em;
+  margin-top: 20px;
+}
+
+.mz-app-phone-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--mz-coral);
+}
+
+.mz-app-phone-menu {
+  margin-inline-start: auto;
+  font-size: 11px;
+}
+
+.mz-app-phone-logo {
+  display: grid;
+  place-items: center;
+  position: relative;
+
+  margin: 48px auto 25px;
+  width: 85px;
+  height: 85px;
+
+  border: 1px solid rgba(255,107,107,.8);
+  border-radius: 24px;
+
+  color: #fff;
+  font-weight: 800;
+  font-size: 43px;
+
+  background: linear-gradient(
+    140deg,
+    rgba(255,107,107,.19),
+    rgba(255,107,107,.025)
+  );
+
+  box-shadow: 0 12px 45px rgba(255,107,107,.17);
+}
+
+.mz-app-phone-logo span {
+  position: absolute;
+  inset-inline-end: 8px;
+  top: 8px;
+  font-size: 16px;
+  color: var(--mz-coral);
+}
+
+.mz-app-phone-kicker {
+  color: #9696ab;
+  text-align: center;
+  font-size: 8px;
+  letter-spacing: .05em;
+}
+
+.mz-app-phone-welcome {
+  text-align: center;
+  margin-top: 7px;
+  font-size: 19px;
+  font-weight: 700;
+}
+
+.mz-app-phone-workspace {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-top: 27px;
+  padding: 12px 10px;
+
+  border: 1px solid rgba(255,255,255,.13);
+  border-radius: 13px;
+
+  color: #dddde9;
+  font-size: 10px;
+  background: rgba(255,255,255,.035);
+}
+
+.mz-app-phone-workspace > span:last-child {
+  margin-inline-start: auto;
+}
+
+.mz-app-workspace-icon {
+  display: grid;
+  place-items: center;
+  width: 26px;
+  height: 26px;
+
+  border-radius: 8px;
+  background: rgba(255,107,107,.22);
+
+  color: var(--mz-coral);
+  font-size: 13px;
+  font-weight: 800;
+}
+
+.mz-app-phone-button {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+
+  background: var(--mz-coral);
+  color: #16161e;
+
+  border-radius: 12px;
+  padding: 12px 8px;
+
+  font-size: 9px;
+  font-weight: 800;
+  margin-top: 13px;
+}
+
+.mz-app-phone-button svg {
+  width: 14px;
+  height: 14px;
+}
+
+.mz-app-phone-bottom {
+  position: absolute;
+  width: 69px;
+  height: 4px;
+  bottom: 10px;
+  left: 50%;
+  transform: translateX(-50%);
+
+  border-radius: 10px;
+  background: rgba(255,255,255,.55);
+}
+
+.mz-app-art-glow {
+  position: absolute;
+  width: 330px;
+  height: 120px;
+  bottom: -12px;
+  border-radius: 50%;
+  background: rgba(255,107,107,.14);
+  filter: blur(46px);
+  pointer-events: none;
+}
+
+/* PLATFORM SECTION */
+
+.mz-app-platform-section {
+  scroll-margin-top: 80px;
+  padding: 100px 0 115px;
+  background: #191925;
+  position: relative;
+}
+
+.mz-app-platform-label {
+  margin-bottom: 28px;
+  color: #c2c2cf;
+}
+
+.mz-app-platform-label > span {
+  display: inline-block;
+  width: 20px;
+  height: 1px;
+  background: var(--mz-coral);
+}
+
+.mz-app-platform-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0,1fr));
+  gap: 22px;
+}
+
+.mz-app-platform-card {
+  min-width: 0;
+  padding: 37px;
+
+  border-radius: 23px;
+  border: 1px solid rgba(255,255,255,.1);
+
+  background: linear-gradient(
+    135deg,
+    rgba(255,255,255,.055),
+    rgba(255,255,255,.018)
+  );
+}
+
+.mz-app-android-card {
+  border-color: rgba(255,107,107,.32);
+
+  background:
+    radial-gradient(
+      ellipse at 100% 0,
+      rgba(255,107,107,.1),
+      transparent 55%
+    ),
+    linear-gradient(
+      135deg,
+      rgba(255,255,255,.055),
+      rgba(255,255,255,.018)
+    );
+}
+
+.mz-app-card-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 14px;
+}
+
+.mz-app-platform-icon {
+  width: 49px;
+  height: 49px;
+  display: grid;
+  place-items: center;
+
+  background: rgba(255,107,107,.12);
+  color: var(--mz-coral);
+
+  border: 1px solid rgba(255,107,107,.17);
+  border-radius: 13px;
+}
+
+.mz-app-platform-icon svg {
+  width: 24px;
+  height: 24px;
+}
+
+.mz-app-platform-pill {
+  font-size: 11px;
+  color: #b4b4c4;
+  border: 1px solid rgba(255,255,255,.13);
+  border-radius: 30px;
+  padding: 7px 11px;
+  letter-spacing: .07em;
+}
+
+.mz-app-platform-card h2 {
+  font-weight: 650;
+  font-size: clamp(27px, 3vw, 38px);
+  line-height: 1.35;
+  margin: 26px 0 4px;
+  color: #fff;
+}
+
+.mz-app-platform-type {
+  font-size: 12px;
+  color: #ffada6;
+  margin: 0;
+}
+
+.mz-app-platform-description {
+  color: #bdbdca;
+  line-height: 1.85;
+  font-size: 14px;
+  min-height: 60px;
+  margin: 18px 0 23px;
+}
+
+/* DOWNLOAD BUTTONS */
+
+.mz-app-button {
+  min-height: 54px;
+  width: 100%;
+  padding: 13px 17px;
+
+  display: inline-flex;
+  gap: 11px;
+  justify-content: center;
+  align-items: center;
+
+  border-radius: 11px;
+  font-weight: 700;
+  font-size: 14px;
+
+  transition:
+    transform .2s ease,
+    background .2s ease,
+    box-shadow .2s ease,
+    border-color .2s ease;
+}
+
+.mz-app-button svg {
+  width: 20px;
+  height: 20px;
+  flex-shrink: 0;
+}
+
+.mz-app-button-primary {
+  background: var(--mz-coral);
+  color: #161620;
+  border: 1px solid var(--mz-coral);
+}
+
+.mz-app-button-primary:hover {
+  color: #161620;
+  background: #ff8885;
+  transform: translateY(-2px);
+  box-shadow: 0 14px 40px rgba(255,107,107,.16);
+}
+
+.mz-app-button-outline {
+  color: #fff;
+  background: rgba(255,255,255,.04);
+  border: 1px solid rgba(255,255,255,.3);
+}
+
+.mz-app-button-outline:hover {
+  color: #fff;
+  background: rgba(255,107,107,.08);
+  border-color: rgba(255,107,107,.6);
+  transform: translateY(-2px);
+}
+
+.mz-app-button-note {
+  color: #88889c;
+  font-size: 11px;
+  line-height: 1.7;
+  margin: 12px 0 0;
+  min-height: 38px;
+}
+
+.mz-app-card-divider {
+  height: 1px;
+  margin: 32px 0 25px;
+  background: rgba(255,255,255,.11);
+}
+
+/* INSTALL STEPS */
+
+.mz-app-platform-card h3 {
+  font-size: 16px;
+  color: #fff;
+  margin: 0 0 18px;
+  font-weight: 600;
+}
+
+.mz-app-steps {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: grid;
+  gap: 16px;
+}
+
+.mz-app-step {
+  display: flex;
+  align-items: flex-start;
+  gap: 14px;
+
+  color: #bcbcc9;
+  font-size: 13px;
+  line-height: 1.8;
+}
+
+.mz-app-step-number {
+  flex-shrink: 0;
+  display: grid;
+  place-items: center;
+
+  width: 29px;
+  height: 29px;
+
+  background: rgba(255,255,255,.055);
+  border: 1px solid rgba(255,255,255,.13);
+
+  color: #ffbbb2;
+  border-radius: 9px;
+
+  font-size: 11px;
+  font-weight: 700;
+}
+
+/* SECURITY */
+
+.mz-app-security-section {
+  padding: 0 0 82px;
+  background: #191925;
+}
+
+.mz-app-security {
+  display: flex;
+  align-items: center;
+  gap: 25px;
+
+  border-radius: 18px;
+  padding: 30px 35px;
+
+  background: #242432;
+  border: 1px solid rgba(255,255,255,.09);
+}
+
+.mz-app-security-mark {
+  flex-shrink: 0;
+  width: 55px;
+  height: 55px;
+  display: grid;
+  place-items: center;
+
+  border-radius: 18px;
+  background: rgba(255,107,107,.1);
+
+  color: var(--mz-coral);
+  font-size: 28px;
+}
+
+.mz-app-security h2 {
+  color: #fff;
+  font-size: 19px;
+  font-weight: 650;
+  margin: 0 0 6px;
+}
+
+.mz-app-security p {
+  color: #a8a8b8;
+  line-height: 1.9;
+  font-size: 13px;
+  margin: 0;
+  max-width: 850px;
+}
+
+.mz-app-end-note {
+  text-align: center;
+  color: #77778a;
+  font-size: 12px;
+  margin: 42px 0 0;
+}
+
+/* ANIMATION */
+
+@keyframes mz-app-floating {
+  0%, 100% {
+    transform:
+      translateY(0)
+      rotate(-5deg)
+      rotateY(-12deg);
+  }
+
+  50% {
+    transform:
+      translateY(-14px)
+      rotate(-5deg)
+      rotateY(-12deg);
+  }
+}
+
+/* TABLET */
+
+@media (max-width: 1050px) {
+  .mz-app-hero {
+    min-height: auto;
+    padding: 95px 0 65px;
+  }
+
+  .mz-app-hero-grid {
+    grid-template-columns: 1fr .85fr;
+  }
+
+  .mz-app-art {
+    height: 500px;
+  }
+
+  .mz-app-portal {
+    scale: .83;
+  }
+
+  .mz-app-phone {
+    scale: .88;
+  }
+
+  .mz-app-platform-card {
+    padding: 29px;
+  }
+}
+
+/* MOBILE */
+
+@media (max-width: 760px) {
+  .mz-app-container {
+    width: min(620px, calc(100% - 36px));
+  }
+
+  .mz-app-hero {
+    padding: 75px 0 58px;
+  }
+
+  .mz-app-hero-grid {
+    grid-template-columns: 1fr;
+    gap: 25px;
+  }
+
+  .mz-app-hero-content {
+    text-align: center;
+  }
+
+  .mz-app-eyebrow {
+    justify-content: center;
+    letter-spacing: .08em;
+  }
+
+  .mz-app-hero-title {
+    font-size: clamp(42px, 9vw, 64px);
+    margin: 25px 0 19px;
+  }
+
+  .mz-app-hero-description {
+    margin-inline: auto;
+  }
+
+  .mz-app-hero-actions {
+    margin-top: 24px;
+  }
+
+  .mz-app-benefits {
+    justify-content: center;
+    margin-top: 26px;
+  }
+
+  .mz-app-art {
+    height: 450px;
+  }
+
+  .mz-app-platform-section {
+    padding: 65px 0 70px;
+  }
+
+  .mz-app-platform-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .mz-app-platform-card {
+    padding: 28px;
+  }
+
+  .mz-app-platform-description,
+  .mz-app-button-note {
+    min-height: 0;
+  }
+
+  .mz-app-security {
+    padding: 24px;
+  }
+}
+
+/* SMALL MOBILE */
+
+@media (max-width: 420px) {
+  .mz-app-container {
+    width: calc(100% - 28px);
+  }
+
+  .mz-app-hero {
+    padding: 60px 0 40px;
+  }
+
+  .mz-app-eyebrow {
+    font-size: 10px;
+  }
+
+  .mz-app-hero-title {
+    font-size: clamp(35px, 10vw, 48px);
+  }
+
+  .mz-app-hero-description {
+    font-size: 14px;
+  }
+
+  .mz-app-benefits {
+    gap: 7px;
+  }
+
+  .mz-app-benefits > span {
+    font-size: 10px;
+    padding: 7px 9px;
+  }
+
+  .mz-app-art {
+    height: 365px;
+  }
+
+  .mz-app-portal {
+    scale: .65;
+  }
+
+  .mz-app-phone {
+    scale: .70;
+  }
+
+  .mz-app-platform-card {
+    padding: 23px 19px;
+  }
+
+  .mz-app-platform-card h2 {
+    font-size: 29px;
+  }
+
+  .mz-app-platform-pill {
+    font-size: 9px;
+  }
+
+  .mz-app-security {
+    gap: 15px;
+    align-items: flex-start;
+    padding: 19px;
+  }
+
+  .mz-app-security-mark {
+    width: 36px;
+    height: 36px;
+    font-size: 20px;
+    border-radius: 11px;
+  }
+
+  .mz-app-security h2 {
+    font-size: 15px;
+  }
+
+  .mz-app-security p {
+    font-size: 12px;
+  }
+}
+
+/* ACCESSIBILITY */
+
+@media (prefers-reduced-motion: reduce) {
+  .mz-app-page *,
+  .mz-app-page *::before,
+  .mz-app-page *::after {
+    animation-duration: .01ms !important;
+    transition-duration: .01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
+
+/* =========================================
+   MAZORYA APP - HEADER BACKGROUND FIX
+========================================= */
+
+#app:has(#mazoryaAppDownload) {
+  background-color: #12121d;
+}
+
+#mazoryaAppDownload {
+  margin-top: 0;
+  padding-top: 0;
+  border-top: 0;
+  background-color: #12121d;
+}
+
+#mazoryaAppDownload .mz-app-hero {
+  margin-top: 0;
+  border-top: 0;
+  background-color: #12121d;
+}
