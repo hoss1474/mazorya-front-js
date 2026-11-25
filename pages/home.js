@@ -1483,9 +1483,24 @@ function getBlogImage(blog) {
   );
 }
 
+
 function getBlogUrl(blog, lang) {
-  return `/${lang}/blog-details/${encodePath(blog.id)}`;
+  const identifier = String(
+    blog?.slug ||
+    blog?.id ||
+    ''
+  ).trim();
+
+  if (!identifier) {
+    return `/${encodeURIComponent(lang)}/blog`;
+  }
+
+  return (
+    `/${encodeURIComponent(lang)}/blog-details/` +
+    encodeURIComponent(identifier)
+  );
 }
+
 
 // ============================================================
 // MAIN BLOG CARD
@@ -1805,16 +1820,28 @@ export async function renderHome() {
   // ==========================================================
 
   const [projectsResult, blogsResult] =
-    await Promise.allSettled([
-      getProjects(6),
-      getBlogs(4)
-    ]);
+  await Promise.allSettled([
+    getProjects(),
+    getBlogs(4)
+  ]);
 
-  const projects =
-    projectsResult.status === 'fulfilled' &&
-    Array.isArray(projectsResult.value)
-      ? projectsResult.value
-      : [];
+  
+const projects =
+  projectsResult.status === 'fulfilled' &&
+  Array.isArray(projectsResult.value)
+    ? projectsResult.value
+        .filter(project => {
+          const isMarked = project?.is_marked;
+
+          return (
+            isMarked === true ||
+            isMarked === 1 ||
+            isMarked === '1'
+          );
+        })
+        .slice(0, 6)
+    : [];
+
 
   const blogs =
     blogsResult.status === 'fulfilled' &&

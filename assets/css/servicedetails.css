@@ -1,0 +1,562 @@
+/* Mazorya Group — Service Details / Light Editorial UI
+   File: assets/css/serviceDetails.css
+   All new rules are scoped to #mazoryaServiceDetails. */
+
+#mazoryaServiceDetails {
+  --mz-sd-coral: #ff6368;
+  --mz-sd-ink: #111524;
+  --mz-sd-muted: #575f6c;
+  --mz-sd-line: #e6e8ed;
+  background: #fff;
+  color: var(--mz-sd-ink);
+  min-height: 70vh;
+  overflow: hidden;
+  isolation: isolate;
+}
+
+#mazoryaServiceDetails *,
+#mazoryaServiceDetails *::before,
+#mazoryaServiceDetails *::after { box-sizing: border-box; }
+
+#mazoryaServiceDetails a { text-decoration: none; }
+#mazoryaServiceDetails a:focus-visible {
+  outline: 2px solid var(--mz-sd-coral);
+  outline-offset: 4px;
+}
+
+#mazoryaServiceDetails .mz-sd-container {
+  width: min(1180px, calc(100% - 72px));
+  margin-inline: auto;
+}
+
+/* Breadcrumb */
+#mazoryaServiceDetails .mz-sd-breadcrumb {
+  display: flex;
+  align-items: center;
+  gap: 13px;
+  flex-wrap: wrap;
+  color: #ff6368;
+  font-size: 12px;
+}
+#mazoryaServiceDetails .mz-sd-breadcrumb a { color: #515767; }
+#mazoryaServiceDetails .mz-sd-breadcrumb a:hover { color: #ff6368; }
+#mazoryaServiceDetails .mz-sd-breadcrumb > span[aria-hidden] { color: #aeb1ba; }
+#mazoryaServiceDetails .mz-sd-breadcrumb > span[aria-current] {
+  max-width: 260px;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+  overflow: hidden;
+}
+
+/* Hero */
+#mazoryaServiceDetails .mz-sd-hero {
+  position: relative;
+  padding: 47px 0 100px;
+  background:
+    radial-gradient(ellipse 26% 42% at 81% 32%, #ff777522, transparent 85%),
+    linear-gradient(#fff, #fff);
+}
+
+#mazoryaServiceDetails .mz-sd-back {
+  display: inline-flex;
+  align-items: center;
+  gap: 11px;
+  color: #343846;
+  font-size: 13px;
+  font-weight: 600;
+}
+
+#mazoryaServiceDetails .mz-sd-back:hover { color: var(--mz-sd-coral); }
+#mazoryaServiceDetails .mz-sd-back span { font-size: 22px; line-height: 1; }
+
+#mazoryaServiceDetails .mz-sd-hero-grid {
+  display: grid;
+  grid-template-columns: minmax(0, .95fr) minmax(0, 1.05fr);
+  align-items: center;
+  gap: clamp(28px, 4vw, 65px);
+  padding-top: 43px;
+}
+
+#mazoryaServiceDetails .mz-sd-eyebrow,
+#mazoryaServiceDetails .mz-sd-section-index {
+  color: var(--mz-sd-coral);
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: .1em;
+  text-transform: uppercase;
+}
+
+#mazoryaServiceDetails .mz-sd-title {
+  color: var(--mz-sd-ink);
+  font-size: clamp(45px, 5vw, 76px);
+  line-height: 1.08;
+  letter-spacing: -.065em;
+  font-weight: 700;
+  margin: 26px 0 22px;
+  overflow-wrap: anywhere;
+}
+
+#mazoryaServiceDetails .mz-sd-title > span,
+#mazoryaServiceDetails .mz-sd-about h2 > span,
+#mazoryaServiceDetails .mz-sd-approach h2 > span,
+#mazoryaServiceDetails .mz-sd-more h2 > span { color: var(--mz-sd-coral); }
+
+#mazoryaServiceDetails .mz-sd-hero-desc {
+  color: #424857;
+  font-size: clamp(15px, 1.6vw, 18px);
+  line-height: 1.85;
+  max-width: 510px;
+  margin: 0 0 31px;
+  white-space: pre-line;
+}
+
+#mazoryaServiceDetails .mz-sd-button {
+  display: inline-flex;
+  justify-content: center;
+  align-items: center;
+  gap: 16px;
+  min-height: 50px;
+  padding: 13px 25px;
+  border: 1px solid var(--mz-sd-coral);
+  border-radius: 99px;
+  background: var(--mz-sd-coral);
+  color: #fff;
+  font-weight: 700;
+  font-size: 13px;
+  transition: background .2s, color .2s, transform .2s;
+}
+
+#mazoryaServiceDetails .mz-sd-button span { font-size: 20px; line-height: .8; }
+#mazoryaServiceDetails .mz-sd-button:hover {
+  color: #fff;
+  background: #e94552;
+  transform: translateY(-2px);
+}
+
+/* Laptop mockup, screenshot from API */
+#mazoryaServiceDetails .mz-sd-hero-art {
+  min-width: 0;
+  position: relative;
+  padding: 52px 0 30px;
+}
+
+#mazoryaServiceDetails .mz-sd-halo {
+  width: 70%;
+  aspect-ratio: 1;
+  position: absolute;
+  inset-block-start: 1%;
+  inset-inline-end: 2%;
+  border-radius: 50%;
+  background: radial-gradient(circle at 60% 30%, #ffada9b5, #ff636825 62%, transparent 72%);
+  pointer-events: none;
+}
+
+#mazoryaServiceDetails .mz-sd-laptop { position: relative; width: 100%; z-index: 1; }
+#mazoryaServiceDetails .mz-sd-laptop-lid {
+  position: relative;
+  width: 90%;
+  margin: 0 auto;
+  padding: 11px 10px 10px;
+  border: 1px solid #666971;
+  border-radius: 14px 14px 4px 4px;
+  background: linear-gradient(125deg, #424650, #0b0d11 22%, #15171c 84%, #51565d);
+  box-shadow: 0 16px 45px #1d203528;
+}
+
+#mazoryaServiceDetails .mz-sd-laptop-camera {
+  display: block;
+  width: 5px;
+  height: 5px;
+  margin: -6px auto 6px;
+  border-radius: 50%;
+  background: #737881;
+}
+
+#mazoryaServiceDetails .mz-sd-laptop-screen {
+  position: relative;
+  width: 100%;
+  aspect-ratio: 16 / 10;
+  overflow: hidden;
+  border: 0;
+  border-radius: 1px;
+  background: #151823;
+  margin: 0;
+  padding: 0;
+}
+
+#mazoryaServiceDetails .mz-sd-laptop-screen img,
+#mazoryaServiceDetails .mz-sd-monitor-display img,
+#mazoryaServiceDetails .mz-sd-phone img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: center top;
+  margin: 0;
+}
+
+#mazoryaServiceDetails .mz-sd-laptop-base {
+  height: 14px;
+  position: relative;
+  border-radius: 2px 2px 50% 50%;
+  background: linear-gradient(#e4e4e6, #8b8e98 42%, #d4d6d9 75%, #707580);
+  box-shadow: 0 13px 17px #18213022;
+}
+
+#mazoryaServiceDetails .mz-sd-laptop-base span {
+  display: block;
+  width: 20%;
+  height: 6px;
+  margin: 0 auto;
+  background: #9297a1;
+  border-radius: 0 0 9px 9px;
+}
+
+#mazoryaServiceDetails .mz-sd-art-placeholder {
+  display: grid;
+  place-items: center;
+  height: 100%;
+  background: radial-gradient(circle at 75% 40%, #ff62664d, transparent 60%), #191a27;
+  color: #fff;
+  font-size: clamp(24px, 4vw, 48px);
+  font-weight: 700;
+  letter-spacing: -.06em;
+}
+#mazoryaServiceDetails .mz-sd-art-placeholder span span { color: #ff7477; }
+
+/* About + deliverables */
+#mazoryaServiceDetails .mz-sd-about { padding: 63px 0 70px; }
+#mazoryaServiceDetails .mz-sd-about-grid {
+  display: grid;
+  grid-template-columns: minmax(0, .77fr) minmax(0, 1.23fr);
+  gap: clamp(30px, 6vw, 95px);
+  align-items: center;
+}
+
+#mazoryaServiceDetails .mz-sd-about h2,
+#mazoryaServiceDetails .mz-sd-approach h2,
+#mazoryaServiceDetails .mz-sd-more h2 {
+  color: var(--mz-sd-ink);
+  font-size: clamp(29px, 3vw, 43px);
+  line-height: 1.16;
+  font-weight: 700;
+  letter-spacing: -.045em;
+  margin: 18px 0 24px;
+}
+
+#mazoryaServiceDetails .mz-sd-about-copy > p,
+#mazoryaServiceDetails .mz-sd-approach-copy > p {
+  font-size: 14px;
+  line-height: 1.95;
+  color: var(--mz-sd-muted);
+  margin: 0;
+  white-space: pre-line;
+}
+
+#mazoryaServiceDetails .mz-sd-deliver-box {
+  padding: 28px;
+  border-radius: 18px;
+  border: 1px solid var(--mz-sd-line);
+  background: #fff;
+  box-shadow: 0 20px 65px #10172708;
+}
+
+#mazoryaServiceDetails .mz-sd-deliver-box > h3 {
+  margin: 0 0 21px;
+  color: var(--mz-sd-ink);
+  font-size: 22px;
+  font-weight: 700;
+}
+
+#mazoryaServiceDetails .mz-sd-deliver-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0;
+}
+
+#mazoryaServiceDetails .mz-sd-deliver-card {
+  display: flex;
+  align-items: flex-start;
+  gap: 14px;
+  padding: 16px 12px;
+  min-width: 0;
+  border-bottom: 1px solid var(--mz-sd-line);
+}
+
+#mazoryaServiceDetails .mz-sd-deliver-card:nth-child(odd) {
+  border-inline-end: 1px solid var(--mz-sd-line);
+}
+
+#mazoryaServiceDetails .mz-sd-deliver-icon,
+#mazoryaServiceDetails .mz-sd-process-icon {
+  flex: 0 0 auto;
+  display: grid;
+  place-items: center;
+  width: 45px;
+  height: 45px;
+  background: #fff0f0;
+  color: var(--mz-sd-coral);
+  border-radius: 12px;
+}
+
+#mazoryaServiceDetails .mz-sd-deliver-card h3 {
+  font-size: 13px;
+  font-weight: 700;
+  margin: 3px 0 6px;
+  color: #1a1e2c;
+  overflow-wrap: anywhere;
+}
+
+#mazoryaServiceDetails .mz-sd-deliver-card p {
+  font-size: 11px;
+  line-height: 1.8;
+  margin: 0;
+  color: #5d6370;
+  overflow-wrap: anywhere;
+}
+
+/* Approach / second service image */
+#mazoryaServiceDetails .mz-sd-approach { padding: 45px 0 50px; }
+#mazoryaServiceDetails .mz-sd-approach-grid {
+  display: grid;
+  grid-template-columns: minmax(0, .62fr) minmax(0, 1.38fr);
+  gap: clamp(28px, 5vw, 80px);
+  align-items: center;
+}
+
+#mazoryaServiceDetails .mz-sd-approach-copy > p { max-width: 340px; }
+#mazoryaServiceDetails .mz-sd-short-line {
+  display: block;
+  height: 2px;
+  width: 50px;
+  background: var(--mz-sd-coral);
+  margin-top: 25px;
+}
+
+#mazoryaServiceDetails .mz-sd-approach-art {
+  min-width: 0;
+  min-height: 375px;
+  position: relative;
+  padding: 20px 48px 45px 8px;
+  background: radial-gradient(ellipse 69% 70% at 62% 45%, #ffb2b020, transparent 82%);
+}
+
+#mazoryaServiceDetails .mz-sd-monitor { position: relative; width: 84%; margin-inline: auto; }
+#mazoryaServiceDetails .mz-sd-monitor-display {
+  aspect-ratio: 16 / 10;
+  overflow: hidden;
+  padding: 9px;
+  border: 2px solid #51535b;
+  border-radius: 12px;
+  background: #16171b;
+  box-shadow: 0 20px 45px #1216222e;
+}
+
+#mazoryaServiceDetails .mz-sd-monitor-display img { border-radius: 2px; }
+#mazoryaServiceDetails .mz-sd-monitor-neck {
+  height: 29px;
+  width: 10%;
+  margin: 0 auto;
+  background: linear-gradient(90deg, #aaaeb7, #d5d8dd 52%, #9296a0);
+}
+#mazoryaServiceDetails .mz-sd-monitor-stand {
+  height: 8px;
+  width: 29%;
+  margin: 0 auto;
+  background: linear-gradient(#d9dbe1, #7d828b);
+  border-radius: 50% 50% 4px 4px;
+}
+
+#mazoryaServiceDetails .mz-sd-phone {
+  position: absolute;
+  bottom: 5px;
+  inset-inline-end: 4%;
+  width: 23%;
+  height: 70%;
+  padding: 9px 5px 7px;
+  border: 3px solid #4b4c51;
+  border-radius: 21px;
+  background: #17181e;
+  box-shadow: 0 12px 40px #10132338;
+  overflow: hidden;
+}
+#mazoryaServiceDetails .mz-sd-phone-camera {
+  position: absolute;
+  z-index: 2;
+  width: 34%;
+  height: 8px;
+  left: 33%;
+  top: 4px;
+  background: #17181e;
+  border-radius: 0 0 6px 6px;
+}
+#mazoryaServiceDetails .mz-sd-phone img { border-radius: 12px; }
+
+/* Numbered process */
+#mazoryaServiceDetails .mz-sd-process { padding: 12px 0 80px; }
+#mazoryaServiceDetails .mz-sd-process-rows { margin-top: 27px; }
+#mazoryaServiceDetails .mz-sd-process-row {
+  display: grid;
+  grid-template-columns: 72px 58px minmax(0, .8fr) minmax(0, 1.2fr);
+  align-items: center;
+  gap: 25px;
+  padding: 17px 0;
+  border-bottom: 1px solid var(--mz-sd-line);
+}
+
+#mazoryaServiceDetails .mz-sd-process-num {
+  font-size: 32px;
+  line-height: 1;
+  color: #ffa09d;
+  font-weight: 600;
+  letter-spacing: -.055em;
+}
+
+#mazoryaServiceDetails .mz-sd-process-row h3 {
+  color: #1b1e2b;
+  font-size: 17px;
+  font-weight: 700;
+  margin: 0;
+  overflow-wrap: anywhere;
+}
+
+#mazoryaServiceDetails .mz-sd-process-row p {
+  color: #535a68;
+  font-size: 13px;
+  line-height: 1.75;
+  margin: 0;
+  overflow-wrap: anywhere;
+}
+
+/* Optional additional sections */
+#mazoryaServiceDetails .mz-sd-more { padding: 15px 0 70px; }
+#mazoryaServiceDetails .mz-sd-more-grid { border-top: 1px solid var(--mz-sd-line); }
+#mazoryaServiceDetails .mz-sd-more-item {
+  display: grid;
+  grid-template-columns: 50px .8fr 1.2fr;
+  gap: 23px;
+  padding: 24px 0;
+  border-bottom: 1px solid var(--mz-sd-line);
+  align-items: start;
+}
+#mazoryaServiceDetails .mz-sd-more-item > span { color: var(--mz-sd-coral); font-size: 12px; }
+#mazoryaServiceDetails .mz-sd-more-item h3 {
+  margin: 0;
+  color: var(--mz-sd-ink);
+  font-size: 20px;
+  font-weight: 700;
+}
+#mazoryaServiceDetails .mz-sd-more-item p {
+  margin: 0;
+  color: var(--mz-sd-muted);
+  font-size: 14px;
+  line-height: 1.85;
+  white-space: pre-line;
+}
+
+/* CTA: keep .cta-section for shared animation hooks */
+#mazoryaServiceDetails .mz-sd-cta-section {
+  padding: 0 0 85px;
+  background: #fff;
+  margin: 0;
+}
+#mazoryaServiceDetails .mz-sd-cta {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 30px;
+  padding: 42px 53px;
+  border-radius: 19px;
+  background:
+    radial-gradient(ellipse 52% 120% at 100% 10%, #ffc4c6ad, transparent 80%),
+    radial-gradient(ellipse 35% 95% at 0% 20%, #ffdbda8f, transparent 85%),
+    #fff4f5;
+  overflow: hidden;
+}
+#mazoryaServiceDetails .mz-sd-cta::before {
+  position: absolute;
+  content: '';
+  width: 70%;
+  aspect-ratio: 2 / 1;
+  right: -12%;
+  bottom: -85%;
+  border: 1px solid #ff8a8c4d;
+  border-radius: 50%;
+  box-shadow: 0 -20px 0 -19px #ff8a8c55, 0 -40px 0 -39px #ff8a8c55,
+              0 -60px 0 -59px #ff8a8c55, 0 -80px 0 -79px #ff8a8c55;
+  transform: rotate(-8deg);
+  pointer-events: none;
+}
+#mazoryaServiceDetails .mz-sd-cta-text,
+#mazoryaServiceDetails .mz-sd-cta .mz-sd-button { position: relative; z-index: 1; }
+#mazoryaServiceDetails .mz-sd-cta h2 {
+  margin: 0 0 9px;
+  font-size: clamp(24px, 3vw, 37px);
+  line-height: 1.2;
+  color: var(--mz-sd-ink);
+  letter-spacing: -.035em;
+}
+#mazoryaServiceDetails .mz-sd-cta p { margin: 0; font-size: 14px; color: #555b67; }
+
+/* Loading / missing */
+#mazoryaServiceDetails .mz-sd-status { padding-top: 140px; padding-bottom: 160px; }
+#mazoryaServiceDetails .mz-sd-status h1 {
+  color: var(--mz-sd-ink);
+  font-size: clamp(35px, 5vw, 60px);
+  margin: 22px 0;
+}
+#mazoryaServiceDetails .mz-sd-status p { color: var(--mz-sd-muted); margin-bottom: 24px; }
+
+/* Tablet */
+@media (max-width: 1020px) {
+  #mazoryaServiceDetails .mz-sd-container { width: calc(100% - 52px); }
+  #mazoryaServiceDetails .mz-sd-hero-grid { gap: 25px; }
+  #mazoryaServiceDetails .mz-sd-about-grid { gap: 32px; }
+  #mazoryaServiceDetails .mz-sd-deliver-box { padding: 21px; }
+  #mazoryaServiceDetails .mz-sd-deliver-card { padding: 15px 8px; gap: 10px; }
+  #mazoryaServiceDetails .mz-sd-deliver-icon { width: 38px; height: 38px; }
+  #mazoryaServiceDetails .mz-sd-approach-grid { gap: 26px; }
+}
+
+/* Mobile */
+@media (max-width: 760px) {
+  #mazoryaServiceDetails .mz-sd-container { width: calc(100% - 36px); }
+  #mazoryaServiceDetails .mz-sd-hero { padding: 29px 0 55px; }
+  #mazoryaServiceDetails .mz-sd-hero-grid { grid-template-columns: 1fr; padding-top: 36px; }
+  #mazoryaServiceDetails .mz-sd-title { font-size: clamp(41px, 10vw, 65px); margin: 19px 0; }
+  #mazoryaServiceDetails .mz-sd-hero-art { padding: 36px 0 20px; }
+  #mazoryaServiceDetails .mz-sd-about { padding: 50px 0; }
+  #mazoryaServiceDetails .mz-sd-about-grid { grid-template-columns: 1fr; gap: 28px; }
+  #mazoryaServiceDetails .mz-sd-approach { padding: 24px 0 30px; }
+  #mazoryaServiceDetails .mz-sd-approach-grid { grid-template-columns: 1fr; gap: 20px; }
+  #mazoryaServiceDetails .mz-sd-approach-art { min-height: 300px; padding: 15px 33px 40px 0; }
+  #mazoryaServiceDetails .mz-sd-process { padding-bottom: 55px; }
+  #mazoryaServiceDetails .mz-sd-process-row {
+    grid-template-columns: 49px 45px minmax(0, 1fr);
+    gap: 13px;
+  }
+  #mazoryaServiceDetails .mz-sd-process-row p { grid-column: 3; }
+  #mazoryaServiceDetails .mz-sd-process-num { font-size: 25px; }
+  #mazoryaServiceDetails .mz-sd-process-icon { width: 40px; height: 40px; }
+  #mazoryaServiceDetails .mz-sd-more-item { grid-template-columns: 30px 1fr; gap: 10px 15px; }
+  #mazoryaServiceDetails .mz-sd-more-item p { grid-column: 2; }
+  #mazoryaServiceDetails .mz-sd-cta-section { padding-bottom: 50px; }
+  #mazoryaServiceDetails .mz-sd-cta { padding: 35px 28px; align-items: start; flex-direction: column; }
+}
+
+@media (max-width: 460px) {
+  #mazoryaServiceDetails .mz-sd-container { width: calc(100% - 28px); }
+  #mazoryaServiceDetails .mz-sd-deliver-box { padding: 21px 17px; }
+  #mazoryaServiceDetails .mz-sd-deliver-grid { grid-template-columns: 1fr; }
+  #mazoryaServiceDetails .mz-sd-deliver-card { border-inline-end: 0 !important; }
+  #mazoryaServiceDetails .mz-sd-approach-art { min-height: 245px; }
+  #mazoryaServiceDetails .mz-sd-phone { border-radius: 14px; padding: 5px 3px 4px; }
+  #mazoryaServiceDetails .mz-sd-phone img { border-radius: 8px; }
+  #mazoryaServiceDetails .mz-sd-cta { padding: 27px 21px; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  #mazoryaServiceDetails *, #mazoryaServiceDetails *::before,
+  #mazoryaServiceDetails *::after { animation: none !important; transition: none !important; }
+}

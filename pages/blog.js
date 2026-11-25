@@ -1,16 +1,8 @@
 
 /**
- * Mazorya Group - Blog Listing Page
+ * Mazorya Group — Blog Listing
  * File: pages/blog.js
- *
- * Features:
- * - Laravel API integration
- * - Multilingual blog listing
- * - RTL / LTR
- * - 3-column Webflow grid
- * - Safe image and content rendering
- * - Blog details navigation by ID
- * - Localized dates
+ * Slug-based links with legacy ID support
  */
 
 import { i18n } from '../core/i18n.js';
@@ -25,17 +17,12 @@ import {
   attachFooterEvents
 } from '../components/footer.js';
 
-import { getBlogs } from '../core/api.js';
+import {
+  getBlogs,
+  resolveMediaUrl
+} from '../core/api.js';
 
-// ============================================================
-// CONFIGURATION
-// ============================================================
-
-const DEFAULT_IMAGE =
-  '/assets/img/default-project.jpg';
-
-const DEFAULT_API_BASE =
-  'https://api.mazoryagroup.com/api';
+const DEFAULT_IMAGE = '/assets/img/default-project.jpg';
 
 let renderRequestId = 0;
 
@@ -52,221 +39,250 @@ function escapeHtml(value) {
     .replace(/'/g, '&#39;');
 }
 
-/**
- * Translation with fallback.
- */
 function tr(key, fallback = '') {
   const value = i18n.t(key);
 
-  if (
-    value === key ||
-    value === undefined ||
-    value === null ||
-    value === ''
-  ) {
-    return fallback || key;
-  }
-
-  return String(value);
+  return value == null ||
+    value === '' ||
+    value === key
+      ? fallback || key
+      : String(value);
 }
 
 function t(key, fallback = '') {
   return escapeHtml(tr(key, fallback));
 }
 
-/**
- * Convert HTML descriptions into plain text.
- */
-function stripHtml(value) {
-  if (
-    typeof value !== 'string' &&
-    typeof value !== 'number'
-  ) {
-    return '';
-  }
+function stringValue(value) {
+  return typeof value === 'string' ||
+    typeof value === 'number'
+      ? String(value).trim()
+      : '';
+}
 
-  const parsed = new DOMParser().parseFromString(
-    String(value),
+function stripHtml(value) {
+  const raw = stringValue(value);
+
+  if (!raw) return '';
+
+  const doc = new DOMParser().parseFromString(
+    raw,
     'text/html'
   );
 
-  return (parsed.body.textContent || '')
+  doc.querySelectorAll(
+    'script, style, template, iframe, object, svg'
+  ).forEach(node => node.remove());
+
+  return (doc.body.textContent || '')
     .replace(/\s+/g, ' ')
     .trim();
 }
 
-/**
- * Truncate article descriptions.
- */
 function truncateText(value, maxLength = 120) {
-  const text = stripHtml(value);
-  const characters = Array.from(text);
+  const characters = Array.from(
+    stripHtml(value)
+  );
 
   if (characters.length <= maxLength) {
-    return text;
+    return characters.join('');
   }
 
   return (
     characters
       .slice(0, maxLength)
       .join('')
-      .trimEnd() + '...'
+      .trimEnd() + '…'
   );
 }
 
 // ============================================================
-// BLOG TITLE AND DESCRIPTION
+// MULTILINGUAL FIELDS
 // ============================================================
 
-function getBlogTitle(blog, lang) {
-  const value = lang === 'en'
-    ? blog?.title_en || blog?.title
-    : blog?.title || blog?.title_en;
+function localized(blog, field, lang) {
+  if (!blog || typeof blog !== 'object') {
+    return '';
+  }
 
-  return String(
-    value || tr('untitled_blog', 'Untitled Article')
+  const translations = blog.translations;
+
+  const fromArray = Array.isArray(translations)
+    ? translations.find(
+        row =>
+          row?.lang === lang ||
+          row?.locale === lang
+      )?.[field]
+    : undefined;
+
+  const candidates = [
+    blog[`${field}_${lang}`],
+
+    Array.isArray(translations)
+      ? undefined
+      : translations?.[lang]?.[field],
+
+    fromArray,
+    blog[field],
+    blog[`${field}_en`]
+  ];
+
+  for (const candidate of candidates) {
+    const value = stringValue(candidate);
+
+    if (value) return value;
+  }
+
+  return '';
+}
+
+function getBlogTitle(blog, lang) {
+  return (
+    localized(blog, 'title', lang) ||
+    tr('untitled_blog', 'Untitled Article')
   );
 }
 
 function getBlogDescription(blog, lang) {
-  if (blog?.excerpt) {
-    return stripHtml(blog.excerpt);
-  }
+  const value =
+    localized(blog, 'excerpt', lang) ||
+    localized(blog, 'description', lang);
 
-  const description = lang === 'en'
-    ? blog?.description_en || blog?.description
-    : blog?.description || blog?.description_en;
-
-  return truncateText(description, 120);
+  return truncateText(value, 120);
 }
 
 // ============================================================
-// IMAGE URL
+// IMAGES
 // ============================================================
 
 function resolveImageUrl(value) {
-  if (
-    typeof value !== 'string' ||
-    !value.trim()
-  ) {
+  const raw =
+    typeof value === 'string'
+      ? value
+      : value && typeof value === 'object'
+        ? (
+            value.url ??
+            value.path ??
+            value.src ??
+            value.image
+          )
+        : '';
+
+  if (!stringValue(raw)) {
     return DEFAULT_IMAGE;
   }
 
-  const path = value.trim();
-
   try {
-    if (
-      path.startsWith('//') ||
-      (
-        /^[a-z][a-z\d+.-]*:/i.test(path) &&
-        !/^https?:\/\//i.test(path)
-      )
-    ) {
-      return DEFAULT_IMAGE;
-    }
-
-    let url;
-
-    if (/^https?:\/\//i.test(path)) {
-      url = new URL(path);
-    } else if (
-      path.startsWith('/assets/') ||
-      path.startsWith('assets/')
-    ) {
-      url = new URL(
-        path.startsWith('/')
-          ? path
-          : `/${path}`,
+    if (/^\/?assets\//i.test(raw)) {
+      return new URL(
+        `/${raw.replace(/^\/+/, '')}`,
         window.location.origin
-      );
-    } else {
-      const apiBase =
-        import.meta.env?.VITE_API_URL ||
-        DEFAULT_API_BASE;
-
-      const apiOrigin = new URL(
-        apiBase,
-        window.location.origin
-      ).origin;
-
-      url = new URL(
-        `/${path.replace(/^\/+/, '')}`,
-        apiOrigin
-      );
+      ).href;
     }
 
-    if (
-      url.protocol !== 'http:' &&
-      url.protocol !== 'https:'
-    ) {
-      return DEFAULT_IMAGE;
-    }
+    const resolved = resolveMediaUrl(raw);
 
-    return escapeHtml(url.href);
+    if (!resolved) return DEFAULT_IMAGE;
+
+    const url = new URL(
+      resolved,
+      window.location.origin
+    );
+
+    return ['http:', 'https:'].includes(url.protocol)
+      ? url.href
+      : DEFAULT_IMAGE;
   } catch {
     return DEFAULT_IMAGE;
   }
 }
 
 function getBlogImage(blog) {
-  const images = blog?.images;
+  let images = blog?.images;
 
-  const image =
-    (typeof images === 'string'
-      ? images
-      : null) ||
+  if (typeof images === 'string') {
+    const raw = images.trim();
+
+    if (
+      raw.startsWith('{') ||
+      raw.startsWith('[')
+    ) {
+      try {
+        images = JSON.parse(raw);
+      } catch {
+        images = raw;
+      }
+    }
+  }
+
+  const firstImage = Array.isArray(images)
+    ? images[0]
+    : null;
+
+  const candidate =
+    firstImage ||
+    (
+      typeof images === 'string'
+        ? images
+        : null
+    ) ||
     images?.image_1 ||
     images?.image ||
+    blog?.image_1 ||
     blog?.cover_url ||
     blog?.image_url ||
     blog?.image;
 
-  return resolveImageUrl(image);
+  return resolveImageUrl(candidate);
 }
 
 // ============================================================
-// BLOG DETAILS URL
+// SLUG-BASED BLOG LINKS
 // ============================================================
 
-function getBlogLink(blog, lang) {
-  const id = blog?.id;
 
-  if (
-    id === undefined ||
-    id === null ||
-    String(id).trim() === ''
-  ) {
+function getBlogLink(blog, lang) {
+  const identifier = String(
+    blog?.slug || blog?.id || ''
+  ).trim();
+
+  if (!identifier) {
     return null;
   }
 
   return (
-    `/${lang}/blog-details/` +
-    encodeURIComponent(String(id))
+    `/${encodeURIComponent(lang)}/blog-details/` +
+    encodeURIComponent(identifier)
   );
 }
 
+
 // ============================================================
-// DATE FORMAT
+// DATE
 // ============================================================
 
 function formatBlogDate(blog, lang) {
-  const rawDate =
+  const raw = stringValue(
+    blog?.published_at ||
     blog?.created_at ||
     blog?.createdAt ||
-    blog?.published_at ||
-    blog?.date;
+    blog?.date
+  );
 
-  if (!rawDate) {
-    return '';
-  }
+  if (!raw) return '';
 
-  const date = new Date(rawDate);
+  const normalized =
+    /^\d{4}-\d{2}-\d{2}$/.test(raw)
+      ? `${raw}T12:00:00`
+      : raw;
+
+  const date = new Date(normalized);
 
   if (Number.isNaN(date.getTime())) {
     return '';
   }
 
-  const localeMap = {
+  const locale = {
     en: 'en-US',
     fa: 'fa-IR',
     ar: 'ar-SA',
@@ -274,9 +290,7 @@ function formatBlogDate(blog, lang) {
     de: 'de-DE',
     es: 'es-ES',
     tr: 'tr-TR'
-  };
-
-  const locale = localeMap[lang] || 'en-US';
+  }[lang] || 'en-US';
 
   try {
     return new Intl.DateTimeFormat(locale, {
@@ -290,14 +304,16 @@ function formatBlogDate(blog, lang) {
 }
 
 // ============================================================
-// BANNER SECTION
+// BANNER
 // ============================================================
 
 function renderBannerSection() {
   return `
     <section class="blog-banner">
 
-      <div class="w-layout-blockcontainer container-regular w-container">
+      <div
+        class="w-layout-blockcontainer container-regular w-container"
+      >
 
         <div class="align-center">
 
@@ -325,7 +341,7 @@ function renderBannerSection() {
 }
 
 // ============================================================
-// SINGLE BLOG CARD
+// BLOG CARD
 // ============================================================
 
 function renderBlogCard(blog, lang) {
@@ -337,20 +353,28 @@ function renderBlogCard(blog, lang) {
     return '';
   }
 
-  const title = getBlogTitle(blog, lang);
-  const description = getBlogDescription(blog, lang);
-  const image = getBlogImage(blog);
-  const link = getBlogLink(blog, lang);
-  const date = formatBlogDate(blog, lang);
+  const title = escapeHtml(
+    getBlogTitle(blog, lang)
+  );
 
-  const safeTitle = escapeHtml(title);
-  const safeDesc = escapeHtml(description);
-  const safeDate = escapeHtml(date);
+  const description = escapeHtml(
+    getBlogDescription(blog, lang)
+  );
+
+  const image = escapeHtml(
+    getBlogImage(blog)
+  );
+
+  const link = getBlogLink(blog, lang);
+
+  const date = escapeHtml(
+    formatBlogDate(blog, lang)
+  );
 
   const imageHtml = `
     <img
       src="${image}"
-      alt="${safeTitle}"
+      alt="${title}"
       loading="lazy"
       decoding="async"
     />
@@ -367,9 +391,9 @@ function renderBlogCard(blog, lang) {
             link
               ? `
                 <a
-                  href="${link}"
+                  href="${escapeHtml(link)}"
                   class="blog-image-link"
-                  aria-label="${safeTitle}"
+                  aria-label="${title}"
                 >
                   ${imageHtml}
                 </a>
@@ -389,7 +413,7 @@ function renderBlogCard(blog, lang) {
             date
               ? `
                 <span class="blog-date">
-                  ${safeDate}
+                  ${date}
                 </span>
               `
               : ''
@@ -400,11 +424,11 @@ function renderBlogCard(blog, lang) {
             ${
               link
                 ? `
-                  <a href="${link}">
-                    ${safeTitle}
+                  <a href="${escapeHtml(link)}">
+                    ${title}
                   </a>
                 `
-                : safeTitle
+                : title
             }
 
           </h3>
@@ -413,7 +437,7 @@ function renderBlogCard(blog, lang) {
             description
               ? `
                 <p class="blog-card-excerpt">
-                  ${safeDesc}
+                  ${description}
                 </p>
               `
               : ''
@@ -423,10 +447,11 @@ function renderBlogCard(blog, lang) {
             link
               ? `
                 <a
-                  href="${link}"
+                  href="${escapeHtml(link)}"
                   class="blog-read-more"
                 >
                   ${t('read_more', 'Read More')}
+
                   <span aria-hidden="true">→</span>
                 </a>
               `
@@ -442,24 +467,19 @@ function renderBlogCard(blog, lang) {
 }
 
 // ============================================================
-// BLOG CARDS
+// BLOG GRID
 // ============================================================
 
 function renderBlogCards(blogs, lang) {
   if (
     !Array.isArray(blogs) ||
-    blogs.length === 0
+    !blogs.length
   ) {
     return `
       <div class="no-blogs">
-
         <p>
-          ${t(
-            'no_blogs',
-            'No blog posts found.'
-          )}
+          ${t('no_blogs', 'No blog posts found.')}
         </p>
-
       </div>
     `;
   }
@@ -469,17 +489,17 @@ function renderBlogCards(blogs, lang) {
     .join('');
 }
 
-// ============================================================
-// BLOG GRID SECTION
-// ============================================================
-
 function renderBlogGridSection(blogs, lang) {
-  const isRTL = lang === 'fa' || lang === 'ar';
+  const isRTL =
+    lang === 'fa' ||
+    lang === 'ar';
 
   return `
     <section class="blog-list-section">
 
-      <div class="w-layout-blockcontainer container-regular w-container">
+      <div
+        class="w-layout-blockcontainer container-regular w-container"
+      >
 
         <div class="blogs-grid ${isRTL ? 'rtl-blog' : ''}">
 
@@ -494,14 +514,16 @@ function renderBlogGridSection(blogs, lang) {
 }
 
 // ============================================================
-// CTA SECTION
+// CTA
 // ============================================================
 
-function renderCTASection(currentLang) {
+function renderCTASection(lang) {
   return `
     <section class="cta-section">
 
-      <div class="w-layout-blockcontainer container-regular w-container">
+      <div
+        class="w-layout-blockcontainer container-regular w-container"
+      >
 
         <div class="cta-image-wrap">
 
@@ -527,11 +549,11 @@ function renderCTASection(currentLang) {
               <div class="cta-button-wrap">
 
                 <a
-                  href="/${currentLang}/contact"
+                  href="/${encodeURIComponent(lang)}/contact"
                   class="cta-button"
                   data-route="contact"
                 >
-                  ${t('subscribe', 'Subscribe')}
+                  ${t('contact_us', 'Contact Us')}
                 </a>
 
               </div>
@@ -551,7 +573,53 @@ function renderCTASection(currentLang) {
 }
 
 // ============================================================
-// MAIN BLOG RENDER
+// RESPONSE NORMALIZATION
+// ============================================================
+
+function extractBlogs(response) {
+  if (response?.status === false) {
+    return [];
+  }
+
+  const items = Array.isArray(response)
+    ? response
+    : Array.isArray(response?.data)
+      ? response.data
+      : Array.isArray(response?.data?.data)
+        ? response.data.data
+        : [];
+
+  return items.filter(
+    item =>
+      item &&
+      typeof item === 'object' &&
+      !Array.isArray(item)
+  );
+}
+
+function attachImageFallbacks(app) {
+  app
+    .querySelectorAll('.blog-card-image img')
+    .forEach(image => {
+
+      image.addEventListener(
+        'error',
+        () => {
+          if (
+            image.getAttribute('src') !==
+            DEFAULT_IMAGE
+          ) {
+            image.src = DEFAULT_IMAGE;
+          }
+        },
+        { once: true }
+      );
+
+    });
+}
+
+// ============================================================
+// MAIN RENDER
 // ============================================================
 
 export async function renderBlog() {
@@ -564,31 +632,18 @@ export async function renderBlog() {
     return;
   }
 
-  const currentLang = i18n.getCurrentLanguage();
-  const initialPath = window.location.pathname;
-  const requestId = ++renderRequestId;
+  const lang = i18n.getCurrentLanguage();
 
-  // ==========================================================
-  // FETCH BLOGS
-  // ==========================================================
+  const path = window.location.pathname;
+
+  const currentRequest = ++renderRequestId;
 
   let blogs = [];
 
   try {
-    const response = await getBlogs();
-
-    if (Array.isArray(response)) {
-      blogs = response.filter(
-        blog =>
-          blog &&
-          typeof blog === 'object' &&
-          !Array.isArray(blog)
-      );
-    } else {
-      console.warn(
-        '[Blog] API returned an invalid response.'
-      );
-    }
+    blogs = extractBlogs(
+      await getBlogs()
+    );
   } catch (error) {
     console.error(
       '[Blog] Failed to load articles:',
@@ -596,60 +651,37 @@ export async function renderBlog() {
     );
   }
 
-  // ==========================================================
-  // PREVENT OUTDATED RENDER
-  // ==========================================================
-
   if (
-    requestId !== renderRequestId ||
-    window.location.pathname !== initialPath ||
-    i18n.getCurrentLanguage() !== currentLang
+    currentRequest !== renderRequestId ||
+    window.location.pathname !== path ||
+    i18n.getCurrentLanguage() !== lang
   ) {
     return;
   }
 
-  // ==========================================================
-  // RENDER PAGE
-  // ==========================================================
+  app.innerHTML = `
+    ${renderHeader()}
 
-  
-app.innerHTML = `
-  ${renderHeader()}
+    <main
+      class="mz-blog"
+      id="mazoryaBlog"
+      dir="${['fa', 'ar'].includes(lang) ? 'rtl' : 'ltr'}"
+    >
 
-  <main class="mz-blog" id="mazoryaBlog">
-    ${renderBannerSection()}
-    ${renderBlogGridSection(blogs, currentLang)}
-    ${renderCTASection(currentLang)}
-  </main>
+      ${renderBannerSection()}
 
-  ${renderFooter()}
-`;
+      ${renderBlogGridSection(blogs, lang)}
 
+      ${renderCTASection(lang)}
 
-  // ==========================================================
-  // INITIALIZE COMPONENTS
-  // ==========================================================
+    </main>
+
+    ${renderFooter()}
+  `;
 
   attachHeaderEvents();
   attachFooterEvents();
+  attachImageFallbacks(app);
 
-  /*
-   * Animation initialization is handled by:
-   *
-   * app.js
-   *   -> router.afterRender
-   *   -> reinitAnimations()
-   *
-   * Native navigation is preserved.
-   *
-   * Existing Webflow CSS classes are unchanged.
-   */
-
-  console.log(
-    '[Blog] Page rendered:',
-    {
-      language: currentLang,
-      articles: blogs.length
-    }
-  );
+  // Animations remain managed by app.js.
 }

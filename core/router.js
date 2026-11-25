@@ -276,20 +276,26 @@ class Router {
       };
     }
 
-    // BLOG DETAILS
-    if (
-      first === 'blog-details' &&
-      segments.length === 2 &&
-      segments[1]
-    ) {
-      return {
-        routeName: 'blogDetails',
-        params: {
-          id: segments[1]
-        },
-        lang
-      };
-    }
+   
+if (
+  first === 'blog-details' &&
+  segments.length === 2
+) {
+  if (!segments[1]) {
+    return notFound;
+  }
+
+  return {
+    routeName: 'blogDetails',
+
+    params: {
+      slug: segments[1]
+    },
+
+    lang
+  };
+}
+
 
     // PROFILE
     if (

@@ -1,1217 +1,1098 @@
+
 /**
-
- * Mazorya Group - Blog Details Page
-
+ * Mazorya Group — Blog Details
  * File: pages/blogDetails.js
-
- *
-
- * - Laravel API integration
-
- * - Blog details by ID
-
- * - Seven-language support
-
- * - RTL / LTR compatibility
-
- * - Safe article rendering
-
- * - Localized publication dates
-
- * - Safe Laravel Storage image URLs
-
- * - SPA navigation compatibility
-
+ * Slug + legacy ID support
+ * Seven languages / Light Editorial UI
  */
 
 import { i18n } from '../core/i18n.js';
 
 import {
-
   renderHeader,
-
   attachHeaderEvents
-
 } from '../components/header.js';
 
 import {
-
   renderFooter,
-
   attachFooterEvents
-
 } from '../components/footer.js';
 
-import { getBlogById, resolveMediaUrl } from '../core/api.js';
+import {
+  getBlogBySlug,
+  resolveMediaUrl
+} from '../core/api.js';
 
-// ============================================================
-
-// CONFIGURATION
-
-// ============================================================
+import '../assets/css/blogDetails.css';
 
 let renderRequestId = 0;
 
 // ============================================================
-
-// HTML HELPERS
-
+// UI TRANSLATIONS
 // ============================================================
 
-function escapeHtml(value) {
+const UI = {
+  en: {
+    back: 'Back to Blog',
+    journal: 'INSIGHTS / MAZORYA JOURNAL',
+    article: 'Article',
+    read: 'min read',
+    contents: 'Article Overview',
+    takeaways: 'Key Takeaways',
+    contactTitle: 'Have a project in mind?',
+    contactText: "Let's build a digital experience that makes an impact.",
+    contact: 'Contact Us',
+    notFound: 'Article Not Found',
+    notFoundDesc: 'This article is unavailable or could not be loaded.'
+  },
 
-  return String(value ?? '')
+  fa: {
+    back: 'بازگشت به بلاگ',
+    journal: 'مجله مزوریا / مطالب',
+    article: 'مقاله',
+    read: 'دقیقه مطالعه',
+    contents: 'فهرست مقاله',
+    takeaways: 'نکات کلیدی',
+    contactTitle: 'پروژه‌ای در ذهن دارید؟',
+    contactText: 'بیایید با هم تجربه‌ای دیجیتال و ماندگار بسازیم.',
+    contact: 'تماس با ما',
+    notFound: 'مقاله پیدا نشد',
+    notFoundDesc: 'این مقاله در دسترس نیست یا بارگذاری نشد.'
+  },
 
-    .replace(/&/g, '&amp;')
+  ar: {
+    back: 'العودة إلى المدونة',
+    journal: 'رؤى / مجلة مازوریا',
+    article: 'مقال',
+    read: 'دقائق للقراءة',
+    contents: 'محتويات المقال',
+    takeaways: 'أهم النقاط',
+    contactTitle: 'هل لديك مشروع؟',
+    contactText: 'لنصنع تجربة رقمية مؤثرة معًا.',
+    contact: 'اتصل بنا',
+    notFound: 'المقال غير موجود',
+    notFoundDesc: 'هذا المقال غير متاح.'
+  },
 
-    .replace(/</g, '&lt;')
+  fr: {
+    back: 'Retour au blog',
+    journal: 'INSIGHTS / JOURNAL MAZORYA',
+    article: 'Article',
+    read: 'min de lecture',
+    contents: 'Dans cet article',
+    takeaways: 'À retenir',
+    contactTitle: 'Un projet en tête ?',
+    contactText: 'Créons ensemble une expérience numérique remarquable.',
+    contact: 'Contactez-nous',
+    notFound: 'Article introuvable',
+    notFoundDesc: "Cet article n'est pas disponible."
+  },
 
-    .replace(/>/g, '&gt;')
+  de: {
+    back: 'Zurück zum Blog',
+    journal: 'INSIGHTS / MAZORYA JOURNAL',
+    article: 'Artikel',
+    read: 'Min. Lesezeit',
+    contents: 'Artikelübersicht',
+    takeaways: 'Wichtige Erkenntnisse',
+    contactTitle: 'Ein Projekt im Kopf?',
+    contactText: 'Gemeinsam schaffen wir digitale Erlebnisse mit Wirkung.',
+    contact: 'Kontakt',
+    notFound: 'Artikel nicht gefunden',
+    notFoundDesc: 'Dieser Artikel ist nicht verfügbar.'
+  },
 
-    .replace(/"/g, '&quot;')
+  es: {
+    back: 'Volver al blog',
+    journal: 'IDEAS / REVISTA MAZORYA',
+    article: 'Artículo',
+    read: 'min de lectura',
+    contents: 'Contenido del artículo',
+    takeaways: 'Conclusiones clave',
+    contactTitle: '¿Tienes un proyecto?',
+    contactText: 'Creemos juntos una experiencia digital memorable.',
+    contact: 'Contáctanos',
+    notFound: 'Artículo no encontrado',
+    notFoundDesc: 'Este artículo no está disponible.'
+  },
 
-    .replace(/'/g, '&#39;');
-
-}
-
-function tr(key, fallback = '') {
-
-  const value = i18n.t(key);
-
-  if (
-
-    value === undefined ||
-
-    value === null ||
-
-    value === '' ||
-
-    value === key
-
-  ) {
-
-    return fallback || key;
-
+  tr: {
+    back: 'Bloga dön',
+    journal: 'İÇGÖRÜLER / MAZORYA DERGİ',
+    article: 'Makale',
+    read: 'dk okuma',
+    contents: 'Makale İçeriği',
+    takeaways: 'Önemli Noktalar',
+    contactTitle: 'Aklınızda bir proje mi var?',
+    contactText: 'Birlikte etkileyici bir dijital deneyim oluşturalım.',
+    contact: 'İletişim',
+    notFound: 'Makale bulunamadı',
+    notFoundDesc: 'Bu makale şu anda mevcut değil.'
   }
+};
 
-  return String(value);
+// ============================================================
+// HELPERS
+// ============================================================
 
-}
-
-function t(key, fallback = '') {
-
-  return escapeHtml(tr(key, fallback));
-
-}
-
-function getText(value) {
-
-  if (
-
+function plain(value) {
+  return (
     typeof value === 'string' ||
-
     typeof value === 'number'
-
-  ) {
-
-    return String(value);
-
-  }
-
-  return '';
-
+  )
+    ? String(value)
+    : '';
 }
 
-// ============================================================
-
-// ARTICLE TEXT
-
-// ============================================================
-
-/**
-
- * Convert possible HTML content into plain text,
-
- * retaining paragraph breaks.
-
- *
-
- * We intentionally do not inject raw API HTML.
-
- */
+function esc(value) {
+  return String(value ?? '')
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#39;');
+}
 
 function toPlainText(value) {
+  const raw = plain(value).trim();
 
-  const raw = getText(value);
+  if (!raw) return '';
 
-  if (!raw.trim()) {
-
-    return '';
-
-  }
-
-  const withBreaks = raw
-
-    .replace(/<br\s*\/?>/gi, '\n')
-
+  const spaced = raw
+    .replace(/<br\s*\/?\s*>/gi, '\n')
     .replace(
-
-      /<\/?(?:p|div|h[1-6]|li|blockquote)[^>]*>/gi,
-
+      /<\/?(?:p|div|h[1-6]|li|blockquote|ul|ol)[^>]*>/gi,
       '\n\n'
-
     );
 
-  const documentFragment = new DOMParser()
+  const parsed = new DOMParser().parseFromString(
+    spaced,
+    'text/html'
+  );
 
-    .parseFromString(withBreaks, 'text/html');
+  parsed.querySelectorAll(
+    'script,style,template,iframe,object,svg'
+  ).forEach(node => node.remove());
 
-  // Remove script/style content rather than
-
-  // exposing its text to readers.
-
-  documentFragment.querySelectorAll(
-
-    'script, style, template'
-
-  ).forEach(element => element.remove());
-
-  return (documentFragment.body.textContent || '')
-
+  return (parsed.body.textContent || '')
     .replace(/\r\n?/g, '\n')
-
     .replace(/[ \t]+\n/g, '\n')
-
     .replace(/\n{3,}/g, '\n\n')
-
     .trim();
-
 }
 
-/**
+function renderParagraphs(value, cssClass = '') {
+  const valueText = toPlainText(value);
 
- * Render safe paragraphs while preserving
+  if (!valueText) return '';
 
- * single line breaks.
-
- */
-
-function renderTextParagraphs(value, className = '') {
-
-  const text = toPlainText(value);
-
-  if (!text) return '';
-
-  const paragraphs = text
-
+  return valueText
     .split(/\n{2,}/)
-
-    .filter(Boolean);
-
-  return paragraphs.map(paragraph => `
-
-    <p
-
-      ${className ? `class="${className}"` : ''}
-
-      style="white-space: pre-line;"
-
-    >${escapeHtml(paragraph)}</p>
-
-  `).join('');
-
+    .filter(Boolean)
+    .map(part => `
+      <p${cssClass ? ` class="${cssClass}"` : ''}>
+        ${esc(part)}
+      </p>
+    `)
+    .join('');
 }
 
 // ============================================================
-
-// MULTILINGUAL FIELDS
-
+// LOCALIZED FIELDS
 // ============================================================
 
-function getLocalizedField(item, field, lang) {
-
-  if (!item || typeof item !== 'object') {
-
+function localized(item, field, lang) {
+  if (
+    !item ||
+    typeof item !== 'object'
+  ) {
     return '';
-
   }
 
-  const localizedKey = `${field}_${lang}`;
+  const trans = item.translations;
 
-  const candidates = [
+  const fromArray = Array.isArray(trans)
+    ? trans.find(
+        row =>
+          row?.lang === lang ||
+          row?.locale === lang
+      )?.[field]
+    : undefined;
 
-    item[localizedKey],
-
-    item.translations?.[lang]?.[field],
-
+  const values = [
+    item[`${field}_${lang}`],
+    trans?.[lang]?.[field],
+    fromArray,
     item[field],
-
     item[`${field}_en`]
-
   ];
 
-  for (const value of candidates) {
-
-    const text = getText(value);
-
-    if (text.trim()) {
-
-      return text;
-
+  for (const value of values) {
+    if (plain(value).trim()) {
+      return plain(value);
     }
-
   }
 
   return '';
-
 }
 
-function getBlogTitle(blog, lang) {
-
+function titleOf(blog, lang, ui) {
   return (
-
-    getLocalizedField(blog, 'title', lang) ||
-
-    tr('untitled_blog', 'Untitled Article')
-
+    localized(blog, 'title', lang) ||
+    ui.article
   );
-
 }
 
-function getBlogDescription(blog, lang) {
+function sectionsOf(blog, lang) {
+  if (!Array.isArray(blog?.sections)) {
+    return [];
+  }
 
-  return (
+  return blog.sections
+    .filter(
+      row =>
+        row &&
+        typeof row === 'object' &&
+        !Array.isArray(row)
+    )
+    .map(row => ({
+      title: toPlainText(
+        localized(row, 'title', lang) ||
+        localized(row, 'name', lang)
+      ),
 
-    getLocalizedField(blog, 'description', lang) ||
+      body:
+        localized(row, 'description', lang) ||
+        localized(row, 'content', lang),
 
-    getLocalizedField(blog, 'excerpt', lang)
-
-  );
-
-}
-
-// ============================================================
-
-// IMAGE URL
-
-// ============================================================
-
-function resolveImageUrl(value) {
-  const url = resolveMediaUrl(value);
-  // The URL goes into an HTML src attribute.
-  return url ? escapeHtml(url) : null;
-}
-
-function getBlogImage(blog, key) {
-
-  const images = blog?.images;
-
-  if (key === 'image_1') {
-
-    return resolveImageUrl(
-
-      images?.image_1 ||
-
-      blog?.image_1 ||
-
-      blog?.cover_url ||
-
-      blog?.image_url
-
+      quote: toPlainText(
+        localized(row, 'quote', lang)
+      )
+    }))
+    .filter(row =>
+      row.title ||
+      toPlainText(row.body) ||
+      row.quote
     );
+}
 
+function takeawaysOf(blog, lang) {
+  let source =
+    blog?.takeaways ??
+    blog?.key_takeaways;
+
+  if (typeof source === 'string') {
+    try {
+      source = JSON.parse(source);
+    } catch {
+      return [];
+    }
   }
 
-  if (key === 'image_2') {
-
-    return resolveImageUrl(
-
-      images?.image_2 ||
-
-      blog?.image_2
-
-    );
-
+  if (!Array.isArray(source)) {
+    return [];
   }
 
-  return null;
+  return source
+    .map(row => {
+      const value =
+        typeof row === 'string'
+          ? row
+          : (
+              localized(row, 'text', lang) ||
+              localized(row, 'title', lang)
+            );
 
+      return toPlainText(value);
+    })
+    .filter(Boolean)
+    .slice(0, 6);
 }
 
 // ============================================================
-
-// DATE
-
+// IMAGES
 // ============================================================
 
-function formatBlogDate(blog, lang) {
+function imageUrl(value) {
+  const raw =
+    typeof value === 'string'
+      ? value
+      : (
+          value &&
+          typeof value === 'object'
+        )
+        ? (
+            value.url ??
+            value.path ??
+            value.src
+          )
+        : '';
 
-  const rawDate =
-
-    blog?.published_at ||
-
-    blog?.created_at ||
-
-    blog?.createdAt ||
-
-    blog?.date;
-
-  if (!rawDate) {
-
+  if (!plain(raw).trim()) {
     return '';
-
   }
-
-  const date = new Date(rawDate);
-
-  if (Number.isNaN(date.getTime())) {
-
-    return '';
-
-  }
-
-  const localeMap = {
-
-    en: 'en-US',
-
-    fa: 'fa-IR',
-
-    ar: 'ar-SA',
-
-    fr: 'fr-FR',
-
-    de: 'de-DE',
-
-    es: 'es-ES',
-
-    tr: 'tr-TR'
-
-  };
 
   try {
+    const resolved = resolveMediaUrl(raw);
 
-    return new Intl.DateTimeFormat(
+    if (!resolved) return '';
 
-      localeMap[lang] || 'en-US',
+    const url = new URL(
+      resolved,
+      window.location.origin
+    );
 
-      {
-
-        year: 'numeric',
-
-        month: 'long',
-
-        day: 'numeric'
-
-      }
-
-    ).format(date);
-
-  } catch {
-
-    return date.toLocaleDateString('en-US');
-
-  }
-
-}
-
-// ============================================================
-
-// BLOG NOT FOUND
-
-// ============================================================
-
-function renderBlogNotFound(lang) {
-
-  return `
-
-    <section class="blog-not-found-section">
-
-      <div
-
-        class="container-regular"
-
-        style="
-
-          text-align: center;
-
-          padding: 100px 20px;
-
-          min-height: 60vh;
-
-        "
-
-      >
-
-        <h1>
-
-          ${t(
-
-            'blog_not_found',
-
-            'Blog Post Not Found'
-
-          )}
-
-        </h1>
-
-        <p style="margin-top: 20px;">
-
-          ${t(
-
-            'blog_not_found_desc',
-
-            'The article could not be found or loaded.'
-
-          )}
-
-        </p>
-
-        <a
-
-          href="/${lang}/blog"
-
-          class="primary-button"
-
-          style="
-
-            display: inline-block;
-
-            margin-top: 30px;
-
-          "
-
-        >
-
-          ${t(
-
-            'back_to_blog',
-
-            'Back to Blog'
-
-          )}
-
-        </a>
-
-      </div>
-
-    </section>
-
-  `;
-
-}
-
-// ============================================================
-
-// BLOG HEADER
-
-// ============================================================
-
-function renderBlogHeader(blog, lang) {
-
-  const title = getBlogTitle(blog, lang);
-
-  const description = getBlogDescription(blog, lang);
-
-  const date = formatBlogDate(blog, lang);
-
-  return `
-
-    <div class="blog-details-header">
-
-      <h1 class="blog-details-title">
-
-        ${escapeHtml(title)}
-
-      </h1>
-
-      ${
-
-        date
-
-          ? `
-
-            <div class="blog-details-date">
-
-              ${escapeHtml(date)}
-
-            </div>
-
-          `
-
-          : ''
-
-      }
-
-      ${
-
-        description
-
-          ? `
-
-            <div class="blog-details-subtitle">
-
-              ${renderTextParagraphs(description)}
-
-            </div>
-
-          `
-
-          : ''
-
-      }
-
-    </div>
-
-  `;
-
-}
-
-// ============================================================
-
-// MAIN IMAGE
-
-// ============================================================
-
-function renderMainImage(blog, lang) {
-
-  const imageUrl = getBlogImage(
-
-    blog,
-
-    'image_1'
-
-  );
-
-  if (!imageUrl) {
-
-    return '';
-
-  }
-
-  const title = getBlogTitle(blog, lang);
-
-  return `
-
-    <div class="blog-details-image-main">
-
-      <img
-
-        src="${imageUrl}"
-
-        alt="${escapeHtml(title)}"
-
-        class="blog-details-image"
-
-        loading="eager"
-
-        decoding="async"
-
-      />
-
-    </div>
-
-  `;
-
-}
-
-// ============================================================
-
-// SECONDARY IMAGE
-
-// ============================================================
-
-function renderSecondaryImage(blog, lang) {
-
-  const imageUrl = getBlogImage(
-
-    blog,
-
-    'image_2'
-
-  );
-
-  if (!imageUrl) {
-
-    return '';
-
-  }
-
-  const title = getBlogTitle(blog, lang);
-
-  return `
-
-    <div class="blog-details-image-secondary">
-
-      <img
-
-        src="${imageUrl}"
-
-        alt="${escapeHtml(title)}"
-
-        class="blog-details-image"
-
-        loading="lazy"
-
-        decoding="async"
-
-      />
-
-    </div>
-
-  `;
-
-}
-
-// ============================================================
-
-// CONTENT SECTIONS
-
-// ============================================================
-
-function renderBlogSections(sections, lang) {
-
-  if (
-
-    !Array.isArray(sections) ||
-
-    !sections.length
-
-  ) {
-
-    return '';
-
-  }
-
-  return sections
-
-    .filter(section =>
-
-      section &&
-
-      typeof section === 'object' &&
-
-      !Array.isArray(section)
-
-    )
-
-    .map(section => {
-
-      const title = getLocalizedField(
-
-        section,
-
-        'title',
-
-        lang
-
-      ) || getLocalizedField(
-
-        section,
-
-        'name',
-
-        lang
-
-      );
-
-      const description = getLocalizedField(
-
-        section,
-
-        'description',
-
-        lang
-
-      ) || getLocalizedField(
-
-        section,
-
-        'content',
-
-        lang
-
-      );
-
-      if (!title && !description) {
-
-        return '';
-
-      }
-
-      return `
-
-        <div class="blog-details-block">
-
-          ${
-
-            title
-
-              ? `
-
-                <h2 class="blog-details-block-title">
-
-                  ${escapeHtml(title)}
-
-                </h2>
-
-              `
-
-              : ''
-
-          }
-
-          ${
-
-            description
-
-              ? `
-
-                <div class="blog-details-block-content">
-
-                  ${renderTextParagraphs(description)}
-
-                </div>
-
-              `
-
-              : ''
-
-          }
-
-        </div>
-
-      `;
-
-    })
-
-    .join('');
-
-}
-
-// ============================================================
-
-// BLOG MAIN CONTENT
-
-// ============================================================
-
-function renderBlogContent(blog, lang) {
-
-  const sections = Array.isArray(blog.sections)
-
-    ? blog.sections
-
-    : [];
-
-  const rtlClass =
-
-    lang === 'fa' || lang === 'ar'
-
-      ? 'rtl-blog'
-
+    return ['https:', 'http:'].includes(url.protocol)
+      ? url.href
       : '';
 
+  } catch {
+    return '';
+  }
+}
+
+function articleImages(blog) {
+  const cover = imageUrl(
+    blog?.images?.image_1 ??
+    blog?.image_1 ??
+    blog?.cover_url ??
+    blog?.image_url ??
+    blog?.image
+  );
+
+  const secondary = imageUrl(
+    blog?.images?.image_2 ??
+    blog?.image_2
+  );
+
+  return {
+    cover,
+    secondary:
+      secondary !== cover
+        ? secondary
+        : ''
+  };
+}
+
+// ============================================================
+// DATES AND READING TIME
+// ============================================================
+
+function dateOf(blog, lang) {
+  const raw = plain(
+    blog?.published_at ??
+    blog?.created_at ??
+    blog?.createdAt ??
+    blog?.date
+  ).trim();
+
+  if (!raw) return '';
+
+  const input =
+    /^\d{4}-\d{2}-\d{2}$/.test(raw)
+      ? `${raw}T12:00:00`
+      : raw;
+
+  const date = new Date(input);
+
+  if (!Number.isFinite(date.getTime())) {
+    return '';
+  }
+
+  const locale = {
+    en: 'en-US',
+    fa: 'fa-IR',
+    ar: 'ar-SA',
+    fr: 'fr-FR',
+    de: 'de-DE',
+    es: 'es-ES',
+    tr: 'tr-TR'
+  }[lang] || 'en-US';
+
+  try {
+    return new Intl.DateTimeFormat(locale, {
+      day: 'numeric',
+      month: 'long',
+      year: 'numeric'
+    }).format(date);
+  } catch {
+    return date.toLocaleDateString('en-US');
+  }
+}
+
+function readingMinutes(blog, sections, lang) {
+  const all = [
+    localized(blog, 'description', lang),
+    ...sections.flatMap(section => [
+      section.title,
+      section.body
+    ])
+  ]
+    .map(toPlainText)
+    .join(' ');
+
+  const words = all
+    .trim()
+    .split(/\s+/)
+    .filter(Boolean)
+    .length;
+
+  if (!words) return 0;
+
+  return Math.max(
+    1,
+    Math.ceil(words / 210)
+  );
+}
+
+function decoratedTitle(value) {
+  const parts = plain(value)
+    .trim()
+    .split(/\s+/)
+    .filter(Boolean);
+
+  if (parts.length < 2) {
+    return esc(value);
+  }
+
+  const last = parts.pop();
+
   return `
+    ${esc(parts.join(' '))}
+    <span>${esc(last)}</span>
+  `;
+}
 
-    <section class="blog-details-page ${rtlClass}">
+// ============================================================
+// HERO
+// ============================================================
 
-      <div class="w-layout-blockcontainer container-regular w-container">
+function hero(blog, lang, ui, sections, cover) {
+  const title = titleOf(blog, lang, ui);
 
-        ${renderBlogHeader(blog, lang)}
+  const date = dateOf(blog, lang);
 
-        ${renderMainImage(blog, lang)}
+  const minutes = readingMinutes(
+    blog,
+    sections,
+    lang
+  );
 
-        <div class="blog-details-content">
+  const excerpt =
+    localized(blog, 'excerpt', lang) ||
+    localized(blog, 'description', lang);
 
-          ${renderBlogSections(sections, lang)}
+  const excerptText = toPlainText(excerpt);
+
+  const summary = excerptText
+    .slice(0, 290)
+    .trim();
+
+  const category = toPlainText(
+    localized(blog, 'category_name', lang) ||
+    (
+      typeof blog?.category === 'string'
+        ? blog.category
+        : blog?.category?.name
+    )
+  );
+
+  return `
+    <section class="mzbd-hero">
+
+      <div class="mzbd-container">
+
+        <nav
+          class="mzbd-breadcrumb"
+          aria-label="Breadcrumb"
+        >
+
+          <a href="/${encodeURIComponent(lang)}/blog">
+            ${esc(ui.back)}
+          </a>
+
+          <span aria-hidden="true">/</span>
+
+          <span>${esc(ui.article)}</span>
+
+        </nav>
+
+        <div class="mzbd-kicker">
+
+          ${esc(ui.journal)}
+
+          ${
+            category
+              ? `
+                <span>/ ${esc(category)}</span>
+              `
+              : ''
+          }
 
         </div>
 
-        ${renderSecondaryImage(blog, lang)}
+        <h1 class="mzbd-title">
+          ${decoratedTitle(title)}
+        </h1>
+
+        <div class="mzbd-meta">
+
+          ${
+            date
+              ? `
+                <span class="mzbd-meta-item">
+                  <span aria-hidden="true">▦</span>
+                  ${esc(date)}
+                </span>
+              `
+              : ''
+          }
+
+          ${
+            minutes
+              ? `
+                <span class="mzbd-reading-time">
+                  <span aria-hidden="true">◷</span>
+                  ${minutes} ${esc(ui.read)}
+                </span>
+              `
+              : ''
+          }
+
+        </div>
+
+        ${
+          summary
+            ? `
+              <p class="mzbd-subtitle">
+                ${esc(summary)}
+                ${excerptText.length > 290 ? '…' : ''}
+              </p>
+            `
+            : ''
+        }
+
+        ${
+          cover
+            ? `
+              <figure class="mzbd-cover">
+
+                <img
+                  src="${esc(cover)}"
+                  alt="${esc(title)}"
+                  loading="eager"
+                  decoding="async"
+                  fetchpriority="high"
+                >
+
+              </figure>
+            `
+            : ''
+        }
 
       </div>
 
     </section>
-
   `;
-
 }
 
 // ============================================================
-
-// CTA
-
+// SECOND IMAGE
 // ============================================================
 
-function renderCTASection(lang) {
+function secondImage(url, title) {
+  if (!url) return '';
 
   return `
+    <figure class="mzbd-inline-image">
 
-    <section class="cta-section">
+      <img
+        src="${esc(url)}"
+        alt="${esc(title)}"
+        loading="lazy"
+        decoding="async"
+      >
 
-      <div class="w-layout-blockcontainer container-regular w-container">
+    </figure>
+  `;
+}
 
-        <div class="cta-image-wrap">
+// ============================================================
+// CONTENT
+// ============================================================
 
-          <img
+function content(
+  blog,
+  lang,
+  ui,
+  sections,
+  secondary
+) {
+  const articleDescription = localized(
+    blog,
+    'description',
+    lang
+  );
 
-            src="/assets/img/cta-image.jpg"
+  const articleQuote = localized(
+    blog,
+    'quote',
+    lang
+  );
 
-            loading="lazy"
+  const secondaryAfter =
+    sections.length >= 3
+      ? 1
+      : sections.length - 1;
 
-            decoding="async"
+  const sectionsHtml = sections
+    .map((section, index) => `
+      <section
+        class="mzbd-article-section"
+        id="mzbd-section-${index + 1}"
+      >
 
-            alt=""
+        ${
+          section.title
+            ? `
+              <h2>${esc(section.title)}</h2>
+            `
+            : ''
+        }
 
-            class="cta-image"
+        ${renderParagraphs(section.body)}
 
-          />
+        ${
+          section.quote
+            ? `
+              <blockquote class="mzbd-quote">
+                “${esc(section.quote)}”
+              </blockquote>
+            `
+            : ''
+        }
 
-          <div class="cta-title-area">
+      </section>
 
-            <div class="cta-title-wrap">
+      ${
+        secondary && index === secondaryAfter
+          ? secondImage(
+              secondary,
+              titleOf(blog, lang, ui)
+            )
+          : ''
+      }
+    `)
+    .join('');
 
-              <h2 class="section-title text-white">
+  return `
+    <article
+      class="mzbd-article"
+      id="mzbd-article"
+    >
 
-                ${t(
+      ${
+        articleDescription
+          ? `
+            <div class="mzbd-article-intro">
+              ${renderParagraphs(articleDescription)}
+            </div>
+          `
+          : ''
+      }
 
-                  'cta_blog_details',
+      ${
+        articleQuote
+          ? `
+            <blockquote class="mzbd-quote">
+              “${esc(toPlainText(articleQuote))}”
+            </blockquote>
+          `
+          : ''
+      }
 
-                  'Enjoyed this article?'
+      ${sectionsHtml}
 
-                )}
+      ${
+        secondary && !sections.length
+          ? secondImage(
+              secondary,
+              titleOf(blog, lang, ui)
+            )
+          : ''
+      }
 
+    </article>
+  `;
+}
+
+// ============================================================
+// SIDEBAR
+// ============================================================
+
+function sidebar(blog, lang, ui, sections) {
+  const named = sections
+    .map((section, index) => ({
+      ...section,
+      index
+    }))
+    .filter(section => section.title);
+
+  const takeaways = takeawaysOf(blog, lang);
+
+  if (
+    !named.length &&
+    !takeaways.length
+  ) {
+    return '';
+  }
+
+  return `
+    <aside
+      class="mzbd-sidebar"
+      aria-label="${esc(ui.contents)}"
+    >
+
+      ${
+        named.length
+          ? `
+            <nav
+              class="mzbd-side-card mzbd-toc"
+              aria-label="${esc(ui.contents)}"
+            >
+
+              <h2>
+                <span aria-hidden="true">▤</span>
+                ${esc(ui.contents)}
               </h2>
 
-              <div class="cta-button-wrap">
+              <ol>
 
-                <a
+                ${named.map((section, index) => `
+                  <li>
 
-                  href="/${lang}/contact"
+                    <a
+                      href="#mzbd-section-${section.index + 1}"
+                    >
 
-                  class="cta-button"
+                      <span>
+                        ${String(index + 1).padStart(2, '0')}
+                      </span>
 
-                  data-route="contact"
+                      <span>
+                        ${esc(section.title)}
+                      </span>
 
-                >
+                    </a>
 
-                  ${t(
+                  </li>
+                `).join('')}
 
-                    'get_in_touch',
+              </ol>
 
-                    'Get in Touch'
+            </nav>
+          `
+          : ''
+      }
 
-                  )}
+      ${
+        takeaways.length
+          ? `
+            <section
+              class="mzbd-side-card mzbd-takeaways"
+            >
 
-                </a>
+              <h2>
+                <span aria-hidden="true">✦</span>
+                ${esc(ui.takeaways)}
+              </h2>
 
-              </div>
+              <ul>
 
-            </div>
+                ${takeaways.map(item => `
+                  <li>
+
+                    <span aria-hidden="true">✓</span>
+
+                    <p>${esc(item)}</p>
+
+                  </li>
+                `).join('')}
+
+              </ul>
+
+            </section>
+          `
+          : ''
+      }
+
+    </aside>
+  `;
+}
+
+// ============================================================
+// CTA
+// ============================================================
+
+function contactSection(lang, ui) {
+  return `
+    <section class="mzbd-contact-section">
+
+      <div class="mzbd-container">
+
+        <div class="mzbd-contact-card">
+
+          <div>
+
+            <h2>${esc(ui.contactTitle)}</h2>
+
+            <p>${esc(ui.contactText)}</p>
 
           </div>
 
-          <div class="cta-bg-wrap"></div>
+          <a
+            href="/${encodeURIComponent(lang)}/contact"
+            class="mzbd-contact-button"
+            data-route="contact"
+          >
+            ${esc(ui.contact)}
+
+            <span aria-hidden="true">↗</span>
+          </a>
 
         </div>
 
       </div>
 
     </section>
-
   `;
-
 }
 
 // ============================================================
-
-// PAGE RENDER HELPER
-
+// NOT FOUND
 // ============================================================
 
-function renderPage(content) {
+function statusSection(lang, ui) {
+  return `
+    <section class="mzbd-not-found mzbd-container">
 
+      <span class="mzbd-kicker">
+        MAZORYA / BLOG
+      </span>
+
+      <h1>${esc(ui.notFound)}</h1>
+
+      <p>${esc(ui.notFoundDesc)}</p>
+
+      <a
+        href="/${encodeURIComponent(lang)}/blog"
+        class="mzbd-contact-button"
+      >
+        ${esc(ui.back)} ↗
+      </a>
+
+    </section>
+  `;
+}
+
+// ============================================================
+// PAGE LAYOUT
+// ============================================================
+
+function renderPage(html, lang) {
   const app = document.getElementById('app');
 
   if (!app) return;
 
-  app.innerHTML = `
+  const dir =
+    ['fa', 'ar'].includes(lang)
+      ? 'rtl'
+      : 'ltr';
 
+  app.innerHTML = `
     ${renderHeader()}
 
     <main
-
-      class="mz-blog-details"
-
       id="mazoryaBlogDetails"
-
+      class="mz-blog-details mzbd-page"
+      dir="${dir}"
     >
-
-      ${content}
-
+      ${html}
     </main>
 
     ${renderFooter()}
-
   `;
 
   attachHeaderEvents();
-
   attachFooterEvents();
-
 }
 
 // ============================================================
-
-// VALIDATE ACTIVE RENDER
-
+// SLUG / LEGACY ID
 // ============================================================
 
-function isCurrentRender(requestId, path, search, lang) {
-
-  return (
-
-    requestId === renderRequestId &&
-
-    window.location.pathname === path &&
-
-    window.location.search === search &&
-
-    i18n.getCurrentLanguage() === lang
-
+function identifierOf(params = {}) {
+  const query = new URLSearchParams(
+    window.location.search
   );
 
+  const fromParams =
+    params.slug ??
+    params.id ??
+    params.blogId;
+
+  const fromQuery =
+    query.get('slug') ??
+    query.get('id');
+
+  let identifier = plain(
+    fromParams ?? fromQuery
+  ).trim();
+
+  if (!identifier && !fromQuery) {
+    const segments = window.location.pathname
+      .split('/')
+      .filter(Boolean);
+
+    const last = segments.at(-1);
+
+    if (
+      segments.length >= 2 &&
+      last !== 'blog-details'
+    ) {
+      try {
+        identifier = decodeURIComponent(
+          last
+        ).trim();
+      } catch {
+        return '';
+      }
+    }
+  }
+
+  return identifier;
 }
 
 // ============================================================
-
 // MAIN RENDER
-
 // ============================================================
 
 export async function renderBlogDetails(params = {}) {
-
-  const app = document.getElementById('app');
-
-  if (!app) {
-
-    console.error(
-
-      '[BlogDetails] #app element not found.'
-
-    );
-
+  if (!document.getElementById('app')) {
     return;
-
   }
 
-  const currentLang = i18n.getCurrentLanguage();
+  const lang = i18n.getCurrentLanguage();
 
-  const initialPath = window.location.pathname;
+  const ui = UI[lang] || UI.en;
 
-  const initialSearch = window.location.search;
+  const path = window.location.pathname;
 
-  const requestId = ++renderRequestId;
+  const search = window.location.search;
 
-  // ==========================================================
+  const thisRequest = ++renderRequestId;
 
-  // GET ARTICLE ID
-
-  // ==========================================================
-
-  let blogId = params?.id;
-
-  // Legacy URLs: /blog-details?id=12
+  const identifier = identifierOf(params);
 
   if (
-
-    blogId === undefined ||
-
-    blogId === null ||
-
-    String(blogId).trim() === ''
-
+    !identifier ||
+    identifier.includes('/') ||
+    identifier.includes('\\')
   ) {
-
-    const searchParams = new URLSearchParams(
-
-      window.location.search
-
-    );
-
-    blogId = searchParams.get('id');
-
-  }
-
-  if (
-
-    blogId === undefined ||
-
-    blogId === null ||
-
-    String(blogId).trim() === ''
-
-  ) {
-
-    window.location.assign(
-
-      `/${currentLang}/blog`
-
-    );
-
-    return;
-
-  }
-
-  blogId = String(blogId).trim();
-
-  // Keep ID as a single URL segment.
-
-  // The actual request is made by core/api.js.
-
-  if (
-
-    blogId.includes('/') ||
-
-    blogId.includes('\\')
-
-  ) {
-
     renderPage(
-
-      renderBlogNotFound(currentLang)
-
+      statusSection(lang, ui),
+      lang
     );
 
     return;
-
   }
-
-  // ==========================================================
-
-  // FETCH ARTICLE
-
-  // ==========================================================
 
   let blog = null;
 
   try {
-
-    blog = await getBlogById(blogId);
-
-  } catch (error) {
-
-    console.error(
-
-      '[BlogDetails] API request failed:',
-
-      error
-
+    const response = await getBlogBySlug(
+      identifier
     );
 
-  }
-
-  // ==========================================================
-
-  // IGNORE OUTDATED REQUEST
-
-  // ==========================================================
-
-  if (
-
-    !isCurrentRender(
-
-      requestId,
-
-      initialPath,
-
-      initialSearch,
-
-      currentLang
-
-    )
-
-  ) {
-
-    return;
-
-  }
-
-  // ==========================================================
-
-  // ARTICLE NOT FOUND
-
-  // ==========================================================
-
-  if (
-
-    !blog ||
-
-    typeof blog !== 'object' ||
-
-    Array.isArray(blog)
-
-  ) {
-
-    renderPage(
-
-      renderBlogNotFound(currentLang)
-
-    );
-
-    console.warn(
-
-      '[BlogDetails] Article unavailable:',
-
-      blogId
-
-    );
-
-    return;
-
-  }
-
-  // ==========================================================
-
-  // RENDER ARTICLE
-
-  // ==========================================================
-
-  renderPage(`
-
-    ${renderBlogContent(blog, currentLang)}
-
-    ${renderCTASection(currentLang)}
-
-  `);
-
-  /*
-
-   * Animations are managed by app.js
-
-   * after the route finishes rendering.
-
-   *
-
-   * No duplicate IntersectionObservers
-
-   * or navigation listeners are added here.
-
-   */
-
-  console.log(
-
-    '[BlogDetails] Article rendered:',
-
-    {
-
-      id: blogId,
-
-      language: currentLang,
-
-      title: getBlogTitle(blog, currentLang)
-
+    if (response?.status !== false) {
+      blog = (
+        response?.data &&
+        typeof response.data === 'object' &&
+        !Array.isArray(response.data)
+      )
+        ? response.data
+        : response;
     }
 
-  );
+  } catch (error) {
+    console.error(
+      '[BlogDetails] API request failed:',
+      error
+    );
+  }
 
+  // Ignore stale SPA responses.
+
+  if (
+    thisRequest !== renderRequestId ||
+    window.location.pathname !== path ||
+    window.location.search !== search ||
+    i18n.getCurrentLanguage() !== lang
+  ) {
+    return;
+  }
+
+  if (
+    !blog ||
+    typeof blog !== 'object' ||
+    Array.isArray(blog) ||
+    !localized(blog, 'title', lang)
+  ) {
+    renderPage(
+      statusSection(lang, ui),
+      lang
+    );
+
+    return;
+  }
+
+  const sections = sectionsOf(blog, lang);
+
+  const { cover, secondary } = articleImages(blog);
+
+  document.title =
+    `${titleOf(blog, lang, ui)} | Mazorya Group`;
+
+  const hasSidebar =
+    sections.some(section => section.title) ||
+    takeawaysOf(blog, lang).length > 0;
+
+  renderPage(`
+    ${hero(blog, lang, ui, sections, cover)}
+
+    <div
+      class="mzbd-body mzbd-container ${
+        hasSidebar ? 'mzbd-has-sidebar' : ''
+      }"
+    >
+
+      ${content(
+        blog,
+        lang,
+        ui,
+        sections,
+        secondary
+      )}
+
+      ${sidebar(
+        blog,
+        lang,
+        ui,
+        sections
+      )}
+
+    </div>
+
+    ${contactSection(lang, ui)}
+  `, lang);
 }

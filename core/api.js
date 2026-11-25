@@ -4,8 +4,7 @@
  * File: core/api.js
  *
  * Laravel API integration
- * Authentication
- * Profile management
+ * Authentication / Profile
  * Projects / Blogs / Services
  * Media URL resolver
  * Public API cache
@@ -57,30 +56,11 @@ const API_BASE = normalizeApiBase(
 );
 
 const REQUEST_TIMEOUT = 15000;
-
 const PUBLIC_CACHE_TIME = 5 * 60 * 1000;
 
 // ============================================================
 // MEDIA URL RESOLVER
 // ============================================================
-
-/**
- * Resolve frontend assets and Laravel media URLs.
- *
- * Examples:
- *
- * https://cdn.example.com/photo.jpg
- *   -> unchanged
- *
- * /assets/img/3.png
- *   -> frontend domain
- *
- * storage/blogs/photo.jpg
- *   -> backend domain
- *
- * blogs/photo.jpg
- *   -> backend /storage/blogs/photo.jpg
- */
 
 export function resolveMediaUrl(value) {
   if (typeof value !== 'string') {
@@ -98,7 +78,6 @@ export function resolveMediaUrl(value) {
   }
 
   try {
-    // Absolute URLs
     if (/^[a-z][a-z0-9+.-]*:/i.test(path)) {
       const absolute = new URL(path);
 
@@ -111,7 +90,6 @@ export function resolveMediaUrl(value) {
 
     const cleanPath = path.replace(/^\/+/, '');
 
-    // Local frontend assets
     if (/^assets\//i.test(cleanPath)) {
       return new URL(
         `/${cleanPath}`,
@@ -124,7 +102,6 @@ export function resolveMediaUrl(value) {
       window.location.origin
     ).origin;
 
-    // Root-relative backend paths
     if (path.startsWith('/')) {
       return new URL(
         path,
@@ -132,7 +109,6 @@ export function resolveMediaUrl(value) {
       ).href;
     }
 
-    // Laravel storage / uploads
     if (/^(storage|uploads)\//i.test(cleanPath)) {
       return new URL(
         `/${cleanPath}`,
@@ -140,7 +116,6 @@ export function resolveMediaUrl(value) {
       ).href;
     }
 
-    // Filament public disk relative path
     return new URL(
       `/storage/${cleanPath}`,
       backendOrigin
@@ -273,24 +248,14 @@ export function setAuthToken(
       : 7200;
 
   _authToken = token;
-
-  _tokenExpiry =
-    Date.now() + duration * 1000;
+  _tokenExpiry = Date.now() + duration * 1000;
 
   storageSet('auth_token', token);
-
-  storageSet(
-    'token_expires_at',
-    _tokenExpiry
-  );
+  storageSet('token_expires_at', _tokenExpiry);
 
   if (refreshToken) {
     _refreshToken = refreshToken;
-
-    storageSet(
-      'refresh_token',
-      refreshToken
-    );
+    storageSet('refresh_token', refreshToken);
   }
 
   return true;
@@ -405,15 +370,11 @@ function isSuccessResponse(data) {
 }
 
 function getErrorMessage(data) {
-  if (
-    typeof data?.message === 'string'
-  ) {
+  if (typeof data?.message === 'string') {
     return data.message;
   }
 
-  if (
-    typeof data?.error === 'string'
-  ) {
+  if (typeof data?.error === 'string') {
     return data.error;
   }
 
@@ -510,7 +471,6 @@ async function fetchWithRetry(
     options.method || 'GET'
   ).toUpperCase();
 
-  // Never retry non-idempotent requests
   const attempts =
     ['GET', 'HEAD'].includes(method)
       ? Math.max(1, retries)
@@ -591,9 +551,7 @@ export async function refreshAuthToken() {
       }
 
       const result = await readJSON(response);
-
-      const payload =
-        result?.data || result;
+      const payload = result?.data || result;
 
       if (
         isSuccessResponse(result) &&
@@ -608,9 +566,7 @@ export async function refreshAuthToken() {
         return true;
       }
 
-      throw new Error(
-        'Invalid refresh response'
-      );
+      throw new Error('Invalid refresh response');
 
     } catch (error) {
       console.error(
@@ -626,7 +582,6 @@ export async function refreshAuthToken() {
 
   try {
     return await refreshPromise;
-
   } finally {
     refreshPromise = null;
   }
@@ -647,10 +602,7 @@ async function fetchWithAuth(
     options.headers || {}
   );
 
-  headers.set(
-    'Accept',
-    'application/json'
-  );
+  headers.set('Accept', 'application/json');
 
   headers.set(
     'X-Requested-With',
@@ -686,9 +638,7 @@ async function fetchWithAuth(
     }
 
     if (!token) {
-      throw new Error(
-        'Not authenticated'
-      );
+      throw new Error('Not authenticated');
     }
 
     headers.set(
@@ -709,21 +659,16 @@ async function fetchWithAuth(
     response.status === 401 &&
     requireAuth
   ) {
-    const refreshed =
-      await refreshAuthToken();
+    const refreshed = await refreshAuthToken();
 
     if (!refreshed) {
-      throw new Error(
-        'Session expired'
-      );
+      throw new Error('Session expired');
     }
 
     const newToken = getAuthToken();
 
     if (!newToken) {
-      throw new Error(
-        'Session expired'
-      );
+      throw new Error('Session expired');
     }
 
     headers.set(
@@ -946,10 +891,7 @@ export async function uploadAvatar(file) {
 
   const formData = new FormData();
 
-  formData.append(
-    'avatar',
-    file
-  );
+  formData.append('avatar', file);
 
   try {
     const response = await fetchWithAuth(
@@ -1248,10 +1190,7 @@ export async function uploadInvoice(
     invoiceNumber
   );
 
-  formData.append(
-    'file',
-    file
-  );
+  formData.append('file', file);
 
   try {
     const response = await fetchWithAuth(
@@ -1366,12 +1305,10 @@ async function fetchPublicAPI(
 // ============================================================
 
 function extractArray(response) {
-  // Standard Laravel response
   if (Array.isArray(response?.data)) {
     return response.data;
   }
 
-  // Laravel paginated response
   if (Array.isArray(response?.data?.data)) {
     return response.data.data;
   }
@@ -1379,11 +1316,29 @@ function extractArray(response) {
   return [];
 }
 
+/**
+ * Filter inactive records.
+ *
+ * Supports:
+ * false, 0, "0", "false"
+ */
 function onlyActive(items) {
-  return items.filter(item => (
-    item?.is_active !== false &&
-    item?.is_active !== 0
-  ));
+  return items.filter(item => {
+    if (
+      !item ||
+      typeof item !== 'object' ||
+      Array.isArray(item)
+    ) {
+      return false;
+    }
+
+    return ![
+      false,
+      0,
+      '0',
+      'false'
+    ].includes(item.is_active);
+  });
 }
 
 function hasArrayData(response) {
@@ -1426,21 +1381,14 @@ export async function loadInitialData() {
         '/projects',
         { limit: 6 }
       ),
-
       fetchPublicAPI(
         '/blogs',
         { limit: 4 }
       ),
-
-      fetchPublicAPI(
-        '/Services'
-      )
+      fetchPublicAPI('/Services')
     ]);
 
-    // Ignore results from an outdated language
-    if (
-      lang !== i18n.getCurrentLanguage()
-    ) {
+    if (lang !== i18n.getCurrentLanguage()) {
       return null;
     }
 
@@ -1456,20 +1404,9 @@ export async function loadInitialData() {
       servicesResult
     );
 
-    appStore.setData(
-      'projects',
-      projects
-    );
-
-    appStore.setData(
-      'blogs',
-      blogs
-    );
-
-    appStore.setData(
-      'services',
-      services
-    );
+    appStore.setData('projects', projects);
+    appStore.setData('blogs', blogs);
+    appStore.setData('services', services);
 
     const successful =
       projectsResult !== null &&
@@ -1519,9 +1456,7 @@ export async function getProjects(limit = null) {
   );
 }
 
-export async function getProjectBySlug(
-  identifier
-) {
+export async function getProjectBySlug(identifier) {
   const value = String(
     identifier ?? ''
   ).trim();
@@ -1544,7 +1479,6 @@ export async function getProjectBySlug(
   const encodedId = encodeURIComponent(value);
   const encodedLang = encodeURIComponent(lang);
 
-  // Original route first, then ID route on 404
   const endpoints = [
     `/projects/${encodedLang}/${encodedId}`,
     `/projects/${encodedId}`
@@ -1631,6 +1565,11 @@ export async function getProjectBySlug(
 // BLOGS
 // ============================================================
 
+/**
+ * Get active blogs.
+ *
+ * GET /blogs?lang=en
+ */
 export async function getBlogs(limit = null) {
   const params =
     limit != null
@@ -1647,9 +1586,26 @@ export async function getBlogs(limit = null) {
   );
 }
 
+/**
+ * Get blog details by ID.
+ *
+ * GET /blogs/{id}
+ *
+ * Legacy numeric URLs supported.
+ */
 export async function getBlogById(id) {
+  const value = String(id ?? '').trim();
+
+  if (
+    !value ||
+    value.includes('/') ||
+    value.includes('\\')
+  ) {
+    return null;
+  }
+
   const endpoint =
-    `/blogs/${encodeURIComponent(id)}`;
+    `/blogs/${encodeURIComponent(value)}`;
 
   try {
     const response = await fetchWithRetry(
@@ -1667,7 +1623,33 @@ export async function getBlogById(id) {
 
     const result = await readJSON(response);
 
-    return result?.data || null;
+    if (result?.status === false) {
+      return null;
+    }
+
+    const blog = result?.data;
+
+    if (
+      !blog ||
+      typeof blog !== 'object' ||
+      Array.isArray(blog)
+    ) {
+      return null;
+    }
+
+    // Prevent viewing explicitly inactive blogs.
+    if (
+      [
+        false,
+        0,
+        '0',
+        'false'
+      ].includes(blog.is_active)
+    ) {
+      return null;
+    }
+
+    return blog;
 
   } catch (error) {
     console.error(
@@ -1678,6 +1660,112 @@ export async function getBlogById(id) {
     return null;
   }
 }
+
+
+/**
+ * Get blog details by Slug or legacy ID.
+ *
+ * Current Laravel routes:
+ *
+ * GET /blogs/{lang}/{slug}
+ * GET /blogs/{id}
+ *
+ * Examples:
+ * /blogs/en/tst
+ * /blogs/fa/my-blog
+ * /blogs/1
+ */
+export async function getBlogBySlug(identifier) {
+  const value = String(identifier ?? '').trim();
+
+  if (
+    !value ||
+    value.includes('/') ||
+    value.includes('\\')
+  ) {
+    console.warn(
+      '[API] Invalid blog identifier:',
+      identifier
+    );
+
+    return null;
+  }
+
+  // Keep old numeric blog URLs working.
+  if (/^\d+$/.test(value)) {
+    return getBlogById(value);
+  }
+
+  const lang = i18n.getCurrentLanguage();
+
+  const endpoint =
+    `/blogs/${encodeURIComponent(lang)}/` +
+    encodeURIComponent(value);
+
+  const url = `${API_BASE}${endpoint}`;
+
+  try {
+    const response = await fetchWithRetry(
+      url,
+      {
+        method: 'GET',
+        headers: {
+          Accept: 'application/json'
+        }
+      },
+      1
+    );
+
+    if (!response.ok) {
+      console.warn(
+        '[API] Blog details request failed:',
+        response.status,
+        url
+      );
+
+      return null;
+    }
+
+    const result = await readJSON(response);
+
+    if (result?.status === false) {
+      return null;
+    }
+
+    const blog =
+      result?.data?.blog ??
+      result?.data ??
+      result?.blog ??
+      null;
+
+    if (
+      !blog ||
+      typeof blog !== 'object' ||
+      Array.isArray(blog)
+    ) {
+      return null;
+    }
+
+    if (
+      [false, 0, '0', 'false'].includes(
+        blog.is_active
+      )
+    ) {
+      return null;
+    }
+
+    return blog;
+
+  } catch (error) {
+    console.error(
+      '[API] Blog details by slug error:',
+      error
+    );
+
+    return null;
+  }
+}
+
 
 // ============================================================
 // SERVICES
@@ -1730,9 +1818,7 @@ export async function getServiceBySlug(slug) {
 // CONTACT FORM
 // ============================================================
 
-export async function submitContactForm(
-  formData
-) {
+export async function submitContactForm(formData) {
   try {
     const response = await fetchWithRetry(
       `${API_BASE}/messages`,
@@ -1777,9 +1863,7 @@ export async function submitContactForm(
 // NEWSLETTER
 // ============================================================
 
-export async function subscribeNewsletter(
-  email
-) {
+export async function subscribeNewsletter(email) {
   const lang = i18n.getCurrentLanguage();
 
   try {
@@ -1868,6 +1952,7 @@ export default {
   getProjectBySlug,
   getBlogs,
   getBlogById,
+  getBlogBySlug,
   getServices,
   getServiceBySlug,
   submitContactForm,

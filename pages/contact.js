@@ -33,8 +33,8 @@ import {
 // ============================================================
 
 const CONTACT_INFO = {
-  phoneDisplay: '+1 626 756 45 09',
-  phoneHref: '+16267564509',
+  phoneDisplay: '+1 956 666 18 52',
+  phoneHref: '+1956661852',
   email: 'info@mazoryagroup.com'
 };
 
