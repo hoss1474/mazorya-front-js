@@ -1,366 +1,974 @@
 
-/* =========================================================
-   MAZORYA GROUP — SERVICES LIST
-   File: public/assets/css/services.css
-   Scope: .mz-services
-   Depends on: main.css
-   ========================================================= */
+/**
+ * Mazorya Group — Services Listing
+ * File: assets/css/services.css
+ * Scoped styling compatible with Webflow
+ */
 
-.mz-services {
-  --service-accent: var(--color-primary, #ff6b6b);
-  --service-dark: var(--color-dark, #1f1f2e);
-  --service-muted: var(--text-secondary, #555562);
-  --service-line: var(--border-light, #e5e5e9);
+#mazoryaServices {
+  --mzsv-ink: #101625;
+  --mzsv-copy: #565d70;
+  --mzsv-coral: #ff5664;
+  --mzsv-coral-strong: #f63d52;
+  --mzsv-border: #e3e4e9;
 
-  width: 100%;
-  min-width: 0;
-  background: var(--bg-main, #fff);
-  color: var(--text-primary, #1f1f2e);
-  font-family: var(--font-body);
+  background: #fff;
+  color: var(--mzsv-ink);
+  min-height: 70vh;
+  isolation: isolate;
   overflow: clip;
+  font-family: inherit;
 }
 
-/* 01 — BANNER */
+#mazoryaServices *,
+#mazoryaServices *::before,
+#mazoryaServices *::after {
+  box-sizing: border-box;
+}
 
-.mz-services .services-banner {
-  padding: 120px 0 38px;
+#mazoryaServices a {
+  text-decoration: none;
+}
+
+#mazoryaServices a:focus-visible {
+  outline: 2px solid var(--mzsv-coral);
+  outline-offset: 4px;
+}
+
+#mazoryaServices .mzsv-container {
+  width: min(1160px, calc(100% - 88px));
+  max-width: 1160px;
+  padding: 0;
+  margin-inline: auto;
+}
+
+/* ==========================================
+   HERO
+========================================== */
+
+#mazoryaServices .mzsv-hero {
+  position: relative;
+  padding: 48px 0 33px;
+  isolation: isolate;
+
   background:
     radial-gradient(
-      circle at 85% 0%,
-      rgba(255, 107, 107, .08),
-      transparent 38%
+      ellipse 23% 83% at 98% 1%,
+      rgba(255, 90, 107, .17),
+      transparent 85%
+    ),
+    radial-gradient(
+      ellipse 32% 70% at 62% 65%,
+      rgba(255, 176, 187, .16),
+      transparent 80%
     ),
     #fff;
 }
 
-.mz-services .banner-title-wrap {
-  max-width: 790px;
-  margin-inline: auto;
-  text-align: center;
-}
-
-.mz-services .banner-title {
-  margin: 0 0 16px;
-  color: var(--service-dark);
-  font-family: var(--font-heading);
-  font-size: clamp(34px, 4.3vw, 54px);
-  font-weight: 700;
-  line-height: 1.2;
-  letter-spacing: -.035em;
-}
-
-.mz-services .banner-title-wrap p {
-  max-width: 650px;
-  margin: 0 auto;
-  color: var(--service-muted);
-  font-size: 15px;
-  line-height: 1.9;
-}
-
-/* 02 — SERVICE CARDS */
-
-.mz-services .services-section {
-  padding: 30px 0 85px;
-}
-
-.mz-services .services-grid {
+#mazoryaServices .mzsv-hero-layout {
+  min-height: 250px;
   display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: 20px;
-  align-items: stretch;
+
+  grid-template-columns:
+    minmax(0, 1.55fr)
+    minmax(220px, .78fr);
+
+  gap: 25px;
+  align-items: center;
 }
 
-.mz-services .service-card-item {
-  min-width: 0;
-  height: 100%;
+#mazoryaServices .mzsv-hero-copy {
+  position: relative;
+  z-index: 1;
 }
 
-.mz-services .service-card-inner {
+#mazoryaServices .mzsv-eyebrow {
   display: flex;
-  flex-direction: column;
-  align-items: flex-start;
+  gap: 16px;
+  align-items: center;
 
-  height: 100%;
-  min-height: 265px;
-  padding: 29px 27px;
+  margin: 0 0 27px;
 
-  border: 1px solid var(--service-line);
-  border-radius: 15px;
-  background: #fff;
-
-  box-shadow: 0 5px 22px rgba(31, 31, 46, .035);
-
-  transition:
-    border-color .25s ease,
-    box-shadow .25s ease,
-    transform .25s ease;
+  color: #252c3b;
+  font-size: 11px;
+  line-height: 1.5;
+  letter-spacing: .23em;
+  text-transform: uppercase;
+  font-weight: 700;
 }
 
-.mz-services .service-card-inner[data-service-href] {
-  cursor: pointer;
+#mazoryaServices .mzsv-eyebrow span {
+  width: 40px;
+  height: 2px;
+  flex-shrink: 0;
+  background: var(--mzsv-coral);
 }
 
-.mz-services .service-card-inner:hover {
-  border-color: rgba(255, 107, 107, .45);
-  box-shadow: 0 15px 38px rgba(31, 31, 46, .085);
-  transform: translateY(-4px);
+#mazoryaServices .mzsv-hero h1 {
+  margin: 0;
+  max-width: 760px;
+
+  font-size: clamp(42px, 5.2vw, 72px);
+  line-height: 1.12;
+  font-weight: 700;
+  letter-spacing: -.057em;
+
+  overflow-wrap: anywhere;
+  color: var(--mzsv-ink);
 }
 
-.mz-services .service-card-icon {
+#mazoryaServices .mzsv-hero h1 span {
+  color: var(--mzsv-coral);
+}
+
+#mazoryaServices .mzsv-hero-description {
+  max-width: 640px;
+  margin: 18px 0 0;
+
+  font-size: 16px;
+  line-height: 1.7;
+  font-weight: 400;
+  color: var(--mzsv-copy);
+}
+
+#mazoryaServices .mzsv-hero-art {
+  position: relative;
+  align-self: stretch;
+  min-height: 240px;
+
   display: grid;
   place-items: center;
 
-  width: 56px;
-  height: 56px;
-  margin-bottom: 24px;
+  color: #ff7180;
+}
 
-  border-radius: 12px;
-  background: var(
-    --color-primary-soft,
-    rgba(255, 107, 107, .12)
+#mazoryaServices .mzsv-hero-art::before {
+  content: '';
+  position: absolute;
+
+  width: min(125%, 385px);
+  aspect-ratio: 1;
+  border-radius: 50%;
+
+  background: radial-gradient(
+    circle,
+    rgba(255, 116, 131, .14),
+    transparent 70%
   );
 }
 
-.mz-services .service-card-icon img {
-  display: block;
-  width: 33px;
-  height: 33px;
-  object-fit: contain;
-  border-radius: 0;
+#mazoryaServices .mzsv-maze {
+  position: relative;
+  width: min(100%, 290px);
+  height: auto;
+
+  transform: rotate(-10deg);
+
+  filter: drop-shadow(
+    0 14px 20px rgba(255, 86, 104, .055)
+  );
 }
 
-.mz-services .service-card-title {
-  margin: 0 0 12px;
-  color: var(--service-dark);
-  font-family: var(--font-heading);
-  font-size: clamp(18px, 1.7vw, 22px);
+/* ==========================================
+   SERVICES GRID
+========================================== */
+
+#mazoryaServices .mzsv-expertise {
+  padding: 21px 0 30px;
+  margin: 0;
+  background: #fff;
+}
+
+#mazoryaServices .mzsv-section-heading {
+  display: flex;
+  align-items: center;
+  gap: 22px;
+  flex-wrap: wrap;
+
+  margin: 0 0 28px;
+}
+
+#mazoryaServices .mzsv-section-heading h2 {
+  margin: 0;
+
+  font-size: clamp(28px, 3.1vw, 39px);
+  line-height: 1.18;
+  letter-spacing: -.048em;
   font-weight: 700;
-  line-height: 1.4;
+
+  color: var(--mzsv-ink);
 }
 
-.mz-services .service-card-title a {
+#mazoryaServices .mzsv-count {
+  padding: 7px 17px;
+  border-radius: 100px;
+
+  background: #f3f3f5;
+  color: #575b68;
+
+  font-size: 12px;
+  font-weight: 600;
+  line-height: 1.5;
+  white-space: nowrap;
+}
+
+#mazoryaServices .mzsv-grid {
+  display: grid;
+  grid-template-columns: repeat(
+    3,
+    minmax(0, 1fr)
+  );
+
+  gap: 17px;
+  align-items: stretch;
+
+  width: 100%;
+  margin: 0;
+  padding: 0;
+}
+
+#mazoryaServices .mzsv-card {
+  min-width: 0;
+  height: 100%;
+
+  margin: 0;
+  padding: 0;
+  display: block;
+}
+
+#mazoryaServices .mzsv-card-inner {
+  position: relative;
+  overflow: hidden;
+  isolation: isolate;
+
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  gap: 15px;
+
+  width: 100%;
+  height: 100%;
+  min-height: 278px;
+
+  margin: 0;
+  padding: 26px 26px 21px;
+
+  border: 1px solid #dfe2e7;
+  border-radius: 18px;
+
   color: inherit;
+  background: #fff;
+
+  box-shadow: 0 7px 23px rgba(
+    19, 25, 40, .022
+  );
+
+  transition:
+    border-color .25s,
+    transform .25s,
+    box-shadow .25s,
+    background .25s;
+
+  cursor: default;
 }
 
-.mz-services .service-card-title a:hover {
-  color: var(--service-accent);
+#mazoryaServices a.mzsv-card-inner {
+  cursor: pointer;
 }
 
-.mz-services .service-card-description {
-  margin: 0 0 24px;
-  color: var(--service-muted);
-  font-size: 13px;
-  line-height: 1.85;
+#mazoryaServices .mzsv-card-inner:hover {
+  border-color: #ffc0c8;
+
+  box-shadow: 0 13px 32px rgba(
+    22, 24, 44, .065
+  );
+
+  transform: translateY(-3px);
+}
+
+/* Featured first card */
+
+#mazoryaServices .mzsv-card-featured .mzsv-card-inner {
+  border-color: #ff7984;
+
+  background: linear-gradient(
+    139deg,
+    #fff8f9 0%,
+    #fff 57%,
+    #ffedef 100%
+  );
+
+  box-shadow: 0 12px 27px rgba(
+    255, 81, 102, .05
+  );
+}
+
+#mazoryaServices .mzsv-card-featured .mzsv-card-inner::before {
+  content: '';
+  position: absolute;
+
+  inset: auto -25% -95% 52%;
+
+  width: 125%;
+  height: 95%;
+
+  border-radius: 50%;
+  border: 1px solid rgba(
+    255, 96, 111, .15
+  );
+
+  box-shadow:
+    0 -18px 0 -17px rgba(255, 96, 111, .16),
+    0 -40px 0 -39px rgba(255, 96, 111, .12);
+
+  transform: rotate(-17deg);
+  pointer-events: none;
+}
+
+/* Card content */
+
+#mazoryaServices .mzsv-card-top,
+#mazoryaServices .mzsv-card-bottom {
+  position: relative;
+  z-index: 1;
+}
+
+#mazoryaServices .mzsv-card-top {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 14px;
+}
+
+#mazoryaServices .mzsv-card-icon {
+  position: relative;
+
+  display: grid;
+  place-items: center;
+
+  flex: 0 0 75px;
+
+  width: 75px;
+  height: 75px;
+  margin: 0;
+
+  border-radius: 19px;
+
+  color: var(--mzsv-coral);
+
+  background: linear-gradient(
+    145deg,
+    #fff2f3,
+    #ffe5e8
+  );
+
+  box-shadow: 0 8px 15px rgba(
+    255, 80, 98, .065
+  );
+}
+
+#mazoryaServices .mzsv-card-icon svg {
+  width: 40px;
+  height: 40px;
+  display: block;
+}
+
+#mazoryaServices .mzsv-card-icon-image {
+  position: absolute;
+  inset: 10px;
+
+  width: calc(100% - 20px);
+  height: calc(100% - 20px);
+
+  object-fit: contain;
+  background: transparent;
+  border-radius: 9px;
+}
+
+#mazoryaServices .mzsv-card-number {
+  margin-top: 2px;
+
+  color: #ff7c88;
+  font-size: 23px;
+  line-height: 1;
+  font-weight: 700;
+  letter-spacing: -.03em;
+}
+
+#mazoryaServices .mzsv-card-title {
+  margin: 0 0 11px;
+
+  font-size: clamp(19px, 1.9vw, 24px);
+  line-height: 1.23;
+  letter-spacing: -.038em;
+  font-weight: 700;
+
+  color: var(--mzsv-ink);
   overflow-wrap: anywhere;
 }
 
-.mz-services .service-card-link {
+#mazoryaServices .mzsv-card-description {
+  margin: 0 0 22px;
+  min-height: 46px;
+
+  color: var(--mzsv-copy);
+  font-size: 13.5px;
+  line-height: 1.65;
+  font-weight: 400;
+
+  white-space: normal;
+  overflow-wrap: anywhere;
+}
+
+#mazoryaServices .mzsv-card-link {
   display: inline-flex;
   align-items: center;
   gap: 8px;
 
-  margin-top: auto;
+  margin: auto 0 0;
 
-  color: var(--service-dark);
-  font-size: 13px;
+  color: var(--mzsv-coral-strong);
+
+  font-size: 13.5px;
+  line-height: 1.5;
   font-weight: 700;
 }
 
-.mz-services .service-card-link span {
-  color: var(--service-accent);
-  transition: transform .2s ease;
+#mazoryaServices .mzsv-card-link > span {
+  font-size: 19px;
+  line-height: .75;
+
+  transition: transform .2s;
 }
 
-.mz-services .service-card-link:hover {
-  color: var(--service-accent);
+#mazoryaServices .mzsv-card-inner:hover .mzsv-card-link > span {
+  transform: translate(3px, -3px);
 }
 
-.mz-services .service-card-link:hover span {
-  transform: translateX(4px);
-}
-
-/* Empty services */
-
-.mz-services .no-services {
+#mazoryaServices .mzsv-empty {
   grid-column: 1 / -1;
 
-  padding: 55px 24px;
-  border: 1px dashed var(--service-line);
-  border-radius: 15px;
+  border: 1px dashed #f0c9ce;
+  border-radius: 17px;
 
-  background: var(--bg-secondary, #f7f7f7);
-  text-align: center;
-  color: var(--service-muted);
-}
-
-.mz-services .no-services p {
+  padding: 52px 20px;
   margin: 0;
+
+  color: var(--mzsv-copy);
+  background: #fff8f9;
+  text-align: center;
 }
 
-/* 03 — CTA */
+/* ==========================================
+   FOUR-STEP PROCESS
+========================================== */
 
-.mz-services .cta-section {
-  padding: 0 0 85px;
+#mazoryaServices .mzsv-process-section {
+  padding: 12px 0 31px;
 }
 
-.mz-services .cta-image-wrap {
-  position: relative;
-  isolation: isolate;
-
+#mazoryaServices .mzsv-process-card {
   display: grid;
-  place-items: center;
 
-  min-height: 295px;
-  border-radius: 15px;
+  grid-template-columns:
+    minmax(180px, .9fr)
+    minmax(0, 2.15fr);
 
-  background: var(--service-dark);
+  gap: 29px;
+  align-items: center;
+
+  padding: 29px 32px;
+  min-height: 159px;
+
+  border-radius: 22px;
   overflow: hidden;
-}
-
-.mz-services .cta-image {
-  position: absolute;
-  inset: 0;
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-  z-index: -2;
-}
-
-.mz-services .cta-bg-wrap {
-  position: absolute;
-  inset: 0;
-  z-index: -1;
+  position: relative;
 
   background: linear-gradient(
-    110deg,
-    rgba(31, 31, 46, .91),
-    rgba(31, 31, 46, .56)
+    115deg,
+    #fff4f5 0%,
+    #fff 58%,
+    #ffeaed 100%
   );
+}
+
+#mazoryaServices .mzsv-process-card::before {
+  content: '';
+  position: absolute;
+
+  width: 240px;
+  height: 240px;
+
+  inset: auto -135px -185px auto;
+
+  border-radius: 50%;
+  border: 1px solid rgba(
+    255, 92, 109, .2
+  );
+
+  box-shadow:
+    0 -20px 0 -19px rgba(255, 92, 109, .12),
+    0 -45px 0 -44px rgba(255, 92, 109, .1);
 
   pointer-events: none;
 }
 
-.mz-services .cta-title-area {
-  width: 100%;
-  padding: 42px 24px;
-  text-align: center;
-}
-
-.mz-services .cta-title-wrap {
-  max-width: 650px;
-  margin-inline: auto;
-}
-
-.mz-services .cta-title-wrap .section-title {
+#mazoryaServices .mzsv-process-headline {
+  max-width: 285px;
   margin: 0;
+
+  padding-inline-end: 22px;
+  border-inline-end: 1px solid #ffa3ad;
+
+  font-size: clamp(24px, 2.7vw, 34px);
+  font-weight: 700;
+  line-height: 1.23;
+  letter-spacing: -.055em;
+
+  color: var(--mzsv-ink);
+}
+
+#mazoryaServices .mzsv-process-headline span {
+  color: var(--mzsv-coral);
+}
+
+#mazoryaServices .mzsv-process-steps {
+  display: grid;
+
+  grid-template-columns: repeat(
+    4,
+    minmax(0, 1fr)
+  );
+
+  gap: 17px;
+  position: relative;
+  z-index: 1;
+}
+
+#mazoryaServices .mzsv-process-step {
+  min-width: 0;
+}
+
+#mazoryaServices .mzsv-process-step-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 6px;
+
+  margin-bottom: 7px;
+}
+
+#mazoryaServices .mzsv-step-number {
+  display: grid;
+  place-items: center;
+
+  background: #ffe5e8;
+  color: var(--mzsv-coral-strong);
+
+  min-width: 36px;
+  height: 36px;
+  padding: 0 6px;
+
+  border-radius: 50%;
+
+  font-size: 15px;
+  font-weight: 700;
+}
+
+#mazoryaServices .mzsv-step-arrow {
+  color: var(--mzsv-coral);
+  font-size: 28px;
+  line-height: 1;
+}
+
+#mazoryaServices .mzsv-process-step h3 {
+  margin: 0 0 4px;
+
+  font-size: 17px;
+  font-weight: 700;
+  line-height: 1.3;
+  letter-spacing: -.032em;
+
+  color: var(--mzsv-ink);
+}
+
+#mazoryaServices .mzsv-process-step p {
+  margin: 0;
+
+  font-size: 11.5px;
+  line-height: 1.58;
+
+  color: #565d6b;
+}
+
+/* ==========================================
+   CONTACT CTA
+========================================== */
+
+#mazoryaServices .mzsv-cta-section {
+  padding: 0 0 62px;
+}
+
+#mazoryaServices .mzsv-cta {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 25px;
+
+  min-height: 142px;
+  padding: 28px 45px;
+
+  position: relative;
+  overflow: hidden;
+
+  border-radius: 22px;
+
+  background: linear-gradient(
+    112deg,
+    #fff2f3 0%,
+    #fff9fa 55%,
+    #ffe4e8 100%
+  );
+
+  border: 1px solid #fff0f1;
+}
+
+#mazoryaServices .mzsv-cta::before {
+  content: '';
+  position: absolute;
+
+  inset: -105% -21% -128% 59%;
+
+  border: 1px solid rgba(
+    255, 97, 113, .16
+  );
+
+  border-radius: 50%;
+  transform: rotate(-17deg);
+
+  box-shadow:
+    0 18px 0 0 rgba(255, 97, 113, .05),
+    0 42px 0 0 rgba(255, 97, 113, .035),
+    0 68px 0 0 rgba(255, 97, 113, .03);
+
+  pointer-events: none;
+}
+
+#mazoryaServices .mzsv-cta > * {
+  position: relative;
+  z-index: 1;
+}
+
+#mazoryaServices .mzsv-cta h2 {
+  margin: 0 0 8px;
+
+  font-size: clamp(27px, 3vw, 38px);
+  line-height: 1.25;
+  font-weight: 700;
+  letter-spacing: -.052em;
+
+  color: var(--mzsv-ink);
+}
+
+#mazoryaServices .mzsv-cta h2 span {
+  color: var(--mzsv-coral);
+}
+
+#mazoryaServices .mzsv-cta p {
+  margin: 0;
+
+  font-size: 15px;
+  line-height: 1.65;
+
+  color: var(--mzsv-copy);
+}
+
+#mazoryaServices .mzsv-cta-button {
+  display: inline-flex;
+  gap: 14px;
+
+  align-items: center;
+  justify-content: center;
+
+  flex-shrink: 0;
+  min-width: 155px;
+
+  padding: 13px 25px;
+  border-radius: 50px;
+
+  background: var(--mzsv-coral);
   color: #fff;
-  font-size: clamp(24px, 2.8vw, 35px);
-  line-height: 1.35;
+
+  border: 1px solid var(--mzsv-coral);
+
+  box-shadow: 0 10px 24px rgba(
+    255, 83, 103, .14
+  );
+
+  font-size: 14px;
+  font-weight: 700;
+
+  transition:
+    background .2s,
+    transform .2s;
 }
 
-.mz-services .cta-button-wrap {
-  margin-top: 25px;
+#mazoryaServices .mzsv-cta-button:hover {
+  color: #fff;
+  background: var(--mzsv-coral-strong);
+  transform: translateY(-2px);
 }
 
-.mz-services .cta-button {
-  min-height: 44px;
-  font-size: 13px;
-  padding: 11px 26px;
+#mazoryaServices .mzsv-cta-button span {
+  font-size: 19px;
 }
 
-/* 04 — RTL */
+/* ==========================================
+   RTL
+========================================== */
 
-.mz-services:dir(rtl) {
-  direction: rtl;
+#mazoryaServices[dir="rtl"] .mzsv-hero h1,
+#mazoryaServices[dir="rtl"] .mzsv-process-headline,
+#mazoryaServices[dir="rtl"] .mzsv-cta h2 {
+  letter-spacing: -.025em;
 }
 
-.mz-services:dir(rtl) .service-card-inner {
-  text-align: start;
-}
-
-.mz-services:dir(rtl) .service-card-link span {
+#mazoryaServices[dir="rtl"] .mzsv-card-link > span,
+#mazoryaServices[dir="rtl"] .mzsv-cta-button > span,
+#mazoryaServices[dir="rtl"] .mzsv-step-arrow {
   transform: scaleX(-1);
 }
 
-.mz-services:dir(rtl) .service-card-link:hover span {
-  transform: translateX(-4px) scaleX(-1);
-}
+/* ==========================================
+   TABLET
+========================================== */
 
-html[lang="fa"] .mz-services .banner-title,
-html[lang="ar"] .mz-services .banner-title {
-  letter-spacing: normal;
-}
+@media (max-width: 1020px) {
+  #mazoryaServices .mzsv-container {
+    width: calc(100% - 60px);
+  }
 
-/* 05 — TABLET */
+  #mazoryaServices .mzsv-hero h1 {
+    font-size: clamp(41px, 5.8vw, 65px);
+  }
 
-@media (max-width: 991px) {
-  .mz-services .services-grid {
+  #mazoryaServices .mzsv-card-inner {
+    padding: 21px;
+    min-height: 280px;
+  }
+
+  #mazoryaServices .mzsv-card-icon {
+    width: 68px;
+    height: 68px;
+    flex-basis: 68px;
+  }
+
+  #mazoryaServices .mzsv-card-title {
+    font-size: 21px;
+  }
+
+  #mazoryaServices .mzsv-process-card {
     grid-template-columns:
-      repeat(2, minmax(0, 1fr));
-    gap: 16px;
+      minmax(160px, .8fr)
+      minmax(0, 2fr);
+
+    gap: 19px;
+    padding: 26px;
   }
 
-  .mz-services .services-banner {
-    padding-top: 110px;
+  #mazoryaServices .mzsv-process-steps {
+    gap: 12px;
   }
 
-  .mz-services .service-card-inner {
-    padding: 25px;
-    min-height: 250px;
+  #mazoryaServices .mzsv-process-headline {
+    font-size: 27px;
   }
 }
 
-/* 06 — MOBILE */
-
-@media (max-width: 767px) {
-  .mz-services .services-banner {
-    padding: 95px 0 25px;
+@media (max-width: 800px) {
+  #mazoryaServices .mzsv-hero-layout {
+    grid-template-columns:
+      minmax(0, 1.6fr)
+      minmax(150px, .65fr);
   }
 
-  .mz-services .banner-title {
-    font-size: clamp(32px, 8vw, 43px);
+  #mazoryaServices .mzsv-grid {
+    grid-template-columns: repeat(
+      2,
+      minmax(0, 1fr)
+    );
   }
 
-  .mz-services .banner-title-wrap p {
-    font-size: 14px;
+  #mazoryaServices .mzsv-card-inner {
+    min-height: 275px;
   }
 
-  .mz-services .services-section {
-    padding: 22px 0 60px;
-  }
-
-  .mz-services .services-grid {
+  #mazoryaServices .mzsv-process-card {
     grid-template-columns: 1fr;
+    gap: 18px;
+  }
+
+  #mazoryaServices .mzsv-process-headline {
+    max-width: none;
+    border-inline-end: 0;
+
+    border-bottom: 1px solid #ffc1c7;
+    padding: 0 0 16px;
+  }
+
+  #mazoryaServices .mzsv-process-steps {
     gap: 14px;
   }
+}
 
-  .mz-services .service-card-inner {
+/* ==========================================
+   MOBILE
+========================================== */
+
+@media (max-width: 620px) {
+  #mazoryaServices .mzsv-container {
+    width: calc(100% - 34px);
+  }
+
+  #mazoryaServices .mzsv-hero {
+    padding: 40px 0 26px;
+  }
+
+  #mazoryaServices .mzsv-hero-layout {
+    display: block;
     min-height: 0;
-    padding: 24px;
   }
 
-  .mz-services .service-card-icon {
-    margin-bottom: 18px;
+  #mazoryaServices .mzsv-hero-art {
+    position: absolute;
+
+    top: -29px;
+    inset-inline-end: -63px;
+
+    width: 216px;
+    min-height: 216px;
+
+    opacity: .19;
+    pointer-events: none;
   }
 
-  .mz-services .cta-section {
-    padding-bottom: 65px;
+  #mazoryaServices .mzsv-hero h1 {
+    font-size: clamp(34px, 9vw, 49px);
   }
 
-  .mz-services .cta-image-wrap {
-    min-height: 245px;
+  #mazoryaServices .mzsv-eyebrow {
+    font-size: 9px;
+    letter-spacing: .13em;
+    margin-bottom: 22px;
+    gap: 10px;
   }
 
-  .mz-services .cta-title-wrap .section-title {
-    font-size: 26px;
+  #mazoryaServices .mzsv-eyebrow span {
+    width: 27px;
+  }
+
+  #mazoryaServices .mzsv-hero-description {
+    font-size: 14px;
+    line-height: 1.8;
+  }
+
+  #mazoryaServices .mzsv-expertise {
+    padding: 12px 0 26px;
+  }
+
+  #mazoryaServices .mzsv-section-heading {
+    gap: 13px;
+    margin-bottom: 21px;
+  }
+
+  #mazoryaServices .mzsv-section-heading h2 {
+    font-size: 29px;
+  }
+
+  #mazoryaServices .mzsv-grid {
+    grid-template-columns: 1fr;
+    gap: 13px;
+  }
+
+  #mazoryaServices .mzsv-card-inner {
+    min-height: 237px;
+    padding: 22px;
+  }
+
+  #mazoryaServices .mzsv-card-icon {
+    width: 67px;
+    height: 67px;
+    flex-basis: 67px;
+    border-radius: 16px;
+  }
+
+  #mazoryaServices .mzsv-card-title {
+    font-size: 22px;
+  }
+
+  #mazoryaServices .mzsv-card-description {
+    min-height: 0;
+    font-size: 13.5px;
+    margin-bottom: 14px;
+  }
+
+  #mazoryaServices .mzsv-process-card {
+    padding: 24px 20px;
+    border-radius: 18px;
+  }
+
+  #mazoryaServices .mzsv-process-headline {
+    font-size: 29px;
+  }
+
+  #mazoryaServices .mzsv-process-steps {
+    grid-template-columns: repeat(
+      2,
+      minmax(0, 1fr)
+    );
+
+    gap: 24px 17px;
+  }
+
+  #mazoryaServices .mzsv-process-step h3 {
+    font-size: 16px;
+  }
+
+  #mazoryaServices .mzsv-process-step p {
+    font-size: 12px;
+  }
+
+  #mazoryaServices .mzsv-cta-section {
+    padding-bottom: 45px;
+  }
+
+  #mazoryaServices .mzsv-cta {
+    flex-direction: column;
+    align-items: flex-start;
+
+    padding: 28px 25px;
+    gap: 20px;
+  }
+
+  #mazoryaServices .mzsv-cta h2 {
+    font-size: 30px;
+  }
+
+  #mazoryaServices .mzsv-cta p {
+    font-size: 14px;
   }
 }
 
-/* 07 — ACCESSIBILITY */
+/* ==========================================
+   ACCESSIBILITY
+========================================== */
 
 @media (prefers-reduced-motion: reduce) {
-  .mz-services .service-card-inner,
-  .mz-services .service-card-link span {
-    transition: none;
+  #mazoryaServices *,
+  #mazoryaServices *::before,
+  #mazoryaServices *::after {
+    transition: none !important;
+    animation: none !important;
+    scroll-behavior: auto !important;
   }
 }

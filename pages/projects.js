@@ -1,12 +1,8 @@
 
 /**
- * Mazorya Group - Projects Listing
+ * Mazorya Group — Projects Listing
  * File: pages/projects.js
- *
- * Laravel API
- * Multilingual categories
- * Webflow layout
- * Prompt category support
+ * Light UI / Laravel API / Slug / Multilingual
  */
 
 import { i18n } from '../core/i18n.js';
@@ -26,96 +22,270 @@ import {
   resolveMediaUrl
 } from '../core/api.js';
 
-// ============================================================
-// CONFIGURATION
-// ============================================================
+import '../assets/css/projects.css';
 
-const DEFAULT_IMAGE = '/assets/img/default-project.jpg';
+const FALLBACK_IMAGE = '/assets/img/default-project.jpg';
 
 let renderRequestId = 0;
 
-// ============================================================
-// CATEGORIES
-// ============================================================
-
-const CATEGORIES = [
-  { id: 'all', label: 'همه', labelEn: 'All' },
-  { id: 'website', label: 'وبسایت', labelEn: 'Website' },
-  { id: 'ui-ux', label: 'UI/UX', labelEn: 'UI/UX' },
-  {
-    id: 'social-media',
-    label: 'سوشیال مدیا',
-    labelEn: 'Social Media'
-  },
-  {
-    id: 'prompts',
-    label: 'پرامپت‌ها',
-    labelEn: 'Prompts'
-  },
-  { id: 'graphic', label: 'گرافیک', labelEn: 'Graphic' },
-  { id: 'other', label: 'سایر', labelEn: 'Other' }
+const CATEGORY_IDS = [
+  'all',
+  'website',
+  'ui-ux',
+  'social-media',
+  'prompts',
+  'graphic',
+  'other'
 ];
 
-// Prompts must be checked before Website.
-const CATEGORY_MAP = {
+const CATEGORY_ALIASES = {
+  // Check Prompts before Website.
   prompts: [
-    'prompts',
-    'prompt',
-    'ai prompt',
-    'ai prompts',
-    'website prompt',
-    'website prompts',
-    'web prompt',
-    'prompt engineering',
-    'پرامپت',
-    'پرامپت‌ها',
-    'پرامپت ها',
-    'پرامپت سایت',
-    'پرامپت آماده'
+    'prompts', 'prompt', 'ai prompt', 'ai prompts',
+    'website prompt', 'website prompts',
+    'web prompt', 'prompt engineering',
+    'پرامپت', 'پرامپت ها',
+    'پرامپت آماده', 'پرامپت سایت'
   ],
-
   website: [
-    'website',
-    'web',
-    'وبسایت',
-    'وب سایت',
-    'site',
-    'web development'
+    'website', 'web', 'web design',
+    'web development', 'site',
+    'وبسایت', 'وب سایت', 'طراحی سایت'
   ],
-
   'ui-ux': [
-    'ui-ux',
-    'ui/ux',
-    'uiux',
-    'user interface',
-    'user experience',
-    'طراحی رابط کاربری',
-    'تجربه کاربری'
+    'ui ux', 'ui/ux', 'uiux',
+    'user interface', 'user experience',
+    'ux design', 'ui design',
+    'طراحی رابط کاربری', 'تجربه کاربری'
   ],
-
   'social-media': [
-    'social-media',
-    'social media',
-    'social',
-    'سوشیال',
-    'سوشیال مدیا',
-    'instagram',
-    'telegram'
+    'social media', 'social',
+    'social media marketing',
+    'instagram', 'telegram',
+    'سوشیال مدیا', 'سوشیال', 'شبکه اجتماعی'
   ],
-
   graphic: [
-    'graphic',
-    'graphics',
-    'گرافیک',
-    'طراحی گرافیک',
-    'illustration',
-    'تصویرسازی'
+    'graphic', 'graphics', 'graphic design',
+    'illustration', 'brand identity', 'branding',
+    'گرافیک', 'طراحی گرافیک', 'تصویرسازی'
   ]
+};
+
+const LABELS = {
+  en: {
+    eyebrow: 'OUR WORK / SELECTED PROJECTS',
+    heroFirst: 'Crafted to make',
+    heroAccent: 'an impact.',
+    intro: 'A selection of our latest projects across web, UI/UX, social media, prompts, and creative design.',
+    all: 'All',
+    website: 'Website',
+    'ui-ux': 'UI/UX',
+    'social-media': 'Social Media',
+    prompts: 'Prompts',
+    graphic: 'Graphic',
+    other: 'Other',
+    allProjects: 'All Projects',
+    projectSuffix: 'Projects',
+    countOne: 'Project',
+    countMany: 'Projects',
+    sort: 'Sort',
+    latest: 'Latest',
+    oldest: 'Oldest',
+    az: 'Title A–Z',
+    za: 'Title Z–A',
+    empty: 'No projects found in this category.',
+    ctaTitle: 'Have a <em>project</em> in mind?',
+    ctaText: "Let's turn your idea into a meaningful digital experience.",
+    ctaButton: "Let's Talk",
+    pageTitle: 'Our Projects',
+    view: 'View project'
+  },
+
+  fa: {
+    eyebrow: 'نمونه‌کارها / پروژه‌های منتخب',
+    heroFirst: 'خلق‌شده برای',
+    heroAccent: 'اثرگذاری.',
+    intro: 'گزیده‌ای از پروژه‌های ما در طراحی وب، رابط کاربری، شبکه‌های اجتماعی، پرامپت و طراحی خلاقانه.',
+    all: 'همه',
+    website: 'وب‌سایت',
+    'ui-ux': 'رابط کاربری',
+    'social-media': 'سوشیال مدیا',
+    prompts: 'پرامپت‌ها',
+    graphic: 'گرافیک',
+    other: 'سایر',
+    allProjects: 'همه پروژه‌ها',
+    projectSuffix: 'پروژه‌ها',
+    countOne: 'پروژه',
+    countMany: 'پروژه',
+    sort: 'مرتب‌سازی',
+    latest: 'جدیدترین',
+    oldest: 'قدیمی‌ترین',
+    az: 'عنوان الف تا ی',
+    za: 'عنوان ی تا الف',
+    empty: 'پروژه‌ای در این دسته پیدا نشد.',
+    ctaTitle: 'یک <em>پروژه</em> در ذهن دارید؟',
+    ctaText: 'بیایید ایده شما را به یک تجربه دیجیتال ماندگار تبدیل کنیم.',
+    ctaButton: 'شروع گفتگو',
+    pageTitle: 'پروژه‌های ما',
+    view: 'مشاهده پروژه'
+  },
+
+  ar: {
+    eyebrow: 'أعمالنا / مشاريع مختارة',
+    heroFirst: 'صُممت لتصنع',
+    heroAccent: 'تأثيرًا.',
+    intro: 'مجموعة من مشاريعنا في تطوير الويب وتجربة المستخدم ووسائل التواصل والتصميم.',
+    all: 'الكل',
+    website: 'مواقع الويب',
+    'ui-ux': 'UI/UX',
+    'social-media': 'وسائل التواصل',
+    prompts: 'مطالبات AI',
+    graphic: 'تصميم جرافيك',
+    other: 'أخرى',
+    allProjects: 'جميع المشاريع',
+    projectSuffix: 'المشاريع',
+    countOne: 'مشروع',
+    countMany: 'مشاريع',
+    sort: 'ترتيب',
+    latest: 'الأحدث',
+    oldest: 'الأقدم',
+    az: 'العنوان أ–ي',
+    za: 'العنوان ي–أ',
+    empty: 'لا توجد مشاريع في هذه الفئة.',
+    ctaTitle: 'هل لديك <em>مشروع</em>؟',
+    ctaText: 'لنحوّل فكرتك إلى تجربة رقمية مؤثرة.',
+    ctaButton: 'لنتحدث',
+    pageTitle: 'مشاريعنا',
+    view: 'عرض المشروع'
+  },
+
+  fr: {
+    eyebrow: 'NOS RÉALISATIONS / PROJETS SÉLECTIONNÉS',
+    heroFirst: 'Créés pour avoir',
+    heroAccent: 'un impact.',
+    intro: 'Découvrez nos projets web, UI/UX, réseaux sociaux, prompts et design créatif.',
+    all: 'Tout',
+    website: 'Site web',
+    'ui-ux': 'UI/UX',
+    'social-media': 'Réseaux sociaux',
+    prompts: 'Prompts',
+    graphic: 'Graphisme',
+    other: 'Autres',
+    allProjects: 'Tous les projets',
+    projectSuffix: 'Projets',
+    countOne: 'Projet',
+    countMany: 'Projets',
+    sort: 'Trier',
+    latest: 'Récents',
+    oldest: 'Anciens',
+    az: 'Titre A–Z',
+    za: 'Titre Z–A',
+    empty: 'Aucun projet dans cette catégorie.',
+    ctaTitle: 'Un <em>projet</em> en tête ?',
+    ctaText: 'Donnons ensemble vie à votre idée.',
+    ctaButton: 'Discutons',
+    pageTitle: 'Nos projets',
+    view: 'Voir le projet'
+  },
+
+  de: {
+    eyebrow: 'UNSERE ARBEIT / AUSGEWÄHLTE PROJEKTE',
+    heroFirst: 'Entwickelt für',
+    heroAccent: 'Wirkung.',
+    intro: 'Unsere Projekte aus Web, UI/UX, Social Media, Prompts und Design.',
+    all: 'Alle',
+    website: 'Webseite',
+    'ui-ux': 'UI/UX',
+    'social-media': 'Social Media',
+    prompts: 'Prompts',
+    graphic: 'Grafik',
+    other: 'Sonstige',
+    allProjects: 'Alle Projekte',
+    projectSuffix: 'Projekte',
+    countOne: 'Projekt',
+    countMany: 'Projekte',
+    sort: 'Sortieren',
+    latest: 'Neueste',
+    oldest: 'Älteste',
+    az: 'Titel A–Z',
+    za: 'Titel Z–A',
+    empty: 'Keine Projekte in dieser Kategorie.',
+    ctaTitle: 'Eine <em>Projektidee</em>?',
+    ctaText: 'Lassen Sie uns daraus ein digitales Erlebnis machen.',
+    ctaButton: 'Kontakt',
+    pageTitle: 'Unsere Projekte',
+    view: 'Projekt ansehen'
+  },
+
+  es: {
+    eyebrow: 'NUESTRO TRABAJO / PROYECTOS DESTACADOS',
+    heroFirst: 'Diseñados para',
+    heroAccent: 'impactar.',
+    intro: 'Nuestros proyectos de web, UI/UX, redes sociales, prompts y diseño creativo.',
+    all: 'Todos',
+    website: 'Sitios web',
+    'ui-ux': 'UI/UX',
+    'social-media': 'Redes sociales',
+    prompts: 'Prompts',
+    graphic: 'Diseño gráfico',
+    other: 'Otros',
+    allProjects: 'Todos los proyectos',
+    projectSuffix: 'Proyectos',
+    countOne: 'Proyecto',
+    countMany: 'Proyectos',
+    sort: 'Ordenar',
+    latest: 'Recientes',
+    oldest: 'Antiguos',
+    az: 'Título A–Z',
+    za: 'Título Z–A',
+    empty: 'No hay proyectos en esta categoría.',
+    ctaTitle: '¿Tienes un <em>proyecto</em>?',
+    ctaText: 'Transformemos tu idea en una experiencia digital.',
+    ctaButton: 'Hablemos',
+    pageTitle: 'Nuestros proyectos',
+    view: 'Ver proyecto'
+  },
+
+  tr: {
+    eyebrow: 'İŞLERİMİZ / SEÇİLİ PROJELER',
+    heroFirst: 'Etki yaratmak için',
+    heroAccent: 'tasarlandı.',
+    intro: 'Web, UI/UX, sosyal medya, prompt ve yaratıcı tasarım projelerimizden seçmeler.',
+    all: 'Tümü',
+    website: 'Web sitesi',
+    'ui-ux': 'UI/UX',
+    'social-media': 'Sosyal medya',
+    prompts: 'Promptlar',
+    graphic: 'Grafik',
+    other: 'Diğer',
+    allProjects: 'Tüm Projeler',
+    projectSuffix: 'Projeler',
+    countOne: 'Proje',
+    countMany: 'Proje',
+    sort: 'Sırala',
+    latest: 'En yeni',
+    oldest: 'En eski',
+    az: 'Başlık A–Z',
+    za: 'Başlık Z–A',
+    empty: 'Bu kategoride proje bulunamadı.',
+    ctaTitle: 'Aklınızda bir <em>proje</em> mi var?',
+    ctaText: 'Fikrinizi etkileyici bir dijital deneyime dönüştürelim.',
+    ctaButton: 'Konuşalım',
+    pageTitle: 'Projelerimiz',
+    view: 'Projeyi gör'
+  }
 };
 
 // ============================================================
 // HELPERS
 // ============================================================
+
+function textValue(value) {
+  return typeof value === 'string' ||
+    typeof value === 'number'
+      ? String(value).trim()
+      : '';
+}
 
 function escapeHtml(value) {
   return String(value ?? '')
@@ -126,67 +296,15 @@ function escapeHtml(value) {
     .replace(/'/g, '&#39;');
 }
 
-function tr(key, fallback = '') {
-  const value = i18n.t(key);
-
-  if (
-    value == null ||
-    value === '' ||
-    value === key
-  ) {
-    return fallback || key;
-  }
-
-  return String(value);
-}
-
-function t(key, fallback = '') {
-  return escapeHtml(tr(key, fallback));
-}
-
-function isPersian(lang) {
-  return lang === 'fa';
-}
-
-function getCategoryLabel(category, lang) {
-  if (!category) return '';
-
-  const found = CATEGORIES.find(
-    item => item.id === category
-  );
-
-  return found
-    ? (
-        isPersian(lang)
-          ? found.label
-          : found.labelEn
-      )
-    : String(category);
-}
-
-function getProjectCountLabel(count, lang) {
-  return `${count} ${
-    isPersian(lang)
-      ? 'پروژه'
-      : count === 1
-        ? 'project'
-        : 'projects'
-  }`;
-}
-
 function normalizeText(value) {
-  return String(value ?? '')
+  return textValue(value)
     .normalize('NFKC')
     .toLowerCase()
     .replace(/[\u200c\u200d]/g, ' ')
-    .replace(/[\_-]/g, ' ')
+    .replace(/[_\-–—]/g, ' ')
     .replace(/\s+/g, ' ')
     .trim();
 }
-
-// ============================================================
-// CATEGORY EXTRACTION
-// ============================================================
 
 function extractCategoryValues(value) {
   if (value == null) return [];
@@ -201,519 +319,565 @@ function extractCategoryValues(value) {
       value.name,
       value.title,
       value.label
-    ]
-      .filter(item => typeof item === 'string')
-      .map(normalizeText)
-      .filter(Boolean);
+    ].flatMap(extractCategoryValues);
   }
 
-  if (
-    typeof value === 'string' ||
-    typeof value === 'number'
-  ) {
-    const normalized = normalizeText(value);
-
-    return normalized ? [normalized] : [];
-  }
-
-  return [];
-}
-
-function matchCategory(value) {
   const normalized = normalizeText(value);
 
-  if (!normalized) return null;
-
-  for (
-    const [id, keywords]
-    of Object.entries(CATEGORY_MAP)
-  ) {
-    const matches = keywords.some(keyword => {
-      const key = normalizeText(keyword);
-
-      if (normalized === key) {
-        return true;
-      }
-
-      if (key.length <= 3) {
-        const tokens = normalized.split(
-          /[\s/,+&()]+/
-        );
-
-        return tokens.includes(key);
-      }
-
-      return normalized.includes(key);
-    });
-
-    if (matches) {
-      return id;
-    }
-  }
-
-  return null;
+  return normalized ? [normalized] : [];
 }
 
-function getProjectCategory(project) {
+function matchesAlias(value, alias) {
+  const needle = normalizeText(alias);
+
+  if (value === needle) return true;
+
+  if (needle.length <= 3) {
+    return value
+      .split(/[\s/,+&()]+/)
+      .includes(needle);
+  }
+
+  return value.includes(needle);
+}
+
+function projectCategory(project) {
   const values = [
     ...extractCategoryValues(project?.category),
     ...extractCategoryValues(project?.categories),
-    ...extractCategoryValues(project?.tags)
+    ...extractCategoryValues(project?.tags),
+    ...extractCategoryValues(project?.category_slug),
+    ...extractCategoryValues(project?.category_name)
   ];
 
-  for (const value of values) {
-    const match = matchCategory(value);
-
-    if (match) {
-      return match;
+  for (const [id, aliases] of Object.entries(CATEGORY_ALIASES)) {
+    if (
+      values.some(value =>
+        aliases.some(alias =>
+          matchesAlias(value, alias)
+        )
+      )
+    ) {
+      return id;
     }
   }
 
   return 'other';
 }
 
-function groupProjectsByCategory(projects) {
-  const categorized = Object.fromEntries(
-    CATEGORIES
-      .filter(category => category.id !== 'all')
-      .map(category => [
-        category.id,
-        []
-      ])
-  );
+function localized(project, field, lang) {
+  if (!project || typeof project !== 'object') {
+    return '';
+  }
 
-  projects.forEach(project => {
-    const categoryId = getProjectCategory(project);
+  const translations = project.translations;
 
-    categorized[categoryId].push(project);
-  });
+  const arrayValue = Array.isArray(translations)
+    ? translations.find(row =>
+        row?.lang === lang ||
+        row?.locale === lang
+      )?.[field]
+    : undefined;
 
-  return categorized;
+  const candidates = [
+    project[`${field}_${lang}`],
+    Array.isArray(translations)
+      ? undefined
+      : translations?.[lang]?.[field],
+    arrayValue,
+    project[field],
+    project[`${field}_en`]
+  ];
+
+  return candidates
+    .map(textValue)
+    .find(Boolean) || '';
 }
 
-// ============================================================
-// PROJECT IMAGE
-// ============================================================
-
-function resolveImageUrl(value) {
-  return escapeHtml(
-    resolveMediaUrl(value) || DEFAULT_IMAGE
+function projectTitle(project, lang) {
+  return (
+    localized(project, 'name', lang) ||
+    localized(project, 'title', lang) ||
+    'Project'
   );
 }
 
-function getProjectImage(project) {
+function projectLink(project, lang) {
+  const identifier =
+    textValue(project?.slug) ||
+    textValue(project?.id);
+
+  return identifier
+    ? `/${encodeURIComponent(lang)}/project/${encodeURIComponent(identifier)}`
+    : '';
+}
+
+function projectImage(project) {
   const images = project?.images;
 
   const candidates = [
     typeof images === 'string' ? images : null,
     images?.image,
+    images?.image_1,
     images?.cover,
     project?.cover_url,
     project?.image_url,
     project?.image
   ];
 
-  for (const candidate of candidates) {
-    const image =
-      typeof candidate === 'string'
-        ? candidate
-        : candidate?.url ?? candidate?.path ?? null;
+  for (const item of candidates) {
+    const path =
+      typeof item === 'string'
+        ? item
+        : item?.url ?? item?.path;
 
     if (
-      image &&
-      resolveMediaUrl(image)
+      typeof path !== 'string' ||
+      !path.trim()
     ) {
-      return resolveImageUrl(image);
+      continue;
     }
+
+    const url = resolveMediaUrl(path);
+
+    if (url) return url;
   }
 
-  return DEFAULT_IMAGE;
+  return FALLBACK_IMAGE;
 }
 
 // ============================================================
-// PROJECT DETAILS URL
+// SORTING
 // ============================================================
 
-function getProjectLink(project, lang) {
-  const cleanSlug = String(
-    project?.slug ?? ''
-  ).trim();
+function projectTime(project) {
+  const value =
+    project?.published_at ||
+    project?.created_at ||
+    project?.createdAt ||
+    project?.date ||
+    project?.data;
 
-  const identifier = cleanSlug || project?.id;
+  const timestamp = value
+    ? new Date(value).getTime()
+    : NaN;
 
-  if (
-    identifier === undefined ||
-    identifier === null ||
-    String(identifier).trim() === ''
-  ) {
-    return null;
-  }
-
-  return `/${encodeURIComponent(lang)}/project/${encodeURIComponent(
-    String(identifier).trim()
-  )}`;
+  return Number.isFinite(timestamp)
+    ? timestamp
+    : null;
 }
 
-// ============================================================
-// CATEGORY FILTER BUTTONS
-// ============================================================
+function sortProjects(projects, sort, lang) {
+  const collator = new Intl.Collator(
+    {
+      fa: 'fa',
+      ar: 'ar',
+      de: 'de',
+      fr: 'fr',
+      es: 'es',
+      tr: 'tr'
+    }[lang] || 'en',
+    {
+      sensitivity: 'base',
+      numeric: true
+    }
+  );
 
-function renderCategoryFilters(lang) {
-  return CATEGORIES.map(category => {
-    const label = getCategoryLabel(
-      category.id,
-      lang
-    );
-
-    const active = category.id === 'all';
-
-    return `
-      <button
-        type="button"
-        class="category-filter-btn ${active ? 'active' : ''}"
-        data-category="${category.id}"
-        aria-pressed="${active}"
-      >
-        ${escapeHtml(label)}
-      </button>
-    `;
-  }).join('');
-}
-
-// ============================================================
-// PROJECT CARDS
-// ============================================================
-
-function renderProjectCards(
-  projects,
-  lang,
-  showCategory = false
-) {
-  if (
-    !Array.isArray(projects) ||
-    !projects.length
-  ) {
-    return `
-      <div class="no-projects">
-        <p>
-          ${t(
-            'no_projects',
-            isPersian(lang)
-              ? 'هیچ پروژه‌ای وجود ندارد'
-              : 'No projects found.'
-          )}
-        </p>
-      </div>
-    `;
-  }
-
-  const rows = [];
-
-  for (
-    let i = 0;
-    i < projects.length;
-    i += 2
-  ) {
-    rows.push(
-      projects.slice(i, i + 2)
-    );
-  }
-
-  return rows.map(row => `
-    <div class="projects-row">
-
-      ${row.map(project => {
-        const title = String(
-          project?.name ||
-          project?.title ||
-          'Project'
+  return projects
+    .map((project, index) => ({
+      project,
+      index
+    }))
+    .sort((a, b) => {
+      if (sort === 'az' || sort === 'za') {
+        const diff = collator.compare(
+          projectTitle(a.project, lang),
+          projectTitle(b.project, lang)
         );
 
-        const image = getProjectImage(project);
-        const link = getProjectLink(project, lang);
+        return (
+          (sort === 'az' ? diff : -diff) ||
+          a.index - b.index
+        );
+      }
 
-        const categoryId =
-          getProjectCategory(project);
+      const aTime = projectTime(a.project);
+      const bTime = projectTime(b.project);
 
-        const categoryLabel = showCategory
-          ? getCategoryLabel(categoryId, lang)
-          : '';
+      if (aTime === null && bTime === null) {
+        return a.index - b.index;
+      }
 
-        const imageHTML = `
-          <img
-            src="${image}"
-            loading="lazy"
-            decoding="async"
-            alt="${escapeHtml(title)}"
-            class="project-image"
-          />
-        `;
+      if (aTime === null) return 1;
+      if (bTime === null) return -1;
 
-        return `
-          <div class="project-collection-item">
+      const diff = sort === 'oldest'
+        ? aTime - bTime
+        : bTime - aTime;
 
-            <div class="project-card-wrap">
-
-              <div class="project-image-area">
-
-                ${
-                  link
-                    ? `
-                      <a
-                        href="${link}"
-                        class="project-image-wrap w-inline-block"
-                      >
-                        ${imageHTML}
-                      </a>
-
-                      <a
-                        href="${link}"
-                        class="project-overlay-wrap w-inline-block"
-                        aria-label="${escapeHtml(title)}"
-                      >
-                        <div class="project-arrow-icon-wrap">
-                          <img
-                            src="/assets/img/project-arrow.svg"
-                            class="project-arrow-icon"
-                            alt=""
-                          />
-                        </div>
-                      </a>
-                    `
-                    : `
-                      <div class="project-image-wrap">
-                        ${imageHTML}
-                      </div>
-                    `
-                }
-
-              </div>
-
-              <div class="project-title-wrap">
-
-                ${
-                  link
-                    ? `
-                      <a
-                        href="${link}"
-                        class="project-title"
-                      >
-                        ${escapeHtml(title)}
-                      </a>
-                    `
-                    : `
-                      <span class="project-title">
-                        ${escapeHtml(title)}
-                      </span>
-                    `
-                }
-
-                ${
-                  categoryLabel
-                    ? `
-                      <span class="project-category-tag">
-                        ${escapeHtml(categoryLabel)}
-                      </span>
-                    `
-                    : ''
-                }
-
-              </div>
-
-            </div>
-
-          </div>
-        `;
-      }).join('')}
-
-    </div>
-  `).join('');
+      return diff || a.index - b.index;
+    })
+    .map(({ project }) => project);
 }
 
 // ============================================================
-// CATEGORY SECTIONS
+// PROJECT CARD
 // ============================================================
 
-function renderCategories(
-  categorizedProjects,
-  lang
-) {
-  return CATEGORIES
-    .filter(category => category.id !== 'all')
-    .map(category => {
-      const projects =
-        categorizedProjects[category.id] || [];
+const CATEGORY_ICONS = {
+  website: '▣',
+  'ui-ux': '◇',
+  'social-media': '#',
+  prompts: '✧',
+  graphic: '✎',
+  other: '◈'
+};
 
-      const label = getCategoryLabel(
-        category.id,
-        lang
-      );
+function renderProjectCard(project, lang, ui) {
+  const title = escapeHtml(
+    projectTitle(project, lang)
+  );
 
-      return `
-        <div
-          class="category-section"
-          data-category="${category.id}"
-          style="display:none;"
-        >
+  const category = projectCategory(project);
 
-          <div class="category-header">
+  const categoryName = escapeHtml(
+    ui[category] || ui.other
+  );
 
-            <h2 class="category-title">
-              ${escapeHtml(label)}
+  const image = escapeHtml(
+    projectImage(project)
+  );
+
+  const link = escapeHtml(
+    projectLink(project, lang)
+  );
+
+  const symbol = CATEGORY_ICONS[category] || '◈';
+
+  return `
+    <article
+      class="mzpl-card"
+      data-project-category="${category}"
+    >
+      <div class="mzpl-card-media">
+
+        ${
+          link
+            ? `
+              <a
+                class="mzpl-card-image-link"
+                href="${link}"
+                aria-label="${escapeHtml(ui.view)}: ${title}"
+              >
+            `
+            : '<div class="mzpl-card-image-link">'
+        }
+
+          <img
+            class="mzpl-card-image"
+            src="${image}"
+            alt="${title}"
+            loading="lazy"
+            decoding="async"
+          />
+
+          ${
+            link
+              ? `
+                <span
+                  class="mzpl-card-arrow"
+                  aria-hidden="true"
+                >↗</span>
+              `
+              : ''
+          }
+
+        ${link ? '</a>' : '</div>'}
+
+      </div>
+
+      <div class="mzpl-card-info">
+
+        <h3 class="mzpl-card-title">
+          ${
+            link
+              ? `<a href="${link}">${title}</a>`
+              : title
+          }
+        </h3>
+
+        <p class="mzpl-card-category">
+          <span aria-hidden="true">${symbol}</span>
+          ${categoryName}
+        </p>
+
+      </div>
+    </article>
+  `;
+}
+
+// ============================================================
+// HERO
+// ============================================================
+
+function renderHero(ui) {
+  return `
+    <section class="mzpl-hero">
+
+      <div class="mzpl-container mzpl-hero-layout">
+
+        <div class="mzpl-hero-content">
+
+          <div class="mzpl-eyebrow">
+            <span></span>
+            ${escapeHtml(ui.eyebrow)}
+          </div>
+
+          <h1>
+            ${escapeHtml(ui.heroFirst)}
+            <span>${escapeHtml(ui.heroAccent)}</span>
+          </h1>
+
+          <p>
+            ${escapeHtml(ui.intro)}
+          </p>
+
+        </div>
+
+        <div class="mzpl-hero-art" aria-hidden="true">
+
+          <svg
+            class="mzpl-maze"
+            viewBox="0 0 330 330"
+            fill="none"
+            xmlns="http://www.w3.org/2000/svg"
+          >
+
+            <circle
+              cx="165" cy="165" r="150"
+              stroke="currentColor"
+              stroke-width="1.3"
+              opacity=".52"
+              stroke-dasharray="170 20 105 28 150 27 115 10"
+            />
+
+            <circle
+              cx="165" cy="165" r="124"
+              stroke="currentColor"
+              stroke-width="1.6"
+              opacity=".65"
+              stroke-dasharray="117 17 115 24 158 32 105 10"
+              transform="rotate(30 165 165)"
+            />
+
+            <circle
+              cx="165" cy="165" r="95"
+              stroke="currentColor"
+              stroke-width="2"
+              opacity=".72"
+              stroke-dasharray="112 27 91 15 85 20 115 32"
+              transform="rotate(112 165 165)"
+            />
+
+            <circle
+              cx="165" cy="165" r="67"
+              stroke="currentColor"
+              stroke-width="2.2"
+              opacity=".8"
+              stroke-dasharray="68 24 82 18 87 33"
+              transform="rotate(-32 165 165)"
+            />
+
+            <circle
+              cx="165" cy="165" r="38"
+              stroke="currentColor"
+              stroke-width="2.2"
+              opacity=".68"
+              stroke-dasharray="67 16 30 15 55 15"
+              transform="rotate(17 165 165)"
+            />
+
+            <path
+              d="M140 177l16-27 12 19 12-19 15 27"
+              stroke="currentColor"
+              stroke-width="9"
+              stroke-linejoin="round"
+              opacity=".72"
+            />
+
+          </svg>
+
+        </div>
+
+      </div>
+
+    </section>
+  `;
+}
+
+// ============================================================
+// FILTERS
+// ============================================================
+
+function renderFilters(ui) {
+  return `
+    <div class="mzpl-container mzpl-filter-shell">
+
+      <div
+        class="mzpl-filters"
+        id="mzplFilters"
+        role="group"
+        aria-label="Project categories"
+      >
+
+        ${CATEGORY_IDS.map((category, index) => `
+          <button
+            type="button"
+            class="mzpl-filter${index === 0 ? ' is-active' : ''}"
+            data-category="${category}"
+            aria-pressed="${index === 0}"
+          >
+            ${escapeHtml(ui[category] || category)}
+          </button>
+        `).join('')}
+
+      </div>
+
+    </div>
+  `;
+}
+
+// ============================================================
+// PROJECT LIST
+// ============================================================
+
+function renderList(ui, projects, lang) {
+  const sorted = sortProjects(
+    projects,
+    'latest',
+    lang
+  );
+
+  return `
+    <section
+      class="mzpl-projects-section"
+      id="mzplProjectsList"
+    >
+
+      <div class="mzpl-container">
+
+        <div class="mzpl-list-heading">
+
+          <div class="mzpl-heading-group">
+
+            <h2 id="mzplCurrentCategory">
+              ${escapeHtml(ui.allProjects)}
             </h2>
 
-            <span class="category-count">
+            <span
+              class="mzpl-count"
+              id="mzplProjectCount"
+              aria-live="polite"
+            >
+              ${projects.length}
               ${escapeHtml(
-                getProjectCountLabel(
-                  projects.length,
-                  lang
-                )
+                projects.length === 1
+                  ? ui.countOne
+                  : ui.countMany
               )}
             </span>
 
           </div>
 
-          <div class="category-projects">
-            ${renderProjectCards(
-              projects,
-              lang,
-              true
-            )}
-          </div>
+          <label
+            class="mzpl-sort-label"
+            for="mzplSort"
+          >
+
+            <span>${escapeHtml(ui.sort)}:</span>
+
+            <select
+              id="mzplSort"
+              class="mzpl-sort"
+            >
+              <option value="latest">
+                ${escapeHtml(ui.latest)}
+              </option>
+
+              <option value="oldest">
+                ${escapeHtml(ui.oldest)}
+              </option>
+
+              <option value="az">
+                ${escapeHtml(ui.az)}
+              </option>
+
+              <option value="za">
+                ${escapeHtml(ui.za)}
+              </option>
+            </select>
+
+          </label>
 
         </div>
-      `;
-    })
-    .join('');
+
+        <div
+          class="mzpl-grid"
+          id="mzplGrid"
+          aria-live="polite"
+        >
+
+          ${
+            sorted.length
+              ? sorted.map(project =>
+                  renderProjectCard(project, lang, ui)
+                ).join('')
+              : `
+                <div class="mzpl-empty">
+                  ${escapeHtml(ui.empty)}
+                </div>
+              `
+          }
+
+        </div>
+
+      </div>
+
+    </section>
+  `;
 }
 
 // ============================================================
-// PROJECTS BANNER
+// CTA
 // ============================================================
 
-function renderBannerSection(lang) {
+function renderCTA(lang, ui) {
   return `
-    <section class="projects-banner">
+    <section class="mzpl-cta-section">
 
-      <div class="w-layout-blockcontainer container-regular w-container">
+      <div class="mzpl-container">
 
-        <div class="align-center">
+        <div class="mzpl-cta">
 
-          <div class="banner-title-wrap small">
+          <div class="mzpl-cta-text">
 
-            <h1 class="banner-title">
-              ${t(
-                'projects_title',
-                isPersian(lang)
-                  ? 'نمونه کارها'
-                  : 'Our Projects'
-              )}
-            </h1>
+            <h2>${ui.ctaTitle}</h2>
 
             <p>
-              ${t(
-                'projects_subtitle',
-                isPersian(lang)
-                  ? 'گزیده‌ای از مهم‌ترین پروژه‌های ما در حوزه‌های مختلف'
-                  : 'Explore our selected projects across different creative and digital disciplines.'
-              )}
+              ${escapeHtml(ui.ctaText)}
             </p>
 
           </div>
 
-        </div>
-
-      </div>
-
-    </section>
-  `;
-}
-
-// ============================================================
-// PROJECT FILTER SECTION
-// ============================================================
-
-function renderFilterSection(lang) {
-  return `
-    <section class="category-filter-section">
-
-      <div class="w-layout-blockcontainer container-regular w-container">
-
-        <div class="category-filter-wrap">
-          ${renderCategoryFilters(lang)}
-        </div>
-
-      </div>
-
-    </section>
-  `;
-}
-
-// ============================================================
-// PROJECTS GRID
-// ============================================================
-
-function renderProjectsGrid(
-  projects,
-  categorizedProjects,
-  lang
-) {
-  const allTitle = isPersian(lang)
-    ? 'همه پروژه‌ها'
-    : 'All Projects';
-
-  return `
-    <section class="projects-list-section">
-
-      <div class="w-layout-blockcontainer container-regular w-container">
-
-        <div
-          id="projects-grid-container"
-          class="projects-grid"
-        >
-
-          <div
-            id="all-projects-view"
-            class="all-projects-view"
+          <a
+            class="mzpl-cta-link"
+            href="/${encodeURIComponent(lang)}/contact"
+            data-route="contact"
           >
+            ${escapeHtml(ui.ctaButton)}
 
-            <div class="category-header">
-
-              <h2 class="category-title">
-                ${escapeHtml(allTitle)}
-              </h2>
-
-              <span class="category-count">
-                ${escapeHtml(
-                  getProjectCountLabel(
-                    projects.length,
-                    lang
-                  )
-                )}
-              </span>
-
-            </div>
-
-            <div class="category-projects">
-              ${renderProjectCards(
-                projects,
-                lang,
-                false
-              )}
-            </div>
-
-          </div>
-
-          <div
-            id="categories-view"
-            class="categories-view"
-            style="display:none;"
-          >
-            ${renderCategories(
-              categorizedProjects,
-              lang
-            )}
-          </div>
+            <span aria-hidden="true">↗</span>
+          </a>
 
         </div>
 
@@ -724,173 +888,128 @@ function renderProjectsGrid(
 }
 
 // ============================================================
-// CTA SECTION
+// IMAGE FALLBACK
 // ============================================================
 
-function renderCTASection(lang) {
-  return `
-    <section class="cta-section">
+function attachImageFallbacks(scope) {
+  scope
+    .querySelectorAll('.mzpl-card-image')
+    .forEach(img => {
+      img.addEventListener('error', () => {
+        if (img.dataset.fallback) return;
 
-      <div class="w-layout-blockcontainer container-regular w-container">
-
-        <div class="cta-image-wrap">
-
-          <img
-            src="/assets/img/cta-image.jpg"
-            loading="lazy"
-            decoding="async"
-            alt=""
-            class="cta-image"
-          />
-
-          <div class="cta-title-area">
-
-            <div class="cta-title-wrap">
-
-              <h2 class="section-title text-white">
-                ${t(
-                  'cta_projects_title',
-                  isPersian(lang)
-                    ? 'پروژه‌ای در ذهن دارید؟'
-                    : 'Have a project in mind?'
-                )}
-              </h2>
-
-              <div class="cta-button-wrap">
-
-                <a
-                  href="/${encodeURIComponent(lang)}/contact"
-                  class="cta-button"
-                  data-route="contact"
-                >
-                  ${t(
-                    'lets_talk',
-                    isPersian(lang)
-                      ? 'با ما صحبت کنید'
-                      : "Let's Talk"
-                  )}
-                </a>
-
-              </div>
-
-            </div>
-
-          </div>
-
-          <div class="cta-bg-wrap"></div>
-
-        </div>
-
-      </div>
-
-    </section>
-  `;
+        img.dataset.fallback = '1';
+        img.src = FALLBACK_IMAGE;
+      });
+    });
 }
 
 // ============================================================
-// CATEGORY FILTER INTERACTIONS
+// INTERACTIONS
 // ============================================================
 
-function initCategoryFilter(app) {
-  const buttons = [
-    ...app.querySelectorAll(
-      '.category-filter-btn'
-    )
-  ];
-
-  const allView = app.querySelector(
-    '#all-projects-view'
-  );
-
-  const categoriesView = app.querySelector(
-    '#categories-view'
-  );
-
-  const sections = [
-    ...app.querySelectorAll(
-      '.category-section'
-    )
-  ];
+function attachInteractions(app, projects, lang, ui) {
+  const filters = app.querySelector('#mzplFilters');
+  const select = app.querySelector('#mzplSort');
+  const grid = app.querySelector('#mzplGrid');
+  const count = app.querySelector('#mzplProjectCount');
+  const heading = app.querySelector('#mzplCurrentCategory');
 
   if (
-    !buttons.length ||
-    !allView ||
-    !categoriesView
+    !filters ||
+    !select ||
+    !grid ||
+    !count ||
+    !heading
   ) {
     return;
   }
 
-  function activateCategory(
-    selectedCategory
-  ) {
-    buttons.forEach(button => {
-      const active =
-        button.dataset.category ===
-        selectedCategory;
+  let currentCategory = 'all';
 
-      button.classList.toggle(
-        'active',
-        active
-      );
-
-      button.setAttribute(
-        'aria-pressed',
-        String(active)
-      );
-    });
-
-    const showAll =
-      selectedCategory === 'all';
-
-    allView.style.display = showAll
-      ? 'block'
-      : 'none';
-
-    categoriesView.style.display = showAll
-      ? 'none'
-      : 'block';
-
-    sections.forEach(section => {
-      section.style.display =
-        !showAll &&
-        section.dataset.category ===
-          selectedCategory
-          ? 'block'
-          : 'none';
-    });
-  }
-
-  buttons.forEach(button => {
-    button.addEventListener('click', () => {
-      const category =
-        button.dataset.category;
-
-      if (!category) return;
-
-      activateCategory(category);
-
-      const projectsSection =
-        app.querySelector(
-          '.projects-list-section'
+  function update() {
+    const filtered = currentCategory === 'all'
+      ? projects
+      : projects.filter(project =>
+          projectCategory(project) === currentCategory
         );
 
-      if (projectsSection) {
-        const reducedMotion =
-          window.matchMedia?.(
-            '(prefers-reduced-motion: reduce)'
-          )?.matches;
+    const sorted = sortProjects(
+      filtered,
+      select.value,
+      lang
+    );
 
-        projectsSection.scrollIntoView({
-          behavior: reducedMotion
-            ? 'auto'
-            : 'smooth',
-          block: 'start'
-        });
-      }
-    });
+    grid.innerHTML = sorted.length
+      ? sorted.map(project =>
+          renderProjectCard(project, lang, ui)
+        ).join('')
+      : `
+        <div class="mzpl-empty">
+          ${escapeHtml(ui.empty)}
+        </div>
+      `;
+
+    heading.textContent = currentCategory === 'all'
+      ? ui.allProjects
+      : `${ui[currentCategory]} ${ui.projectSuffix}`;
+
+    count.textContent = (
+      `${filtered.length} ${
+        filtered.length === 1
+          ? ui.countOne
+          : ui.countMany
+      }`
+    );
+
+    filters
+      .querySelectorAll('[data-category]')
+      .forEach(button => {
+        const active =
+          button.dataset.category === currentCategory;
+
+        button.classList.toggle(
+          'is-active',
+          active
+        );
+
+        button.setAttribute(
+          'aria-pressed',
+          String(active)
+        );
+      });
+
+    attachImageFallbacks(grid);
+  }
+
+  filters.addEventListener('click', event => {
+    const button = event.target.closest(
+      'button[data-category]'
+    );
+
+    if (
+      !button ||
+      !filters.contains(button)
+    ) {
+      return;
+    }
+
+    const next = button.dataset.category;
+
+    if (
+      !CATEGORY_IDS.includes(next) ||
+      next === currentCategory
+    ) {
+      return;
+    }
+
+    currentCategory = next;
+    update();
   });
 
-  activateCategory('all');
+  select.addEventListener('change', update);
+
+  attachImageFallbacks(grid);
 }
 
 // ============================================================
@@ -898,75 +1017,72 @@ function initCategoryFilter(app) {
 // ============================================================
 
 export async function renderProjects() {
-  const app = document.getElementById(
-    'app'
-  );
+  const app = document.getElementById('app');
 
   if (!app) {
-    console.error(
-      '[Projects] #app element not found.'
-    );
+    console.error('[Projects] #app not found');
     return;
   }
 
-  const currentLang =
-    i18n.getCurrentLanguage();
+  const lang = i18n.getCurrentLanguage();
+  const ui = LABELS[lang] || LABELS.en;
 
-  const initialPath =
-    window.location.pathname;
+  const path = window.location.pathname;
+  const search = window.location.search;
 
-  const requestId =
-    ++renderRequestId;
+  const requestId = ++renderRequestId;
 
   let projects = [];
 
   try {
+    // Fetch all active projects without a limit.
     const result = await getProjects();
 
     if (Array.isArray(result)) {
-      projects = result.filter(
-        project =>
-          project &&
-          typeof project === 'object'
+      projects = result.filter(project =>
+        project &&
+        typeof project === 'object' &&
+        !Array.isArray(project) &&
+        ![false, 0, '0', 'false'].includes(
+          project.is_active
+        )
       );
     }
+
   } catch (error) {
     console.error(
-      '[Projects] Failed to load projects:',
+      '[Projects] Failed to fetch projects:',
       error
     );
   }
 
-  // Ignore outdated SPA responses
+  // Ignore outdated SPA requests.
   if (
     requestId !== renderRequestId ||
-    window.location.pathname !== initialPath ||
-    i18n.getCurrentLanguage() !== currentLang
+    window.location.pathname !== path ||
+    window.location.search !== search ||
+    i18n.getCurrentLanguage() !== lang
   ) {
     return;
   }
-
-  const categorizedProjects =
-    groupProjectsByCategory(projects);
 
   app.innerHTML = `
     ${renderHeader()}
 
     <main
-      class="mz-projects"
+      class="mz-projects mzpl-page"
       id="mazoryaProjects"
+      dir="${lang === 'fa' || lang === 'ar' ? 'rtl' : 'ltr'}"
     >
-      ${renderBannerSection(currentLang)}
 
-      ${renderFilterSection(currentLang)}
+      ${renderHero(ui)}
 
-      ${renderProjectsGrid(
-        projects,
-        categorizedProjects,
-        currentLang
-      )}
+      ${renderFilters(ui)}
 
-      ${renderCTASection(currentLang)}
+      ${renderList(ui, projects, lang)}
+
+      ${renderCTA(lang, ui)}
+
     </main>
 
     ${renderFooter()}
@@ -975,24 +1091,13 @@ export async function renderProjects() {
   attachHeaderEvents();
   attachFooterEvents();
 
-  initCategoryFilter(app);
-
-  // Animation Manager:
-  // app.js -> router.afterRender -> reinitAnimations()
-
-  console.log(
-    '[Projects] Page rendered:',
-    {
-      language: currentLang,
-      projects: projects.length,
-      categories: Object.fromEntries(
-        Object.entries(categorizedProjects).map(
-          ([key, values]) => [
-            key,
-            values.length
-          ]
-        )
-      )
-    }
+  attachInteractions(
+    app,
+    projects,
+    lang,
+    ui
   );
+
+  document.title =
+    `${ui.pageTitle} | Mazorya Group`;
 }

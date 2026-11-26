@@ -1,644 +1,793 @@
 
-/* ============================================================
-   MAZORYA GROUP — PROJECTS LIST
-   File: public/assets/css/projects.css
-   Depends on: main.css
-   Scope: .mz-projects
-   ============================================================ */
+/**
+ * Mazorya Group — Projects Listing
+ * Light Editorial UI
+ * File: assets/css/projects.css
+ */
 
-/* 01 — PAGE BASE */
+#mazoryaProjects {
+  --mzpl-ink: #131725;
+  --mzpl-muted: #636774;
+  --mzpl-coral: #ff5965;
+  --mzpl-coral-dark: #ec4354;
+  --mzpl-border: #e8e9ef;
 
-.mz-projects {
-  --projects-primary: var(--color-primary, #ff6b6b);
-  --projects-dark: var(--color-dark, #1f1f2e);
-  --projects-white: var(--color-white, #ffffff);
-  --projects-muted: var(--text-secondary, #555562);
-  --projects-border: var(--border-light, #e5e5e9);
-  --projects-soft: var(--bg-secondary, #f7f7f7);
-
-  width: 100%;
-  min-width: 0;
+  color: var(--mzpl-ink);
+  background: #fff;
+  min-height: 75vh;
   overflow: clip;
-
-  background: var(--bg-main, #ffffff);
-  color: var(--projects-dark);
-  font-family: var(--font-body);
+  font-family: inherit;
 }
 
-.mz-projects *,
-.mz-projects *::before,
-.mz-projects *::after {
+#mazoryaProjects *,
+#mazoryaProjects *::before,
+#mazoryaProjects *::after {
   box-sizing: border-box;
 }
 
-.mz-projects section {
-  scroll-margin-top: 95px;
+#mazoryaProjects a {
+  text-decoration: none;
 }
 
-/* 02 — PROJECTS BANNER */
-
-.mz-projects .projects-banner {
-  padding: 120px 0 45px;
-
-  background:
-    radial-gradient(
-      circle at 80% 0%,
-      rgba(255, 107, 107, 0.08),
-      transparent 40%
-    ),
-    var(--projects-white);
+#mazoryaProjects button,
+#mazoryaProjects select {
+  font: inherit;
 }
 
-.mz-projects .banner-title-wrap {
-  max-width: 720px;
-  margin-inline: auto;
-  text-align: center;
-}
-
-.mz-projects .banner-title {
-  margin: 0 0 16px;
-
-  color: var(--projects-dark);
-  font-family: var(--font-heading);
-  font-size: clamp(36px, 4.6vw, 56px);
-  font-weight: 700;
-  line-height: 1.18;
-  letter-spacing: -0.035em;
-}
-
-.mz-projects .banner-title-wrap p {
-  max-width: 590px;
-  margin: 0 auto;
-
-  color: var(--projects-muted);
-  font-size: 14px;
-  line-height: 1.9;
-}
-
-/* 03 — CATEGORY FILTERS */
-
-.mz-projects .category-filter-section {
-  padding: 0 0 35px;
-  background: var(--projects-white);
-}
-
-.mz-projects .category-filter-wrap {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  flex-wrap: wrap;
-  gap: 10px;
-
-  width: 100%;
-  margin: 0;
-  padding: 0;
-}
-
-.mz-projects .category-filter-btn {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-
-  min-height: 40px;
-  padding: 9px 20px;
-
-  border: 1px solid var(--projects-border);
-  border-radius: var(--radius-full, 999px);
-
-  background: var(--projects-white);
-  color: var(--projects-muted);
-
-  font-family: var(--font-body);
-  font-size: 13px;
-  font-weight: 500;
-  line-height: 1.4;
-  white-space: nowrap;
-
-  cursor: pointer;
-
-  transition:
-    background 0.25s ease,
-    color 0.25s ease,
-    border-color 0.25s ease,
-    transform 0.25s ease;
-}
-
-.mz-projects .category-filter-btn:hover {
-  background: var(--projects-soft);
-  border-color: var(--projects-primary);
-  color: var(--projects-dark);
-}
-
-.mz-projects .category-filter-btn.active,
-.mz-projects .category-filter-btn[aria-pressed="true"] {
-  background: var(--projects-dark);
-  border-color: var(--projects-dark);
-  color: var(--projects-white);
-}
-
-.mz-projects .category-filter-btn:focus-visible {
-  outline: 2px solid var(--projects-primary);
+#mazoryaProjects button:focus-visible,
+#mazoryaProjects select:focus-visible,
+#mazoryaProjects a:focus-visible {
+  outline: 2px solid var(--mzpl-coral);
   outline-offset: 3px;
 }
 
-/* 04 — LIST SECTION */
-
-.mz-projects .projects-list-section {
-  min-height: 350px;
-  padding: 25px 0 95px;
+#mazoryaProjects .mzpl-container {
+  width: min(1160px, calc(100% - 92px));
+  margin-inline: auto;
 }
 
-.mz-projects .projects-grid,
-.mz-projects .all-projects-view,
-.mz-projects .categories-view,
-.mz-projects .category-projects {
-  width: 100%;
-  min-width: 0;
-}
+/* ==========================================
+   HERO
+========================================== */
 
-/* Category headings */
-
-.mz-projects .category-header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  flex-wrap: wrap;
-
-  gap: 12px;
-  margin-bottom: 27px;
-  padding-bottom: 16px;
-
-  border-bottom: 1px solid var(--projects-border);
-}
-
-.mz-projects .category-title {
-  margin: 0;
-
-  color: var(--projects-dark);
-  font-family: var(--font-heading);
-  font-size: clamp(23px, 2.6vw, 32px);
-  font-weight: 700;
-  line-height: 1.35;
-}
-
-.mz-projects .category-count {
-  display: inline-flex;
-  align-items: center;
-
-  padding: 7px 13px;
-
-  border-radius: var(--radius-full, 999px);
-
-  background: var(--projects-soft);
-  color: var(--projects-muted);
-
-  font-size: 12px;
-  font-weight: 500;
-  white-space: nowrap;
-}
-
-/* Category section switching is controlled by projects.js */
-
-.mz-projects .category-section {
-  width: 100%;
-  min-width: 0;
-}
-
-/* 05 — PROJECT ROWS */
-
-.mz-projects .category-projects {
-  display: flex;
-  flex-direction: column;
-  gap: 25px;
-}
-
-.mz-projects .projects-row {
-  display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-
-  align-items: stretch;
-  gap: 25px;
-
-  width: 100%;
-}
-
-.mz-projects .project-collection-item {
-  display: block;
-
-  width: 100%;
-  min-width: 0;
-  height: 100%;
-
-  margin: 0;
-  padding: 0;
-}
-
-.mz-projects .project-card-wrap {
-  display: flex;
-  flex-direction: column;
-
-  width: 100%;
-  height: 100%;
-  min-width: 0;
-
-  overflow: hidden;
-
-  background: var(--projects-white);
-  border: 1px solid var(--projects-border);
-  border-radius: 14px;
-
-  box-shadow: 0 5px 22px rgba(31, 31, 46, 0.035);
-
-  transition:
-    transform 0.3s ease,
-    border-color 0.3s ease,
-    box-shadow 0.3s ease;
-}
-
-.mz-projects .project-card-wrap:hover {
-  transform: translateY(-5px);
-
-  border-color: rgba(255, 107, 107, 0.35);
-  box-shadow: 0 15px 38px rgba(31, 31, 46, 0.09);
-}
-
-/* 06 — PROJECT IMAGE */
-
-.mz-projects .project-image-area {
+#mazoryaProjects .mzpl-hero {
   position: relative;
+  isolation: isolate;
+  padding: 58px 0 27px;
 
-  width: 100%;
-  aspect-ratio: 16 / 10;
-
-  overflow: hidden;
-
-  background: var(--projects-soft);
+  background:
+    radial-gradient(
+      ellipse 30% 85% at 92% 3%,
+      rgba(255, 107, 122, .16),
+      transparent 75%
+    ),
+    radial-gradient(
+      ellipse 35% 70% at 55% 70%,
+      rgba(255, 191, 196, .19),
+      transparent 76%
+    ),
+    #fff;
 }
 
-.mz-projects .project-image-wrap {
-  display: block;
-
-  width: 100%;
-  height: 100%;
-
-  overflow: hidden;
-}
-
-.mz-projects .project-image {
-  display: block;
-
-  width: 100%;
-  height: 100%;
-
-  object-fit: cover;
-  object-position: center;
-
-  border-radius: 0;
-
-  transition: transform 0.55s ease;
-}
-
-.mz-projects .project-card-wrap:hover .project-image {
-  transform: scale(1.045);
-}
-
-/* Project arrow */
-
-.mz-projects .project-overlay-wrap {
-  position: absolute;
-  inset-inline-end: 15px;
-  bottom: 15px;
-
+#mazoryaProjects .mzpl-hero-layout {
+  min-height: 213px;
   display: grid;
-  place-items: center;
 
-  opacity: 0;
-  transform: translateY(6px);
+  grid-template-columns:
+    minmax(0, 1.5fr)
+    minmax(220px, .78fr);
 
-  transition:
-    opacity 0.25s ease,
-    transform 0.25s ease;
+  align-items: center;
+  gap: 24px;
 }
 
-.mz-projects .project-card-wrap:hover
-.project-overlay-wrap,
-.mz-projects .project-overlay-wrap:focus-visible {
-  opacity: 1;
-  transform: translateY(0);
+#mazoryaProjects .mzpl-hero-content {
+  position: relative;
+  z-index: 1;
 }
 
-.mz-projects .project-arrow-icon-wrap {
-  display: grid;
-  place-items: center;
-
-  width: 43px;
-  height: 43px;
-
-  border-radius: 50%;
-  background: var(--projects-primary);
-}
-
-.mz-projects .project-arrow-icon {
-  display: block;
-
-  width: 19px;
-  height: 19px;
-
-  object-fit: contain;
-  border-radius: 0;
-}
-
-/* 07 — PROJECT INFO */
-
-.mz-projects .project-title-wrap {
+#mazoryaProjects .mzpl-eyebrow {
   display: flex;
-  flex-direction: column;
-  align-items: flex-start;
+  align-items: center;
+  gap: 15px;
 
-  gap: 10px;
-  min-height: 83px;
-  padding: 19px 22px;
+  color: #363b49;
+  letter-spacing: .22em;
+  font-size: 10px;
+  font-weight: 700;
+  line-height: 1.6;
+
+  text-transform: uppercase;
+  margin-bottom: 19px;
 }
 
-.mz-projects .project-title {
-  display: block;
+#mazoryaProjects .mzpl-eyebrow span {
+  display: inline-block;
+  height: 2px;
+  width: 36px;
+  flex-shrink: 0;
+  background: var(--mzpl-coral);
+}
 
+#mazoryaProjects .mzpl-hero h1 {
+  max-width: 710px;
   margin: 0;
 
-  color: var(--projects-dark);
-  font-family: var(--font-heading);
-  font-size: clamp(17px, 1.65vw, 21px);
+  color: var(--mzpl-ink);
+  font-size: clamp(43px, 5.15vw, 71px);
+  line-height: 1.07;
+  letter-spacing: -.055em;
   font-weight: 700;
-  line-height: 1.5;
 
   overflow-wrap: anywhere;
 }
 
-.mz-projects a.project-title:hover {
-  color: var(--projects-primary);
+#mazoryaProjects .mzpl-hero h1 span {
+  display: block;
+  color: var(--mzpl-coral);
 }
 
-/* Category label */
+#mazoryaProjects .mzpl-hero p {
+  max-width: 610px;
+  margin: 19px 0 0;
 
-.mz-projects .project-category-tag {
+  color: var(--mzpl-muted);
+  font-size: 15px;
+  line-height: 1.83;
+}
+
+#mazoryaProjects .mzpl-hero-art {
+  position: relative;
+  display: grid;
+  place-items: center;
+  align-self: stretch;
+  color: #ff6772;
+}
+
+#mazoryaProjects .mzpl-hero-art::before {
+  content: '';
+  position: absolute;
+
+  width: min(115%, 400px);
+  aspect-ratio: 1;
+  border-radius: 50%;
+
+  background: radial-gradient(
+    circle at 50% 50%,
+    rgba(255, 91, 110, .12),
+    transparent 72%
+  );
+}
+
+#mazoryaProjects .mzpl-maze {
+  width: min(100%, 286px);
+  height: auto;
+
+  filter: drop-shadow(
+    0 12px 15px rgba(255, 90, 110, .035)
+  );
+
+  transform: rotate(-11deg);
+}
+
+/* ==========================================
+   CATEGORY FILTERS
+========================================== */
+
+#mazoryaProjects .mzpl-filter-shell {
+  padding-top: 5px;
+}
+
+#mazoryaProjects .mzpl-filters {
+  display: flex;
+  gap: 10px;
+  overflow-x: auto;
+
+  padding: 5px 0 15px;
+
+  scrollbar-width: thin;
+  scrollbar-color: #f3bfc3 transparent;
+}
+
+#mazoryaProjects .mzpl-filter {
+  flex: 1 0 auto;
+  min-width: 96px;
+  padding: 11px 19px;
+
+  border-radius: 50px;
+  border: 1px solid var(--mzpl-border);
+
+  color: #272c38;
+  background: #fff;
+  cursor: pointer;
+  text-align: center;
+  white-space: nowrap;
+
+  font-size: 13px;
+  font-weight: 650;
+  line-height: 1.2;
+
+  box-shadow: 0 2px 10px rgba(15, 18, 29, .015);
+
+  transition:
+    background .18s,
+    border-color .18s,
+    color .18s,
+    transform .18s;
+}
+
+#mazoryaProjects .mzpl-filter:hover {
+  border-color: #ffc2c8;
+  color: var(--mzpl-coral-dark);
+}
+
+#mazoryaProjects .mzpl-filter.is-active {
+  background: var(--mzpl-coral);
+  border-color: var(--mzpl-coral);
+  color: #fff;
+
+  box-shadow: 0 8px 16px rgba(
+    255, 86, 101, .14
+  );
+}
+
+/* ==========================================
+   GRID HEADING
+========================================== */
+
+#mazoryaProjects .mzpl-projects-section {
+  padding: 13px 0 35px;
+}
+
+#mazoryaProjects .mzpl-list-heading {
+  display: flex;
+  gap: 20px;
+
+  align-items: center;
+  justify-content: space-between;
+
+  margin: 0 0 24px;
+}
+
+#mazoryaProjects .mzpl-heading-group {
+  display: flex;
+  align-items: center;
+  gap: 17px;
+  flex-wrap: wrap;
+}
+
+#mazoryaProjects .mzpl-heading-group h2 {
+  margin: 0;
+  color: var(--mzpl-ink);
+
+  font-size: clamp(27px, 3.1vw, 38px);
+  line-height: 1.24;
+
+  font-weight: 700;
+  letter-spacing: -.045em;
+}
+
+#mazoryaProjects .mzpl-count {
+  padding: 7px 15px;
+  border-radius: 99px;
+
+  color: #666a75;
+  background: #f3f3f5;
+
+  font-size: 12px;
+  line-height: 1.4;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+#mazoryaProjects .mzpl-sort-label {
   display: inline-flex;
   align-items: center;
+  gap: 6px;
+  flex-shrink: 0;
 
-  padding: 5px 10px;
-
-  border: 1px solid rgba(255, 107, 107, 0.2);
-  border-radius: 999px;
-
-  background: rgba(255, 107, 107, 0.09);
-  color: var(--projects-dark);
-
-  font-size: 11px;
-  font-weight: 500;
+  font-size: 12px;
+  color: #747785;
 }
 
-/* Empty projects */
+#mazoryaProjects .mzpl-sort {
+  border: none;
+  background: transparent;
 
-.mz-projects .no-projects {
-  width: 100%;
-  padding: 55px 24px;
+  color: #252a37;
+  padding: 8px 17px 8px 4px;
 
-  border: 1px dashed var(--projects-border);
-  border-radius: 14px;
+  font-size: 12px;
+  font-weight: 700;
 
-  background: var(--projects-soft);
-  text-align: center;
+  cursor: pointer;
+  max-width: 160px;
 }
 
-.mz-projects .no-projects p {
+/* ==========================================
+   PROJECT CARDS
+========================================== */
+
+#mazoryaProjects .mzpl-grid {
+  display: grid;
+
+  grid-template-columns:
+    repeat(2, minmax(0, 1fr));
+
+  column-gap: 25px;
+  row-gap: 25px;
+  align-items: start;
+}
+
+#mazoryaProjects .mzpl-card {
+  min-width: 0;
   margin: 0;
-  color: var(--projects-muted);
-  font-size: 14px;
 }
 
-/* 08 — CTA */
-
-.mz-projects .cta-section {
-  padding: 0 0 85px;
-}
-
-.mz-projects .cta-image-wrap {
+#mazoryaProjects .mzpl-card-media {
   position: relative;
-  isolation: isolate;
+  width: 100%;
+  overflow: hidden;
+
+  border-radius: 15px;
+  background: #f0f0f2;
+
+  box-shadow: 0 1px 1px rgba(
+    11, 19, 39, .035
+  );
+}
+
+#mazoryaProjects .mzpl-card-image-link {
+  position: relative;
+  display: block;
+  width: 100%;
+
+  aspect-ratio: 1.91 / 1;
+  overflow: hidden;
+  background: #f5f5f7;
+}
+
+#mazoryaProjects .mzpl-card-image {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+
+  transition:
+    transform .5s cubic-bezier(.18, .7, .24, 1),
+    filter .4s;
+}
+
+#mazoryaProjects .mzpl-card:hover .mzpl-card-image {
+  transform: scale(1.045);
+}
+
+#mazoryaProjects .mzpl-card-arrow {
+  position: absolute;
+  bottom: 15px;
+  inset-inline-end: 15px;
+
+  width: 41px;
+  height: 41px;
 
   display: grid;
   place-items: center;
 
-  width: 100%;
-  min-height: 290px;
+  background: #fff;
+  color: var(--mzpl-coral);
 
+  box-shadow: 0 7px 20px rgba(
+    6, 13, 29, .12
+  );
+
+  border-radius: 50%;
+  font-size: 25px;
+  line-height: 1;
+
+  transition:
+    transform .2s,
+    background .2s,
+    color .2s;
+}
+
+#mazoryaProjects .mzpl-card:hover .mzpl-card-arrow {
+  transform: translate(2px, -2px);
+  background: var(--mzpl-coral);
+  color: #fff;
+}
+
+#mazoryaProjects .mzpl-card-info {
+  padding: 12px 4px 0;
+}
+
+#mazoryaProjects .mzpl-card-title {
+  margin: 0 0 3px;
+
+  font-size: clamp(16px, 1.7vw, 20px);
+  line-height: 1.43;
+  font-weight: 700;
+
+  color: var(--mzpl-ink);
+  letter-spacing: -.03em;
+  overflow-wrap: anywhere;
+}
+
+#mazoryaProjects .mzpl-card-title a {
+  color: inherit;
+}
+
+#mazoryaProjects .mzpl-card-title a:hover {
+  color: var(--mzpl-coral-dark);
+}
+
+#mazoryaProjects .mzpl-card-category {
+  margin: 0;
+
+  display: flex;
+  align-items: center;
+  gap: 8px;
+
+  color: #737783;
+  font-size: 13px;
+  line-height: 1.5;
+}
+
+#mazoryaProjects .mzpl-card-category span {
+  font-size: 16px;
+  color: #777b87;
+
+  min-width: 16px;
+  text-align: center;
+}
+
+#mazoryaProjects .mzpl-empty {
+  grid-column: 1 / -1;
+
+  border: 1px dashed #f0cdd1;
+  background: #fff9f9;
+  border-radius: 16px;
+
+  padding: 62px 20px;
+  text-align: center;
+
+  color: var(--mzpl-muted);
+  font-size: 15px;
+}
+
+/* ==========================================
+   CONTACT CTA
+========================================== */
+
+#mazoryaProjects .mzpl-cta-section {
+  padding: 4px 0 58px;
+}
+
+#mazoryaProjects .mzpl-cta {
+  min-height: 148px;
+
+  position: relative;
   overflow: hidden;
-  border-radius: 14px;
 
-  background: var(--projects-dark);
-}
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 24px;
 
-.mz-projects .cta-image {
-  position: absolute;
-  inset: 0;
-  z-index: -2;
-
-  width: 100%;
-  height: 100%;
-
-  object-fit: cover;
-  border-radius: 0;
-}
-
-.mz-projects .cta-bg-wrap {
-  position: absolute;
-  inset: 0;
-  z-index: -1;
+  padding: 32px 48px;
+  border-radius: 23px;
 
   background: linear-gradient(
-    110deg,
-    rgba(31, 31, 46, 0.9),
-    rgba(31, 31, 46, 0.55)
+    109deg,
+    #fff0f1 0%,
+    #fff9f9 52%,
+    #ffe4e7 100%
   );
+
+  border: 1px solid #fbe5e7;
+}
+
+#mazoryaProjects .mzpl-cta::before {
+  content: '';
+  position: absolute;
+
+  inset: -80% -5% -115% 58%;
+  transform: rotate(-28deg);
+
+  border: 1px solid rgba(
+    255, 85, 100, .13
+  );
+
+  border-radius: 50%;
+
+  box-shadow:
+    0 16px 0 0 rgba(255, 85, 100, .035),
+    0 40px 0 0 rgba(255, 85, 100, .03),
+    0 64px 0 0 rgba(255, 85, 100, .025);
 
   pointer-events: none;
 }
 
-.mz-projects .cta-title-area {
+#mazoryaProjects .mzpl-cta-text,
+#mazoryaProjects .mzpl-cta-link {
   position: relative;
-  z-index: 2;
-
-  width: 100%;
-  padding: 42px 25px;
-  text-align: center;
+  z-index: 1;
 }
 
-.mz-projects .cta-title-wrap {
-  max-width: 680px;
-  margin-inline: auto;
+#mazoryaProjects .mzpl-cta h2 {
+  margin: 0 0 9px;
+
+  color: var(--mzpl-ink);
+
+  font-size: clamp(26px, 3vw, 40px);
+  font-weight: 700;
+  letter-spacing: -.052em;
+  line-height: 1.24;
 }
 
-.mz-projects .cta-title-wrap .section-title {
+#mazoryaProjects .mzpl-cta h2 em {
+  color: var(--mzpl-coral);
+  font-style: normal;
+}
+
+#mazoryaProjects .mzpl-cta p {
   margin: 0;
 
-  color: var(--projects-white);
-  font-size: clamp(24px, 2.7vw, 34px);
-  line-height: 1.35;
+  color: #555a68;
+  font-size: 14px;
+  line-height: 1.6;
 }
 
-.mz-projects .cta-button-wrap {
-  margin-top: 24px;
+#mazoryaProjects .mzpl-cta-link {
+  flex-shrink: 0;
+
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 13px;
+
+  min-width: 145px;
+
+  background: var(--mzpl-coral);
+  border: 1px solid var(--mzpl-coral);
+  color: #fff;
+  border-radius: 50px;
+
+  padding: 13px 23px;
+
+  font-size: 14px;
+  font-weight: 700;
+
+  box-shadow: 0 8px 22px rgba(
+    255, 92, 105, .13
+  );
+
+  transition:
+    background .2s,
+    transform .2s;
 }
 
-.mz-projects .cta-button {
-  min-height: 44px;
-  padding: 11px 25px;
-  font-size: 13px;
+#mazoryaProjects .mzpl-cta-link:hover {
+  background: var(--mzpl-coral-dark);
+  color: #fff;
+  transform: translateY(-2px);
 }
 
-/* 09 — RTL */
-
-.mz-projects:dir(rtl) {
-  direction: rtl;
-  text-align: right;
+#mazoryaProjects .mzpl-cta-link span {
+  font-size: 18px;
 }
 
-.mz-projects:dir(rtl) .banner-title-wrap,
-.mz-projects:dir(rtl) .cta-title-area {
-  text-align: center;
+/* ==========================================
+   RTL
+========================================== */
+
+#mazoryaProjects[dir="rtl"] .mzpl-hero h1 {
+  letter-spacing: -.035em;
 }
 
-.mz-projects:dir(rtl) .project-title-wrap {
-  align-items: flex-start;
-  text-align: start;
+#mazoryaProjects[dir="rtl"] .mzpl-hero p {
+  line-height: 2;
 }
 
-html[lang="fa"] .mz-projects .banner-title,
-html[lang="ar"] .mz-projects .banner-title {
-  letter-spacing: normal;
+#mazoryaProjects[dir="rtl"] .mzpl-card-arrow {
+  transform: scaleX(-1);
 }
 
-/* 10 — TABLET */
+#mazoryaProjects[dir="rtl"] .mzpl-card:hover .mzpl-card-arrow {
+  transform: scaleX(-1) translate(2px, -2px);
+}
 
-@media (max-width: 991px) {
-  .mz-projects .projects-banner {
-    padding-top: 110px;
+/* ==========================================
+   TABLET
+========================================== */
+
+@media (max-width: 1024px) {
+  #mazoryaProjects .mzpl-container {
+    width: min(100% - 56px, 1160px);
   }
 
-  .mz-projects .projects-row {
-    gap: 18px;
+  #mazoryaProjects .mzpl-hero h1 {
+    font-size: clamp(43px, 5.9vw, 65px);
   }
 
-  .mz-projects .category-projects {
-    gap: 18px;
+  #mazoryaProjects .mzpl-hero-layout {
+    grid-template-columns:
+      minmax(0, 1.5fr)
+      minmax(175px, .65fr);
   }
 
-  .mz-projects .project-title-wrap {
-    padding: 17px 18px;
+  #mazoryaProjects .mzpl-filter {
+    min-width: 90px;
+  }
+
+  #mazoryaProjects .mzpl-cta {
+    padding-inline: 32px;
   }
 }
 
-/* 11 — MOBILE */
+/* ==========================================
+   MOBILE
+========================================== */
 
-@media (max-width: 767px) {
-  .mz-projects .projects-banner {
-    padding: 95px 0 30px;
+@media (max-width: 720px) {
+  #mazoryaProjects .mzpl-container {
+    width: calc(100% - 36px);
   }
 
-  .mz-projects .banner-title {
-    font-size: clamp(33px, 8vw, 44px);
+  #mazoryaProjects .mzpl-hero {
+    padding-top: 40px;
+    padding-bottom: 19px;
   }
 
-  .mz-projects .banner-title-wrap p {
-    font-size: 13px;
+  #mazoryaProjects .mzpl-hero-layout {
+    grid-template-columns: 1fr;
+    min-height: auto;
   }
 
-  .mz-projects .category-filter-section {
-    padding-bottom: 22px;
+  #mazoryaProjects .mzpl-hero-art {
+    position: absolute;
+
+    inset-inline-end: -68px;
+    inset-block-start: -36px;
+
+    width: 240px;
+    opacity: .2;
+    pointer-events: none;
   }
 
-  .mz-projects .category-filter-wrap {
-    justify-content: flex-start;
+  #mazoryaProjects .mzpl-hero-content {
+    position: relative;
+    z-index: 1;
+  }
+
+  #mazoryaProjects .mzpl-hero h1 {
+    font-size: clamp(38px, 8.5vw, 54px);
+    max-width: 550px;
+  }
+
+  #mazoryaProjects .mzpl-hero p {
+    max-width: 530px;
+    font-size: 14px;
+  }
+
+  #mazoryaProjects .mzpl-filters {
     gap: 8px;
+    padding-bottom: 13px;
   }
 
-  .mz-projects .category-filter-btn {
-    min-height: 37px;
-    padding: 8px 15px;
+  #mazoryaProjects .mzpl-filter {
+    flex: 0 0 auto;
+    min-width: 79px;
+
+    padding: 10px 17px;
     font-size: 12px;
   }
 
-  .mz-projects .projects-list-section {
-    padding: 18px 0 65px;
+  #mazoryaProjects .mzpl-projects-section {
+    padding-top: 16px;
   }
 
-  .mz-projects .category-header {
-    margin-bottom: 20px;
+  #mazoryaProjects .mzpl-grid {
+    gap: 20px 14px;
   }
 
-  .mz-projects .category-title {
-    font-size: 24px;
+  #mazoryaProjects .mzpl-card-media {
+    border-radius: 12px;
   }
 
-  .mz-projects .projects-row {
+  #mazoryaProjects .mzpl-card-image-link {
+    aspect-ratio: 1.35 / 1;
+  }
+
+  #mazoryaProjects .mzpl-card-arrow {
+    width: 35px;
+    height: 35px;
+
+    font-size: 22px;
+    bottom: 10px;
+    inset-inline-end: 10px;
+  }
+
+  #mazoryaProjects .mzpl-card-title {
+    font-size: 16px;
+  }
+
+  #mazoryaProjects .mzpl-cta {
+    padding: 28px 26px;
+  }
+}
+
+@media (max-width: 540px) {
+  #mazoryaProjects .mzpl-container {
+    width: calc(100% - 30px);
+  }
+
+  #mazoryaProjects .mzpl-eyebrow {
+    font-size: 9px;
+    letter-spacing: .12em;
+    gap: 10px;
+  }
+
+  #mazoryaProjects .mzpl-eyebrow span {
+    width: 24px;
+  }
+
+  #mazoryaProjects .mzpl-hero h1 {
+    font-size: clamp(36px, 9.6vw, 48px);
+  }
+
+  #mazoryaProjects .mzpl-list-heading {
+    flex-wrap: wrap;
+    gap: 8px;
+    align-items: end;
+  }
+
+  #mazoryaProjects .mzpl-heading-group h2 {
+    font-size: 28px;
+  }
+
+  #mazoryaProjects .mzpl-sort-label {
+    margin-inline-start: auto;
+  }
+
+  #mazoryaProjects .mzpl-grid {
     grid-template-columns: 1fr;
-    gap: 16px;
+    row-gap: 24px;
   }
 
-  .mz-projects .category-projects {
-    gap: 16px;
+  #mazoryaProjects .mzpl-card-image-link {
+    aspect-ratio: 1.77 / 1;
   }
 
-  .mz-projects .project-title {
+  #mazoryaProjects .mzpl-card-title {
     font-size: 18px;
   }
 
-  .mz-projects .project-overlay-wrap {
-    opacity: 1;
-    transform: none;
+  #mazoryaProjects .mzpl-cta {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 23px;
+    padding: 28px 25px;
   }
 
-  .mz-projects .project-arrow-icon-wrap {
-    width: 38px;
-    height: 38px;
+  #mazoryaProjects .mzpl-cta h2 {
+    font-size: 30px;
   }
 
-  .mz-projects .cta-section {
-    padding-bottom: 60px;
-  }
-
-  .mz-projects .cta-image-wrap {
-    min-height: 245px;
-  }
-
-  .mz-projects .cta-title-wrap .section-title {
-    font-size: 25px;
+  #mazoryaProjects .mzpl-cta-link {
+    min-width: 145px;
   }
 }
 
-/* 12 — SMALL PHONES */
-
-@media (max-width: 480px) {
-  .mz-projects .project-image-area {
-    aspect-ratio: 4 / 3;
-  }
-
-  .mz-projects .project-title-wrap {
-    padding: 16px;
-  }
-
-  .mz-projects .category-count {
-    font-size: 11px;
-  }
-}
-
-/* 13 — REDUCED MOTION */
+/* ==========================================
+   ACCESSIBILITY
+========================================== */
 
 @media (prefers-reduced-motion: reduce) {
-  .mz-projects .project-card-wrap,
-  .mz-projects .project-image,
-  .mz-projects .project-overlay-wrap,
-  .mz-projects .category-filter-btn {
-    transition: none;
-    transform: none;
+  #mazoryaProjects *,
+  #mazoryaProjects *::before,
+  #mazoryaProjects *::after {
+    animation: none !important;
+    transition: none !important;
+    scroll-behavior: auto !important;
   }
 }

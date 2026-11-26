@@ -1,4 +1,4 @@
-import{e as I,a as C,m as y}from"./index-6O3GMm5i.js";import{r as R,a as z}from"./header-CtcPUyL-.js";import{r as P,a as H}from"./footer-uRjdZ6qW.js";const w={},L="/assets/img/default-project.jpg",O=(w==null?void 0:w.VITE_API_URL)||"https://api.mazoryagroup.com/api";let m=null,b=0;function r(e){return String(e??"").replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;").replace(/'/g,"&#39;")}function a(e,t=""){const i=y.t(e);return i==null||i===""||i===e?t||e:String(i)}function _(e,t=L){if(typeof e!="string"||!e.trim())return t;const i=e.trim();if(i.startsWith("//")||/^[a-z][a-z\d+.-]*:/i.test(i)&&!/^https?:\/\//i.test(i))return t;try{const s=new URL(O,window.location.origin).origin;let n;return/^https?:\/\//i.test(i)?n=new URL(i):/^\/?assets\//i.test(i)?n=new URL("/"+i.replace(/^\/+/,""),window.location.origin):n=new URL("/"+i.replace(/^\/+/,""),s),["http:","https:"].includes(n.protocol)?r(n.href):t}catch{return t}}function q(e){return encodeURIComponent(String(e??""))}function k(e){const t=r(a("hero_title","Build, Design & Scale")),i=r(a("hero_accent","Mazorya Group")),s=r(a("hero_subtitle","We create digital experiences that help ambitious brands grow.")),n=r(a("hero_badge","MAZORYA GROUP · CREATIVE STUDIO"));return`
+import{e as I,a as C,m as $}from"./index-BPA8zJGl.js";import{r as R,a as z}from"./header-C0ExrbOA.js";import{r as P,a as H}from"./footer-DjCcTAM_.js";const b={},L="/assets/img/default-project.jpg",k=(b==null?void 0:b.VITE_API_URL)||"https://api.mazoryagroup.com/api";let h=null,x=0;function r(e){return String(e??"").replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;").replace(/'/g,"&#39;")}function a(e,t=""){const i=$.t(e);return i==null||i===""||i===e?t||e:String(i)}function E(e,t=L){if(typeof e!="string"||!e.trim())return t;const i=e.trim();if(i.startsWith("//")||/^[a-z][a-z\d+.-]*:/i.test(i)&&!/^https?:\/\//i.test(i))return t;try{const s=new URL(k,window.location.origin).origin;let n;return/^https?:\/\//i.test(i)?n=new URL(i):/^\/?assets\//i.test(i)?n=new URL("/"+i.replace(/^\/+/,""),window.location.origin):n=new URL("/"+i.replace(/^\/+/,""),s),["http:","https:"].includes(n.protocol)?r(n.href):t}catch{return t}}function O(e){return encodeURIComponent(String(e??""))}function M(e){const t=r(a("hero_title","Build, Design & Scale")),i=r(a("hero_accent","Mazorya Group")),s=r(a("hero_subtitle","We create digital experiences that help ambitious brands grow.")),n=r(a("hero_badge","MAZORYA GROUP · CREATIVE STUDIO"));return`
     <div class="banner-main-section exon-hero-shell">
 
       <div class="banner-inner-wrap exon-hero-inner">
@@ -109,7 +109,7 @@ import{e as I,a as C,m as y}from"./index-6O3GMm5i.js";import{r as R,a as z}from"
       </div>
 
     </div>
-  `}const M="https://cdn.jsdelivr.net/npm/threejs-components@0.0.16/build/backgrounds/grid1.cdn.min.js",B="https://cdn.jsdelivr.net/npm/three@0.170.0/+esm",T={type:"circle",colors:[2236962,2236962],light1Color:16777215,light1Intensity:1e4,light1PositionZ:50,light2Color:16739179,light2Intensity:15e3,light2PositionZ:-20,depthScale:3,materialParams:{metalness:.5,roughness:.5,clearcoat:1,clearcoatRoughness:.2}};let $=null;function D(){const e=document.createElement("canvas");e.className="exon-hero-canvas";const t={canvas:e,host:null,instance:null,loading:!1,unavailable:!1,ready:!1};return e.addEventListener("webglcontextlost",()=>{var i;t.ready=!1,(i=t.host)==null||i.removeAttribute("data-grid-ready")}),t}function U(e,t){const{grid:i}=e,s=i.config.radius*.8,n=i.config.radius*5,o=s*.125,c=[new t.Vector2(s,-n)];for(let u=0;u<=5;u++){const l=u/5*(Math.PI/2);c.push(new t.Vector2(s-o+Math.cos(l)*o,-o+Math.sin(l)*o))}c.push(new t.Vector2(0,0));const d=new t.LatheGeometry(c,32);d.rotateX(Math.PI/2),i.geometry.dispose(),i.geometry=d}async function G(e){if(!(e.instance||e.loading||e.unavailable)){e.loading=!0;try{const[t,i]=await Promise.all([import(M),import(B)]);if(!e.canvas.isConnected||!e.host)return;const s=t.default(e.canvas,T);e.instance=s,s.three.scene.background=new i.Color("#0a0a0a"),s.three.maxPixelRatio=1.5,U(s,i),s.three.resize(),s.three.onAfterRender=()=>{var o;const n=s.three.renderer.getContext();!e.ready&&!n.isContextLost()&&(e.ready=!0,(o=e.host)==null||o.setAttribute("data-grid-ready",""))}}catch(t){e.unavailable=!0,console.warn("[Home] Exon 3D unavailable. CSS fallback is active.",t)}finally{e.loading=!1}}}function N(){const e=document.getElementById("mazoryaExonHero"),t=e==null?void 0:e.querySelector("#exonHeroGridStage");if(!e||!t)return()=>{};const i=new AbortController,s=i.signal,n=window.matchMedia("(prefers-reduced-motion: reduce)");let o=!1;function c(){const l=$;!l||l.host!==t||(l.host=null,l.canvas.remove(),t.removeAttribute("data-grid-ready"))}function d(){var g,v;if(o)return;if(n.matches){c();return}const l=$??($=D());(g=l.host)==null||g.removeAttribute("data-grid-ready"),l.host=t,t.append(l.canvas),l.ready&&t.setAttribute("data-grid-ready",""),(v=l.instance)==null||v.three.resize(),G(l)}d(),n.addEventListener("change",d,{signal:s});const u=[...e.querySelectorAll(".exon-magnetic")];return u.forEach(l=>{l.addEventListener("pointermove",v=>{if(n.matches||v.pointerType!=="mouse")return;const h=l.getBoundingClientRect(),p=((v.clientX-h.left)/Math.max(h.width,1)*2-1)*10,j=((v.clientY-h.top)/Math.max(h.height,1)*2-1)*10;l.style.transform=`translate3d(${p}px, ${j}px, 0)`},{signal:s});const g=()=>{l.style.transform=""};l.addEventListener("pointerleave",g,{signal:s}),l.addEventListener("pointercancel",g,{signal:s})}),n.matches||e.classList.add("exon-hero-animate"),()=>{o||(o=!0,i.abort(),c(),u.forEach(l=>{l.style.transform=""}))}}function W(){return`
+  `}const B="https://cdn.jsdelivr.net/npm/threejs-components@0.0.16/build/backgrounds/grid1.cdn.min.js",T="https://cdn.jsdelivr.net/npm/three@0.170.0/+esm",U={type:"circle",colors:[2236962,2236962],light1Color:16777215,light1Intensity:1e4,light1PositionZ:50,light2Color:16739179,light2Intensity:15e3,light2PositionZ:-20,depthScale:3,materialParams:{metalness:.5,roughness:.5,clearcoat:1,clearcoatRoughness:.2}};let _=null;function D(){const e=document.createElement("canvas");e.className="exon-hero-canvas";const t={canvas:e,host:null,instance:null,loading:!1,unavailable:!1,ready:!1};return e.addEventListener("webglcontextlost",()=>{var i;t.ready=!1,(i=t.host)==null||i.removeAttribute("data-grid-ready")}),t}function G(e,t){const{grid:i}=e,s=i.config.radius*.8,n=i.config.radius*5,o=s*.125,c=[new t.Vector2(s,-n)];for(let u=0;u<=5;u++){const l=u/5*(Math.PI/2);c.push(new t.Vector2(s-o+Math.cos(l)*o,-o+Math.sin(l)*o))}c.push(new t.Vector2(0,0));const d=new t.LatheGeometry(c,32);d.rotateX(Math.PI/2),i.geometry.dispose(),i.geometry=d}async function N(e){if(!(e.instance||e.loading||e.unavailable)){e.loading=!0;try{const[t,i]=await Promise.all([import(B),import(T)]);if(!e.canvas.isConnected||!e.host)return;const s=t.default(e.canvas,U);e.instance=s,s.three.scene.background=new i.Color("#0a0a0a"),s.three.maxPixelRatio=1.5,G(s,i),s.three.resize(),s.three.onAfterRender=()=>{var o;const n=s.three.renderer.getContext();!e.ready&&!n.isContextLost()&&(e.ready=!0,(o=e.host)==null||o.setAttribute("data-grid-ready",""))}}catch(t){e.unavailable=!0,console.warn("[Home] Exon 3D unavailable. CSS fallback is active.",t)}finally{e.loading=!1}}}function W(){const e=document.getElementById("mazoryaExonHero"),t=e==null?void 0:e.querySelector("#exonHeroGridStage");if(!e||!t)return()=>{};const i=new AbortController,s=i.signal,n=window.matchMedia("(prefers-reduced-motion: reduce)");let o=!1;function c(){const l=_;!l||l.host!==t||(l.host=null,l.canvas.remove(),t.removeAttribute("data-grid-ready"))}function d(){var g,v;if(o)return;if(n.matches){c();return}const l=_??(_=D());(g=l.host)==null||g.removeAttribute("data-grid-ready"),l.host=t,t.append(l.canvas),l.ready&&t.setAttribute("data-grid-ready",""),(v=l.instance)==null||v.three.resize(),N(l)}d(),n.addEventListener("change",d,{signal:s});const u=[...e.querySelectorAll(".exon-magnetic")];return u.forEach(l=>{l.addEventListener("pointermove",v=>{if(n.matches||v.pointerType!=="mouse")return;const m=l.getBoundingClientRect(),p=((v.clientX-m.left)/Math.max(m.width,1)*2-1)*10,f=((v.clientY-m.top)/Math.max(m.height,1)*2-1)*10;l.style.transform=`translate3d(${p}px, ${f}px, 0)`},{signal:s});const g=()=>{l.style.transform=""};l.addEventListener("pointerleave",g,{signal:s}),l.addEventListener("pointercancel",g,{signal:s})}),n.matches||e.classList.add("exon-hero-animate"),()=>{o||(o=!0,i.abort(),c(),u.forEach(l=>{l.style.transform=""}))}}function V(){return`
     <section class="client-section">
 
       <div class="w-layout-blockcontainer container-large w-container">
@@ -125,7 +125,7 @@ import{e as I,a as C,m as y}from"./index-6O3GMm5i.js";import{r as R,a as z}from"
       </div>
 
     </section>
-  `}function V(){return`
+  `}function F(){return`
     <section class="feature-section">
 
       <div class="container-regular">
@@ -169,7 +169,7 @@ import{e as I,a as C,m as y}from"./index-6O3GMm5i.js";import{r as R,a as z}from"
       </div>
 
     </section>
-  `}function F(e){const t=[{number:"100+",text:a("global_clients","Global Clientele"),icon:"/assets/img/count-icon-01.svg"},{number:"50+",text:a("honor_highlight","Honor Highlight"),icon:"/assets/img/count-icon-02.svg"},{number:"200+",text:a("projects_done","Project done"),icon:"/assets/img/count-icon-03.svg"},{number:"15+",text:a("business_expertise","Business Expertise"),icon:"/assets/img/count-icon-04.svg"}];return`
+  `}function K(e){const t=[{number:"100+",text:a("global_clients","Global Clientele"),icon:"/assets/img/count-icon-01.svg"},{number:"50+",text:a("honor_highlight","Honor Highlight"),icon:"/assets/img/count-icon-02.svg"},{number:"200+",text:a("projects_done","Project done"),icon:"/assets/img/count-icon-03.svg"},{number:"15+",text:a("business_expertise","Business Expertise"),icon:"/assets/img/count-icon-04.svg"}];return`
     <section class="count-section">
 
       <div class="w-layout-blockcontainer container-regular w-container">
@@ -208,17 +208,17 @@ import{e as I,a as C,m as y}from"./index-6O3GMm5i.js";import{r as R,a as z}from"
 
             <div class="count-wrap">
 
-              ${f(t[0])}
+              ${w(t[0])}
 
-              ${f(t[1])}
+              ${w(t[1])}
 
             </div>
 
             <div class="count-wrap">
 
-              ${f(t[2])}
+              ${w(t[2])}
 
-              ${f(t[3])}
+              ${w(t[3])}
 
             </div>
 
@@ -229,7 +229,7 @@ import{e as I,a as C,m as y}from"./index-6O3GMm5i.js";import{r as R,a as z}from"
       </div>
 
     </section>
-  `}function f(e){return`
+  `}function w(e){return`
     <div class="count-item-wrap">
 
       <div class="count-icon-wrap">
@@ -255,7 +255,7 @@ import{e as I,a as C,m as y}from"./index-6O3GMm5i.js";import{r as R,a as z}from"
       </div>
 
     </div>
-  `}function K(e){const i=[{title:a("home_service1_title","Web Solutions"),desc:a("home_service1_desc","We design and develop visually appealing, intuitive websites that reflect your brand identity, using cutting-edge tools and modern development practices."),icon:"/assets/img/service-icon-01.svg"},{title:a("home_service2_title","Social Media Management"),desc:a("home_service2_desc","We elevate your brand across social media platforms with targeted content strategies designed to engage audiences and drive meaningful conversions."),icon:"/assets/img/service-icon-02.svg"},{title:a("home_service3_title","PPC Advertising"),desc:a("home_service3_desc","We maximize ROI through targeted ads on search engines and social media, continuously optimizing campaigns to reach your audience effectively and efficiently."),icon:"/assets/img/service-icon-03.svg"},{title:a("home_service4_title","Analytics & Insights"),desc:a("home_service4_desc","We leverage advanced analytics to gain actionable insights for digital marketing. By tracking metrics, measuring campaigns, and optimizing strategies, we help your brand achieve measurable growth."),icon:"/assets/img/service-icon-04.svg"}].map(s=>`
+  `}function X(e){const i=[{title:a("home_service1_title","Web Solutions"),desc:a("home_service1_desc","We design and develop visually appealing, intuitive websites that reflect your brand identity, using cutting-edge tools and modern development practices."),icon:"/assets/img/service-icon-01.svg"},{title:a("home_service2_title","Social Media Management"),desc:a("home_service2_desc","We elevate your brand across social media platforms with targeted content strategies designed to engage audiences and drive meaningful conversions."),icon:"/assets/img/service-icon-02.svg"},{title:a("home_service3_title","PPC Advertising"),desc:a("home_service3_desc","We maximize ROI through targeted ads on search engines and social media, continuously optimizing campaigns to reach your audience effectively and efficiently."),icon:"/assets/img/service-icon-03.svg"},{title:a("home_service4_title","Analytics & Insights"),desc:a("home_service4_desc","We leverage advanced analytics to gain actionable insights for digital marketing. By tracking metrics, measuring campaigns, and optimizing strategies, we help your brand achieve measurable growth."),icon:"/assets/img/service-icon-04.svg"}].map(s=>`
     <div class="service-post-collection-item w-dyn-item w-col w-col-6">
 
       <div class="service-post-card">
@@ -347,7 +347,7 @@ import{e as I,a as C,m as y}from"./index-6O3GMm5i.js";import{r as R,a as z}from"
       </div>
 
     </section>
-  `}function X(e,t){const i=Array.isArray(e)?e:[],s=i.slice(0,3),n=i.slice(3,6);return`
+  `}function Z(e,t){const i=Array.isArray(e)?e:[],s=i.slice(0,3),n=i.slice(3,6);return`
     <section class="project-section">
 
       <div class="w-layout-blockcontainer container-regular w-container">
@@ -390,7 +390,7 @@ import{e as I,a as C,m as y}from"./index-6O3GMm5i.js";import{r as R,a as z}from"
                 class="projects-list"
                 id="projects-home-list-1"
               >
-                ${x(s,t)}
+                ${q(s,t)}
               </div>
 
             </div>
@@ -403,7 +403,7 @@ import{e as I,a as C,m as y}from"./index-6O3GMm5i.js";import{r as R,a as z}from"
               class="projects-list"
               id="projects-home-list-2"
             >
-              ${x(n,t)}
+              ${q(n,t)}
             </div>
 
           </div>
@@ -413,7 +413,7 @@ import{e as I,a as C,m as y}from"./index-6O3GMm5i.js";import{r as R,a as z}from"
       </div>
 
     </section>
-  `}function x(e,t){return!Array.isArray(e)||!e.length?"":e.map(i=>{var d,u;const s=q(i.slug||i.id),n=`/${t}/project/${s}`,o=i.project_name||i.name||i.title||"Project",c=_(((d=i.images)==null?void 0:d.image)||((u=i.images)==null?void 0:u.image_1)||i.cover_url||i.image_url||i.image);return`
+  `}function q(e,t){return!Array.isArray(e)||!e.length?"":e.map(i=>{var d,u;const s=O(i.slug||i.id),n=`/${t}/project/${s}`,o=i.project_name||i.name||i.title||"Project",c=E(((d=i.images)==null?void 0:d.image)||((u=i.images)==null?void 0:u.image_1)||i.cover_url||i.image_url||i.image);return`
       <div
         role="listitem"
         class="project-collection-item w-dyn-item w-col w-col-6"
@@ -471,7 +471,7 @@ import{e as I,a as C,m as y}from"./index-6O3GMm5i.js";import{r as R,a as z}from"
         </div>
 
       </div>
-    `}).join("")}function Z(){const t=[{q:a("faq_q1"),a:a("faq_a1")},{q:a("faq_q2"),a:a("faq_a2")},{q:a("faq_q3"),a:a("faq_a3")},{q:a("faq_q4"),a:a("faq_a4")},{q:a("faq_q5"),a:a("faq_a5")}].map((i,s)=>`
+    `}).join("")}function Q(){const t=[{q:a("faq_q1"),a:a("faq_a1")},{q:a("faq_q2"),a:a("faq_a2")},{q:a("faq_q3"),a:a("faq_a3")},{q:a("faq_q4"),a:a("faq_a4")},{q:a("faq_q5"),a:a("faq_a5")}].map((i,s)=>`
     <div
       data-hover="false"
       data-delay="0"
@@ -557,15 +557,15 @@ import{e as I,a as C,m as y}from"./index-6O3GMm5i.js";import{r as R,a as z}from"
       </div>
 
     </section>
-  `}function Q(e,t){const i=Array.isArray(e)?e:[],s=t==="fa"||t==="ar",n=r(a("blog_title","Read news and articles")),o=r(a("view_articles","View All Articles")),c=i.length?`
+  `}function Y(e,t){const i=Array.isArray(e)?e:[],s=t==="fa"||t==="ar",n=r(a("blog_title","Read news and articles")),o=r(a("view_articles","View All Articles")),c=i.length?`
       <div class="blog-grid-container ${s?"rtl-blog":""}">
 
         <div class="blog-main-card">
-          ${Y(i[0],t)}
+          ${J(i[0],t)}
         </div>
 
         <div class="blog-side-list">
-          ${i.slice(1,4).map(d=>J(d,t)).join("")}
+          ${i.slice(1,4).map(d=>ee(d,t)).join("")}
         </div>
 
       </div>
@@ -607,7 +607,7 @@ import{e as I,a as C,m as y}from"./index-6O3GMm5i.js";import{r as R,a as z}from"
       </div>
 
     </section>
-  `}function E(e,t){return t==="en"?e.title_en||e.title||"":e.title||e.title_en||""}function S(e){var t;return _(((t=e.images)==null?void 0:t.image_1)||e.cover_url||e.image_url||e.image)}function A(e,t){return`/${t}/blog-details/${q(e.id)}`}function Y(e,t){const i=E(e,t),s=S(e),n=A(e,t),o=e.excerpt||(t==="en"?e.description_en||e.description:e.description||e.description_en)||"",c=String(o).replace(/<[^>]*>/g,"").trim(),d=c.length>120?c.substring(0,120)+"...":c;return`
+  `}function S(e,t){return t==="en"?e.title_en||e.title||"":e.title||e.title_en||""}function A(e){var t;return E(((t=e.images)==null?void 0:t.image_1)||e.cover_url||e.image_url||e.image)}function j(e,t){const i=String((e==null?void 0:e.slug)||(e==null?void 0:e.id)||"").trim();return i?`/${encodeURIComponent(t)}/blog-details/`+encodeURIComponent(i):`/${encodeURIComponent(t)}/blog`}function J(e,t){const i=S(e,t),s=A(e),n=j(e,t),o=e.excerpt||(t==="en"?e.description_en||e.description:e.description||e.description_en)||"",c=String(o).replace(/<[^>]*>/g,"").trim(),d=c.length>120?c.substring(0,120)+"...":c;return`
     <div class="blog-main-card-inner">
 
       <a
@@ -649,7 +649,7 @@ import{e as I,a as C,m as y}from"./index-6O3GMm5i.js";import{r as R,a as z}from"
       </div>
 
     </div>
-  `}function J(e,t){const i=E(e,t),s=S(e),n=A(e,t);return`
+  `}function ee(e,t){const i=S(e,t),s=A(e),n=j(e,t);return`
     <div class="blog-side-item">
 
       <a
@@ -679,7 +679,7 @@ import{e as I,a as C,m as y}from"./index-6O3GMm5i.js";import{r as R,a as z}from"
       </div>
 
     </div>
-  `}function ee(e){return`
+  `}function te(e){return`
     <section class="cta-section">
 
       <div class="w-layout-blockcontainer container-regular w-container">
@@ -724,20 +724,20 @@ import{e as I,a as C,m as y}from"./index-6O3GMm5i.js";import{r as R,a as z}from"
       </div>
 
     </section>
-  `}function te(e){const t=new AbortController,i=t.signal;e.querySelectorAll("[data-route]").forEach(o=>{o.addEventListener("click",c=>{if(c.defaultPrevented||c.button!==0||c.ctrlKey||c.metaKey||c.shiftKey||c.altKey)return;const d=o.getAttribute("href");if(!d)return;const u=new URL(d,window.location.origin);u.origin===window.location.origin&&(c.preventDefault(),window.location.assign(u.href))},{signal:i})});const s=e.querySelectorAll(".scroll-animate, [data-w-id]");let n=null;return typeof IntersectionObserver<"u"&&s.length?(n=new IntersectionObserver(o=>{o.forEach(c=>{c.isIntersecting&&(c.target.classList.add("is-visible"),n.unobserve(c.target))})},{threshold:.4}),s.forEach(o=>{n.observe(o)})):s.forEach(o=>{o.classList.add("is-visible")}),()=>{t.abort(),n==null||n.disconnect()}}async function ne(){const e=document.getElementById("app");if(!e){console.error("[Home] #app element not found.");return}m&&(m(),m=null);const t=y.getCurrentLanguage(),i=window.location.pathname,s=++b,[n,o]=await Promise.allSettled([I(6),C(4)]),c=n.status==="fulfilled"&&Array.isArray(n.value)?n.value:[],d=o.status==="fulfilled"&&Array.isArray(o.value)?o.value:[];if(s!==b||window.location.pathname!==i||y.getCurrentLanguage()!==t)return;e.innerHTML=`
+  `}function ie(e){const t=new AbortController,i=t.signal;e.querySelectorAll("[data-route]").forEach(o=>{o.addEventListener("click",c=>{if(c.defaultPrevented||c.button!==0||c.ctrlKey||c.metaKey||c.shiftKey||c.altKey)return;const d=o.getAttribute("href");if(!d)return;const u=new URL(d,window.location.origin);u.origin===window.location.origin&&(c.preventDefault(),window.location.assign(u.href))},{signal:i})});const s=e.querySelectorAll(".scroll-animate, [data-w-id]");let n=null;return typeof IntersectionObserver<"u"&&s.length?(n=new IntersectionObserver(o=>{o.forEach(c=>{c.isIntersecting&&(c.target.classList.add("is-visible"),n.unobserve(c.target))})},{threshold:.4}),s.forEach(o=>{n.observe(o)})):s.forEach(o=>{o.classList.add("is-visible")}),()=>{t.abort(),n==null||n.disconnect()}}async function re(){const e=document.getElementById("app");if(!e){console.error("[Home] #app element not found.");return}h&&(h(),h=null);const t=$.getCurrentLanguage(),i=window.location.pathname,s=++x,[n,o]=await Promise.allSettled([I(),C(4)]),c=n.status==="fulfilled"&&Array.isArray(n.value)?n.value.filter(f=>{const y=f==null?void 0:f.is_marked;return y===!0||y===1||y==="1"}).slice(0,6):[],d=o.status==="fulfilled"&&Array.isArray(o.value)?o.value:[];if(s!==x||window.location.pathname!==i||$.getCurrentLanguage()!==t)return;e.innerHTML=`
   ${R()}
 
   <main class="mz-home" id="mazoryaHome">
-    ${k(t)}
-    ${W()}
+    ${M(t)}
     ${V()}
-    ${F(t)}
+    ${F()}
     ${K(t)}
-    ${X(c,t)}
-    ${Z()}
-    ${Q(d,t)}
-    ${ee(t)}
+    ${X(t)}
+    ${Z(c,t)}
+    ${Q()}
+    ${Y(d,t)}
+    ${te(t)}
   </main>
 
   ${P()}
-`,z(),H();const u=te(e),l=N(),g=e.querySelector("#mazoryaExonHero");let v=null,h=!1;const p=()=>{h||(h=!0,v==null||v.disconnect(),u(),l(),m===p&&(m=null))};m=p,typeof MutationObserver<"u"&&g&&(v=new MutationObserver(()=>{g.isConnected||p()}),v.observe(e,{childList:!0,subtree:!0})),console.log("[Home] Page rendered with Exon Hero.")}export{ne as renderHome};
+`,z(),H();const u=ie(e),l=W(),g=e.querySelector("#mazoryaExonHero");let v=null,m=!1;const p=()=>{m||(m=!0,v==null||v.disconnect(),u(),l(),h===p&&(h=null))};h=p,typeof MutationObserver<"u"&&g&&(v=new MutationObserver(()=>{g.isConnected||p()}),v.observe(e,{childList:!0,subtree:!0})),console.log("[Home] Page rendered with Exon Hero.")}export{re as renderHome};
